@@ -1,0 +1,28 @@
+---
+// A FigJam-style sticky note. Position it with `class`. The whole note tilts;
+// the 3D transform puts it on its own layer so the rotated text stays smooth
+// instead of jagged.
+interface Props {
+  class?: string;
+  color?: "yellow" | "pink" | "green" | "blue";
+  /** degrees */
+  tilt?: number;
+}
+
+const { class: className = "", color = "yellow", tilt = 0 } = Astro.props;
+const fills = { yellow: "#FFE380", pink: "#FFB8D9", green: "#B5EFC6", blue: "#C2DFFB" };
+---
+
+<div
+  class:list={["sticky-note absolute z-10 w-36 sm:w-40 p-3 text-[13px] leading-snug font-medium text-gray-900 shadow-lg", className]}
+  style={`background: ${fills[color]}; transform: rotate(${tilt}deg) translateZ(0);`}
+>
+  <slot />
+</div>
+
+<style>
+  .sticky-note {
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+</style>

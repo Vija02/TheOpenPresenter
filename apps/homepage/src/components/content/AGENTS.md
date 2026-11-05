@@ -12,7 +12,7 @@ rather than inlining a one-off.
 
 ## House style (applies to all)
 
-- Tailwind v4 utility classes; teal is the accent (`teal-500`).
+- Tailwind v4 utility classes; `brand` is the main colour (`brand-500`), `accent` the second.
 - Body copy: `text-gray-600 dark:text-gray-300`. Headings: `font-red-hat-display`.
 - **No em dashes** in copy (house rule). Also avoid the words "genuinely" and
   "honestly" — they read as AI filler.
@@ -99,7 +99,7 @@ The back link + category label + H1 + lead paragraph for an **article** page.
 - Slot: lead paragraph.
 
 ### Callout
-The teal "Before you start" box with an info icon.
+The brand-coloured "Before you start" box with an info icon.
 - `title?` — default `"Before you start"`.
 - `class?` — default `"mb-12"`.
 - Slot: body (may contain links/`<strong>`).
@@ -124,7 +124,7 @@ A numbered step `<article>` with a gradient number badge and an H2 title.
 - `title` — the H2.
 - `color?` — override the badge gradient, e.g. `"from-pink-500 to-pink-400"`.
   By default the color cycles through a palette by `number`:
-  teal → purple → indigo → sky → amber → rose.
+  brand → accent → slate.
 - `class?` — default `"mb-16"`.
 - Slot: the step body (paragraphs, lists, `Figure`, `Tip`, …).
 

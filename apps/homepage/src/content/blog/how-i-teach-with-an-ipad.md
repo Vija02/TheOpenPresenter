@@ -38,20 +38,20 @@ How it works is there are 2 different systems: a **remote** and a **renderer**. 
 <svg viewBox="0 0 440 236" width="100%" style="max-width: 440px; margin: 0 auto" role="img" aria-label="A server holds the shared data. The remote on an iPad or phone sends changes to it, and the renderer on a TV stick or laptop reads from it" font-family="inherit" fill="currentColor">
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="#14b8a6" />
+      <path d="M0 0 L10 5 L0 10 z" fill="#f5a524" />
     </marker>
   </defs>
   <rect x="145" y="10" width="150" height="66" rx="12" fill="none" stroke="currentColor" stroke-opacity="0.4" stroke-width="2" stroke-dasharray="6 5" />
   <text x="220" y="40" text-anchor="middle" font-size="17" font-weight="700" opacity="0.8">Server</text>
   <text x="220" y="62" text-anchor="middle" font-size="14" opacity="0.6">shared data</text>
-  <rect x="10" y="152" width="160" height="76" rx="12" fill="none" stroke="#14b8a6" stroke-width="2.5" />
+  <rect x="10" y="152" width="160" height="76" rx="12" fill="none" stroke="#f5a524" stroke-width="2.5" />
   <text x="90" y="186" text-anchor="middle" font-size="20" font-weight="800">Remote</text>
   <text x="90" y="210" text-anchor="middle" font-size="14" opacity="0.7">iPad or phone</text>
-  <rect x="270" y="152" width="160" height="76" rx="12" fill="none" stroke="#14b8a6" stroke-width="2.5" />
+  <rect x="270" y="152" width="160" height="76" rx="12" fill="none" stroke="#f5a524" stroke-width="2.5" />
   <text x="350" y="186" text-anchor="middle" font-size="20" font-weight="800">Renderer</text>
   <text x="350" y="210" text-anchor="middle" font-size="14" opacity="0.7">TV stick or laptop</text>
-  <path d="M90 150 V114 H200 V80" fill="none" stroke="#14b8a6" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)" />
-  <path d="M240 78 V114 H350 V148" fill="none" stroke="#14b8a6" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)" />
+  <path d="M90 150 V114 H200 V80" fill="none" stroke="#f5a524" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)" />
+  <path d="M240 78 V114 H350 V148" fill="none" stroke="#f5a524" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)" />
 </svg>
 <figcaption>Two separate systems that only talk through the server</figcaption>
 </figure>

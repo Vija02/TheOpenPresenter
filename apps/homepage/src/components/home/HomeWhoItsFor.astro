@@ -29,7 +29,7 @@ const audiences = [
     <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
       <div class="max-w-3xl mx-auto text-center pb-12">
         <div
-          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2"
         >
           Who it's for
         </div>
@@ -46,7 +46,7 @@ const audiences = [
               href={audience.href}
               target={audience.external ? "_blank" : undefined}
               rel={audience.external ? "noopener noreferrer" : undefined}
-              class="group flex flex-col rounded-2xl border border-gray-200 dark:border-gray-800 p-6 transition duration-150 ease-in-out hover:-translate-y-1 hover:border-teal-500 hover:shadow-lg"
+              class="group flex flex-col rounded-2xl border border-gray-200 dark:border-gray-800 p-6 transition duration-150 ease-in-out hover:-translate-y-1 hover:border-brand-500 hover:shadow-lg"
               data-aos="fade-up"
               data-aos-delay={i * 100}
             >
@@ -56,7 +56,7 @@ const audiences = [
               <p class="text-gray-600 dark:text-gray-400 grow mb-4">
                 {audience.body}
               </p>
-              <span class="text-teal-600 dark:text-teal-400 font-medium inline-flex items-center">
+              <span class="text-brand-600 dark:text-brand-400 font-medium inline-flex items-center">
                 {audience.cta}
                 <span
                   class="ml-1 transition-transform group-hover:translate-x-1"

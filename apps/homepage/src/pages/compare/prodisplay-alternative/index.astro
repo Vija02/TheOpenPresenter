@@ -148,7 +148,7 @@ const faqs = [
   },
 ];
 
-const win = "font-bold text-teal-600 dark:text-teal-400";
+const win = "font-bold text-brand-600 dark:text-brand-400";
 const lose = "text-gray-600 dark:text-gray-300";
 ---
 
@@ -181,30 +181,30 @@ const lose = "text-gray-600 dark:text-gray-300";
   </h2>
   <div class="grid gap-6 md:grid-cols-2 mb-16">
     <div
-      class="rounded-lg border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 p-6"
+      class="rounded-lg border border-brand-200 dark:border-brand-500/30 bg-brand-50 dark:bg-brand-500/10 p-6"
     >
       <p class="font-semibold text-gray-900 dark:text-gray-100 mb-4">
         TheOpenPresenter fits better if you want:
       </p>
       <ul class="space-y-3 text-gray-600 dark:text-gray-300">
         <li class="flex gap-3">
-          <span class="text-teal-500 shrink-0">&#10003;</span>
+          <span class="text-brand-500 shrink-0">&#10003;</span>
           One price for the whole church, however many rooms you add
         </li>
         <li class="flex gap-3">
-          <span class="text-teal-500 shrink-0">&#10003;</span>
+          <span class="text-brand-500 shrink-0">&#10003;</span>
           Cheap screens: a Fire TV Stick or any browser, no Apple TV per room
         </li>
         <li class="flex gap-3">
-          <span class="text-teal-500 shrink-0">&#10003;</span>
+          <span class="text-brand-500 shrink-0">&#10003;</span>
           Volunteers running each room from their own phone
         </li>
         <li class="flex gap-3">
-          <span class="text-teal-500 shrink-0">&#10003;</span>
+          <span class="text-brand-500 shrink-0">&#10003;</span>
           Lyrics, Bible, and timers in the kids' rooms, not just playback
         </li>
         <li class="flex gap-3">
-          <span class="text-teal-500 shrink-0">&#10003;</span>
+          <span class="text-brand-500 shrink-0">&#10003;</span>
           The main service and the kids' rooms on one account
         </li>
       </ul>
@@ -295,7 +295,7 @@ const lose = "text-gray-600 dark:text-gray-300";
           checked
         />
         <span
-          class="block rounded-full border border-gray-300 dark:border-gray-700 px-4 py-1.5 text-sm text-gray-600 dark:text-gray-300 peer-checked:border-teal-500 peer-checked:bg-teal-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-teal-500"
+          class="block rounded-full border border-gray-300 dark:border-gray-700 px-4 py-1.5 text-sm text-gray-600 dark:text-gray-300 peer-checked:border-brand-500 peer-checked:bg-brand-500 peer-checked:text-on-brand peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500"
           >Billed yearly</span
         >
       </label>
@@ -308,7 +308,7 @@ const lose = "text-gray-600 dark:text-gray-300";
           class="peer sr-only"
         />
         <span
-          class="block rounded-full border border-gray-300 dark:border-gray-700 px-4 py-1.5 text-sm text-gray-600 dark:text-gray-300 peer-checked:border-teal-500 peer-checked:bg-teal-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-teal-500"
+          class="block rounded-full border border-gray-300 dark:border-gray-700 px-4 py-1.5 text-sm text-gray-600 dark:text-gray-300 peer-checked:border-brand-500 peer-checked:bg-brand-500 peer-checked:text-on-brand peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500"
           >Billed monthly</span
         >
       </label>
@@ -323,11 +323,11 @@ const lose = "text-gray-600 dark:text-gray-300";
           {formatUsd(defaultCosts.prodisplayPerYear)}
         </p>
       </div>
-      <div class="rounded-lg border border-teal-200 dark:border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 p-4">
-        <p class="text-xs font-semibold uppercase tracking-wide text-teal-600 dark:text-teal-400 mb-1">
+      <div class="rounded-lg border border-brand-200 dark:border-brand-500/30 bg-brand-50 dark:bg-brand-500/10 p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400 mb-1">
           TheOpenPresenter, per year
         </p>
-        <p class="font-red-hat-display text-2xl font-extrabold text-teal-600 dark:text-teal-400" data-calc-out="top">
+        <p class="font-red-hat-display text-2xl font-extrabold text-brand-600 dark:text-brand-400" data-calc-out="top">
           {formatGbp(defaultCosts.theOpenPresenter)}
         </p>
         <p class="text-sm text-gray-500 dark:text-gray-400" data-calc-out="top-plan">
@@ -341,7 +341,7 @@ const lose = "text-gray-600 dark:text-gray-300";
         class="font-semibold text-gray-900 dark:text-gray-100"
         data-calc-out="pd-three">{formatUsd(defaultCosts.prodisplayThreeYears)}</strong
       >, TheOpenPresenter <strong
-        class="font-semibold text-teal-600 dark:text-teal-400"
+        class="font-semibold text-brand-600 dark:text-brand-400"
         data-calc-out="top-three"
         >{formatGbp(defaultCosts.theOpenPresenterThreeYears)}</strong
       >.
@@ -353,7 +353,7 @@ const lose = "text-gray-600 dark:text-gray-300";
           Yearly cost by number of screens
         </p>
         <span class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-          <span class="inline-block h-0.5 w-4 rounded-full bg-teal-700 dark:bg-teal-400"></span>
+          <span class="inline-block h-0.5 w-4 rounded-full bg-brand-700 dark:bg-brand-400"></span>
           TheOpenPresenter
         </span>
         <span class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -434,7 +434,7 @@ const lose = "text-gray-600 dark:text-gray-300";
                   stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  class="stroke-teal-700 dark:stroke-teal-400"
+                  class="stroke-brand-700 dark:stroke-brand-400"
                 />
                 <text
                   x={chartX(CHART.maxScreens) + 10}
@@ -483,7 +483,7 @@ const lose = "text-gray-600 dark:text-gray-300";
             cy={chartY(defaultMarker.theOpenPresenter)}
             r="5"
             stroke-width="2"
-            class="fill-teal-700 dark:fill-teal-400 stroke-white dark:stroke-gray-900 pointer-events-none"
+            class="fill-brand-700 dark:fill-brand-400 stroke-white dark:stroke-gray-900 pointer-events-none"
           />
         </svg>
 
@@ -495,7 +495,7 @@ const lose = "text-gray-600 dark:text-gray-300";
           <p class="text-gray-500 dark:text-gray-400 mb-1" data-calc-out="tip-screens">
           </p>
           <p class="flex items-center gap-2">
-            <span class="inline-block h-0.5 w-3 rounded-full bg-teal-700 dark:bg-teal-400"></span>
+            <span class="inline-block h-0.5 w-3 rounded-full bg-brand-700 dark:bg-brand-400"></span>
             <strong class="font-semibold text-gray-900 dark:text-gray-100" data-calc-out="tip-top"></strong>
             <span class="text-gray-500 dark:text-gray-400">TheOpenPresenter</span>
           </p>
@@ -554,12 +554,12 @@ const lose = "text-gray-600 dark:text-gray-300";
   <p class="text-gray-600 dark:text-gray-300 mb-16">
     Prefer to pay once? The <a
       href="/pricing"
-      class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+      class="text-brand-600 dark:text-brand-400 hover:underline font-medium"
       >Lifetime licence</a
     > is the Cloud plan for £990, one time. And churches under 50 weekly attendance
     get the Cloud plan free through our <a
       href="/church/sponsorship"
-      class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+      class="text-brand-600 dark:text-brand-400 hover:underline font-medium"
       >sponsorship programme</a
     >.
   </p>
@@ -581,7 +581,7 @@ const lose = "text-gray-600 dark:text-gray-300";
             ProDisplay
           </th>
           <th
-            class="py-3 pl-4 text-xs font-semibold uppercase tracking-wide text-teal-500"
+            class="py-3 pl-4 text-xs font-semibold uppercase tracking-wide text-brand-500"
           >
             TheOpenPresenter
           </th>
@@ -676,7 +676,7 @@ const lose = "text-gray-600 dark:text-gray-300";
         Plug a Fire TV Stick, Chromecast with Google TV, or Android TV device into
         each screen, or use a laptop or mini PC you already own. <a
           href="/how-to/present-on-tv"
-          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          class="text-brand-600 dark:text-brand-400 hover:underline font-medium"
           >See how to set up a TV</a
         >.
       </p>
@@ -692,7 +692,7 @@ const lose = "text-gray-600 dark:text-gray-300";
         at once, and the kids pastor can see and fix any of them from anywhere
         in the building. <a
           href="/how-to/control-with-phone"
-          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          class="text-brand-600 dark:text-brand-400 hover:underline font-medium"
           >How phone control works</a
         >.
       </p>
@@ -732,7 +732,7 @@ const lose = "text-gray-600 dark:text-gray-300";
       <strong class="font-semibold">Start free.</strong>
       <a
         href="/register"
-        class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+        class="text-brand-600 dark:text-brand-400 hover:underline font-medium"
         >Create an account</a
       >. Up to 5 screens are free, no card needed.
     </li>

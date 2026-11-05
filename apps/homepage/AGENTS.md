@@ -95,5 +95,5 @@ They live in an Astro content collection so a new post is one file.
 ### Styling
 
 Markdown bodies render inside `Prose.astro`, which maps `@tailwindcss/
-typography` onto the house style (Red Hat Display headings, teal links,
+typography` onto the house style (Red Hat Display headings, brand-coloured links,
 bordered figures). Adjust styling there, not in individual posts.

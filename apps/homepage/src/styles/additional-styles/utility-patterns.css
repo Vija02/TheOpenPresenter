@@ -67,7 +67,7 @@
 
 .form-checkbox,
 .form-radio {
-  @apply bg-transparent checked:bg-teal-500 checked:border-transparent focus-visible:not-checked:border-gray-400 dark:focus-visible:not-checked:border-gray-500;
+  @apply bg-transparent checked:bg-brand-500 checked:border-transparent focus-visible:not-checked:border-gray-400 dark:focus-visible:not-checked:border-gray-500;
 }
 
 .form-checkbox {

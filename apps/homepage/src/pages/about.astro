@@ -1,0 +1,308 @@
+---
+import { Image } from "astro:assets";
+import DefaultLayout from "../layouts/DefaultLayout.astro";
+import PageIllustration from "../components/PageIllustration.astro";
+import StickyNote from "../components/about/StickyNote.astro";
+import FrameLabel from "../components/about/FrameLabel.astro";
+import { formatDate, getPublishedPosts, isoDate } from "../lib/blog";
+import creImg from "../assets/images/blog/whats-new-october-2026/cre-stand.jpg";
+
+// The hero photo sits on a dotted canvas; sticky notes add the hand-written bits.
+const CHURCH = "Hope Newcastle";
+
+const stats = [
+  { value: "2023", label: `Started at ${CHURCH}` },
+  { value: "Weekly", label: "Still used every Sunday at our church" },
+  { value: "2,500+", label: "Changes, all public on GitHub" },
+  { value: "£0", label: "For churches under 50 people" },
+];
+
+const story = [
+  {
+    when: "2023",
+    title: "It started with our own church",
+    body: [
+      `${CHURCH} meets in a rented space. Every Sunday we set everything up and pack it all away again. There's no booth at the back and it doesn't make sense to set it up.`,
+      "We wanted to run the screen from wherever we were standing, on whatever device was in our hand. Nothing we tried did that well, so I started building it.",
+    ],
+    note: "Set up, pack down, every single week.",
+    noteColor: "yellow",
+  },
+  {
+    when: "Soon after",
+    title: "Then we forgot the laptop",
+    body: [
+      "Not long after, we did a workshop and forgot to bring a laptop. There was a TV but we had no way of getting our slides to it. This should be something easy.",
+      "So that became a goal too. Any device you have like a phone or a TV stick should be all you need.",
+    ],
+    note: "All we had was a TV and our phones 📱",
+    noteColor: "pink",
+  },
+  {
+    when: "Today",
+    title: "Now other churches use it too",
+    body: [
+      "What started as a tool for one church now has lyrics, slides, bibles, music, chords for the band and a desktop app. It's still open-source.",
+      "Today, churches all over the world use it for their main service, lobby display, and kids ministry.",
+    ],
+    note: "From one church to churches all over the world 🌍",
+    noteColor: "green",
+  },
+] as const;
+
+const values = [
+  {
+    title: "Built for small churches",
+    body: "Most church software assumes a booth and a trained operator. We build for volunteers that are short on time and manpower.",
+    links: [
+      { href: "/church/sponsorship", label: "Free for churches under 50 people" },
+      { href: "/how-to/present-on-tv", label: "Present on a TV with no laptop" },
+      { href: "/download", label: "Run it offline with the desktop app" },
+    ],
+  },
+  {
+    title: "Open, so you're never stuck",
+    body: "Everything is open-source under AGPL 3.0. You can read the code, run it on your own server, and nobody can take it away from you.",
+    links: [
+      { href: "https://github.com/Vija02/TheOpenPresenter", label: "Read the code on GitHub" },
+      { href: "/pricing", label: "See what the cloud plan adds" },
+    ],
+  },
+  {
+    title: "Shaped by the people who use it",
+    body: "Emails come to us, not a call centre. A lot of what we've built started as a message from a church that wanted something.",
+    links: [
+      { href: "/blog", label: "Read the monthly updates" },
+      { href: "mailto:hello@theopenpresenter.com", label: "Tell us what to build next" },
+    ],
+  },
+];
+
+const socials = [
+  { href: "https://github.com/Vija02/TheOpenPresenter", label: "GitHub" },
+  { href: "https://www.linkedin.com/company/theopenpresenter", label: "LinkedIn" },
+  { href: "https://www.instagram.com/theopenpresenter/", label: "Instagram" },
+];
+
+const posts = (await getPublishedPosts()).slice(0, 3);
+
+const link = "text-brand-600 dark:text-brand-400 hover:underline font-medium";
+---
+
+<DefaultLayout
+  title="About us | TheOpenPresenter"
+  description="I'm Michael. I started TheOpenPresenter in 2023 for Hope Newcastle, a church that packs up every Sunday. Here's how it started and who's behind it."
+>
+  <div class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1" aria-hidden="true">
+    <PageIllustration />
+  </div>
+
+  <!-- Hero: the pitch beside a selected photo, then the numbers -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-28 md:pt-36 grid gap-12 md:grid-cols-[1.1fr_1fr] md:gap-16 items-center">
+        <div>
+          <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-3" data-aos="fade-down">
+            About us
+          </div>
+          <h1 class="font-red-hat-display font-black tracking-tighter text-[2.1rem] md:text-[2.6rem] leading-[1.12] mb-5 text-balance" data-aos="fade-down" data-aos-delay="50">
+            Hi, I'm Michael, the founder behind TheOpenPresenter.
+          </h1>
+          <div class="space-y-4 text-lg text-gray-600 dark:text-gray-400" data-aos="fade-down" data-aos-delay="100">
+            <p>
+              In 2023 I started building this to serve small churches like ours better. 
+              We wanted the setup to be easy and for anyone to be able to run it straight from their phones.
+            </p>
+            <p>
+              Since then, it has grown to rival and even surpass giants like 
+              ProPresenter in some aspects. All the while keeping it open-source and easy to use.
+            </p>
+          </div>
+        </div>
+
+        <!-- the photo on the canvas -->
+        <div class="canvas relative rounded-xl p-8 pb-40 sm:p-10 sm:pb-20" data-aos="fade-up" data-aos-delay="150">
+          <div class="relative mx-auto">
+            <FrameLabel>cre-2026.jpg</FrameLabel>
+            <figure class="relative">
+              <Image
+                class="block w-full h-auto rounded-sm shadow-lg"
+                src={creImg}
+                alt="Michael and a teammate at TheOpenPresenter's stand at CRE, with posters and demo devices"
+                widths={[600, 1200]}
+                sizes="(min-width: 768px) 480px, 90vw"
+                loading="eager"
+              />
+              <figcaption class="absolute right-0 -bottom-7 text-xs text-gray-500 dark:text-gray-400">
+                CRE, October 2026
+              </figcaption>
+            </figure>
+            <StickyNote class="-left-2 sm:-left-10 -bottom-36 sm:-bottom-14" color="blue" tilt={-3}>
+              That's me on the left 👋 and that's our stand at CRE this
+              October.
+            </StickyNote>
+          </div>
+        </div>
+      </div>
+
+      <dl class="grid grid-cols-2 lg:grid-cols-4 gap-y-8 mt-14 md:mt-20 pt-8 pb-12 md:pb-20 border-t border-gray-200 dark:border-gray-800">
+        {
+          stats.map((s, i) => (
+            <div
+              class:list={["pr-4 lg:px-6", i > 0 && "lg:border-l lg:border-gray-200 lg:dark:border-gray-800", i === 0 && "lg:pl-0"]}
+              data-aos="fade-up"
+              data-aos-delay={i * 75}
+            >
+              <dt class="sr-only">{s.label}</dt>
+              <dd class="font-red-hat-display font-black text-3xl text-gray-900 dark:text-gray-100">{s.value}</dd>
+              <dd class="mt-1 text-sm text-gray-600 dark:text-gray-400">{s.label}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <!-- The story, as a timeline -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <div class="max-w-3xl pb-10 md:pb-14">
+          <h2 class="h2 font-red-hat-display mb-4">How it started</h2>
+        </div>
+
+        <ol class="max-w-3xl">
+          {
+            story.map((s, i) => (
+              <li class="relative grid md:grid-cols-[150px_1fr] gap-x-8" data-aos="fade-up">
+                <div class="text-sm font-semibold text-brand-500 pb-2 md:pt-1">{s.when}</div>
+                <div class:list={["relative pl-7 border-l border-gray-200 dark:border-gray-800", i < story.length - 1 && "pb-12"]}>
+                  <span class="absolute -left-[5px] top-2 w-2.5 h-2.5 rounded-full bg-brand-500 ring-4 ring-white dark:ring-gray-900" aria-hidden="true"></span>
+                  <h3 class="text-xl font-red-hat-display font-black mb-3">{s.title}</h3>
+                  <div class="space-y-3 text-gray-600 dark:text-gray-400">
+                    {s.body.map((p) => <p>{p}</p>)}
+                  </div>
+                  <StickyNote class="hidden xl:block top-0 -right-72" color={s.noteColor} tilt={i % 2 ? -2 : 2}>
+                    {s.note}
+                  </StickyNote>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- What we care about -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <h2 class="h2 font-red-hat-display mb-10 md:mb-14">What we care about</h2>
+        <div class="grid gap-10 md:gap-8 md:grid-cols-3">
+          {
+            values.map((v, i) => (
+              <div data-aos="fade-up" data-aos-delay={i * 75}>
+                <h3 class="text-xl font-red-hat-display font-black mb-2">{v.title}</h3>
+                <p class="text-gray-600 dark:text-gray-400">{v.body}</p>
+                <ul class="mt-4 space-y-1.5">
+                  {v.links.map((l) => (
+                    <li>
+                      <a class={link} href={l.href}>{l.label} &rarr;</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Build in public -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800 grid gap-10 md:grid-cols-2 md:gap-16 items-start">
+        <div data-aos="fade-up">
+          <h2 class="h2 font-red-hat-display mb-4">Follow along</h2>
+          <p class="text-lg text-gray-600 dark:text-gray-400">
+            We build in public. Every month we write up what changed and why,
+            and the code is there for anyone to read.
+          </p>
+          <p class="mt-4 text-sm">
+            {
+              socials.map((s, i) => (
+                <>
+                  {i > 0 && <span class="mx-2 text-gray-400" aria-hidden="true">·</span>}
+                  <a class={link} href={s.href}>{s.label}</a>
+                </>
+              ))
+            }
+          </p>
+        </div>
+
+        <ul class="divide-y divide-gray-200 dark:divide-gray-800 border-y border-gray-200 dark:border-gray-800" data-aos="fade-up" data-aos-delay="100">
+          {
+            posts.map((post) => (
+              <li>
+                <a
+                  class="group block py-4"
+                  href={`/blog/${post.id}`}
+                >
+                  <time class="text-xs text-gray-500 dark:text-gray-400" datetime={isoDate(post.data.publishDate)}>
+                    {formatDate(post.data.publishDate)}
+                  </time>
+                  <div class="font-red-hat-display font-black group-hover:text-brand-500 transition">{post.data.title}</div>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Say hi -->
+  <section class="bg-gray-100 dark:bg-gray-800">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-16 md:py-20 flex flex-col md:flex-row md:items-center md:justify-between gap-8 text-center md:text-left">
+        <div data-aos="fade-up">
+          <h2 class="h3 font-red-hat-display font-black leading-tight">Come and say hi</h2>
+          <p class="mt-3 text-gray-600 dark:text-gray-400 max-w-xl">
+            Tell us how you run your Sunday, what's annoying you, or what
+            you'd like us to build next. I will personally read every message you send.
+          </p>
+        </div>
+        <div class="shrink-0" data-aos="fade-up" data-aos-delay="100">
+          <div class="flex flex-col sm:flex-row justify-center md:justify-end gap-3">
+            <a class="btn text-on-brand bg-brand-500 hover:bg-brand-400" href="mailto:hello@theopenpresenter.com">
+              Email us
+            </a>
+            <a class="btn text-brand-500 bg-white hover:bg-gray-50 border border-brand-500 dark:bg-transparent dark:hover:bg-gray-700" href="/register">
+              Try it free
+            </a>
+          </div>
+          <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 text-center md:text-right">
+            Free to start · No card needed · Open-source
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</DefaultLayout>
+
+<style>
+  /* the design canvas: a dotted board behind frames */
+  .canvas {
+    background-color: rgba(255, 255, 255, 0.02);
+    background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+    background-size: 18px 18px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+  :global(html:not(.dark)) .canvas {
+    background-color: #f7f7f8;
+    background-image: radial-gradient(rgba(0, 0, 0, 0.12) 1px, transparent 1px);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+</style>

@@ -21,7 +21,7 @@ const apps = [
     <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
       <div class="max-w-3xl mx-auto text-center pb-10">
         <div
-          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-teal-500 mb-2"
+          class="inline-flex items-center text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2"
         >
           Switching?
         </div>
@@ -37,7 +37,7 @@ const apps = [
           apps.map((app, i) => (
             <a
               href={app.href}
-              class="group flex flex-col rounded-2xl border border-gray-200 dark:border-gray-800 p-6 transition duration-150 ease-in-out hover:-translate-y-1 hover:border-teal-500 hover:shadow-lg"
+              class="group flex flex-col rounded-2xl border border-gray-200 dark:border-gray-800 p-6 transition duration-150 ease-in-out hover:-translate-y-1 hover:border-brand-500 hover:shadow-lg"
               data-aos="fade-up"
               data-aos-delay={i * 100}
             >
@@ -48,7 +48,7 @@ const apps = [
                 {app.name}
               </h3>
               <p class="text-gray-600 dark:text-gray-400 grow mb-4">{app.body}</p>
-              <span class="text-teal-600 dark:text-teal-400 font-medium inline-flex items-center">
+              <span class="text-brand-600 dark:text-brand-400 font-medium inline-flex items-center">
                 Read the comparison
                 <span
                   class="ml-1 transition-transform group-hover:translate-x-1"
@@ -65,7 +65,7 @@ const apps = [
       <p class="text-center mt-8">
         <a
           href="/compare"
-          class="text-teal-600 dark:text-teal-400 hover:underline font-medium"
+          class="text-brand-600 dark:text-brand-400 hover:underline font-medium"
           >All comparisons</a
         >
       </p>
