@@ -30,6 +30,11 @@ preloader.initPreloader();
 
 listenForOutputVolumeChanges();
 
+// Nothing to scroll in the remote's preview, so iOS has nothing to grow the iframe to
+if (new URLSearchParams(window.location.search).get("preview") === "1") {
+  document.documentElement.classList.add("preview");
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary FallbackComponent={ErrorAlert} onError={captureException}>
