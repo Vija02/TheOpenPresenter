@@ -38,16 +38,17 @@ export const PluginAPIProvider = ({
     useState<ReturnType<InitPluginApiFunc> | null>(null);
 
   useEffect(() => {
-    setPluginAPI(
-      initPluginApi({
-        yjsPluginSceneData,
-        yjsPluginRendererData,
-        awarenessContext,
-        pluginContext,
-        setRenderCurrentScene,
-        misc,
-      }),
-    );
+    const api = initPluginApi({
+      yjsPluginSceneData,
+      yjsPluginRendererData,
+      awarenessContext,
+      pluginContext,
+      setRenderCurrentScene,
+      misc,
+    });
+    setPluginAPI(api);
+
+    return () => api.dispose();
   }, [
     setPluginAPI,
     yjsPluginSceneData,

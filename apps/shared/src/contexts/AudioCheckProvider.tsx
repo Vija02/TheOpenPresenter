@@ -3,6 +3,7 @@ import React, {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -36,33 +37,48 @@ export function AudioCheckProvider({ children }: React.PropsWithChildren<{}>) {
 
   const { addError, removeError } = useError();
 
-  const audioCanPlay = proxy({
-    get value() {
-      if (canPlayObj.value) {
-        return true;
-      }
-      if (!canPlayObj.isChecking) {
-        setCanPlayObj({ value: false, isChecking: true });
-      }
+  const latest = useRef(canPlayObj);
+  latest.current = canPlayObj;
 
-      return false;
-    },
-    get _rawValue() {
-      return canPlayObj.value;
-    },
-    get isChecking() {
-      return canPlayObj.isChecking;
-    },
-    get subscribe() {
-      return (callback: () => void) => {
-        const id = performance.now().toString();
-        subscriber.current[id] = callback;
-        return () => {
-          delete subscriber.current[id];
-        };
+  const audioCanPlay = useMemo(() => {
+    const subscribe = (callback: () => void) => {
+      const id = performance.now().toString();
+      subscriber.current[id] = callback;
+      return () => {
+        delete subscriber.current[id];
       };
-    },
-  });
+    };
+
+    return proxy({
+      get value() {
+        if (latest.current.value) {
+          return true;
+        }
+        if (!latest.current.isChecking) {
+          setCanPlayObj((prev) =>
+            prev.value || prev.isChecking
+              ? prev
+              : { value: false, isChecking: true },
+          );
+        }
+
+        return false;
+      },
+      get _rawValue() {
+        return latest.current.value;
+      },
+      get isChecking() {
+        return latest.current.isChecking;
+      },
+      get subscribe() {
+        return subscribe;
+      },
+    });
+  }, []);
+  const contextValue = useMemo(
+    () => ({ canPlayAudio: audioCanPlay }),
+    [audioCanPlay],
+  );
 
   useEffect(() => {
     if (canPlayObj.value) return;
@@ -90,11 +106,7 @@ export function AudioCheckProvider({ children }: React.PropsWithChildren<{}>) {
   }, [addError, canPlayObj.isChecking, canPlayObj.value, removeError]);
 
   return (
-    <AudioCheckContext.Provider
-      value={{
-        canPlayAudio: audioCanPlay,
-      }}
-    >
+    <AudioCheckContext.Provider value={contextValue}>
       <audio style={{ display: "none" }} ref={audioRef} src={objectUrl} />
       {children}
     </AudioCheckContext.Provider>
