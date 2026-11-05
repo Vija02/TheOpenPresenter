@@ -189,6 +189,10 @@
     color: #0366d6;
     text-decoration: none;
 
+    .dark & {
+      color: #58a6ff;
+    }
+
     &:hover {
       text-decoration: underline;
     }
