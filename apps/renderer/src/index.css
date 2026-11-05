@@ -9,12 +9,6 @@ body {
   background-color: black;
 }
 
-html.preview,
-html.preview body {
-  overflow: hidden;
-  height: 100%;
-}
-
 .landing {
   @apply h-full text-white p-10 md:p-20;
 

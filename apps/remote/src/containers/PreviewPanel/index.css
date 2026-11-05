@@ -6,15 +6,11 @@
 }
 
 .rt--preview-panel--frame-wrapper {
-  @apply relative w-full aspect-video overflow-hidden bg-black;
+  @apply relative w-full;
 }
 
-/* iOS Safari sizes iframes to their content, which loops with the renderer's
-   self-measuring stage. Absolute + `width: 1px; min-width: 100%` pins it. */
 .rt--preview-panel--frame {
-  @apply absolute inset-0 block h-full border-0 bg-black;
-  width: 1px;
-  min-width: 100%;
+  @apply block w-full aspect-video border-0 bg-black;
 }
 
 .rt--preview-panel--output-picker {
