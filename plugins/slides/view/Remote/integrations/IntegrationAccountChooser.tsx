@@ -12,6 +12,8 @@ import {
 import { ReactNode, useState } from "react";
 import { FaArrowUpRightFromSquare, FaLinkSlash, FaPlus } from "react-icons/fa6";
 
+import { PublicLinkConfig, PublicLinkOption } from "./PublicLinkForm";
+
 export type IntegrationAccount = {
   id: string;
   label: string;
@@ -28,6 +30,8 @@ export const IntegrationAccountChooser = ({
   connect,
   onImportOnce,
   disconnect,
+  publicLink,
+  notice,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -35,12 +39,16 @@ export const IntegrationAccountChooser = ({
   icon: (className: string) => ReactNode;
   accounts: IntegrationAccount[];
   onChoose: (accountId: string) => void;
-  connect: { description: string; onClick: () => void };
-  onImportOnce: () => void;
+  /** Left out when accounts can't be connected here */
+  connect?: { description: string; onClick: () => void };
+  onImportOnce?: () => void;
   disconnect: {
     description: string;
     onConfirm: (accountId: string) => Promise<void>;
   };
+  publicLink?: PublicLinkConfig;
+  /** Shown above the options, e.g. why signing in isn't available */
+  notice?: ReactNode;
 }) => {
   const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
 
@@ -54,6 +62,7 @@ export const IntegrationAccountChooser = ({
   };
 
   const hasAccounts = accounts.length > 0;
+  const canSignIn = !!connect || !!onImportOnce;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -66,6 +75,9 @@ export const IntegrationAccountChooser = ({
         </DialogHeader>
         <DialogBody>
           <div className="flex flex-col gap-2">
+            {notice != null && (
+              <p className="text-sm text-secondary mb-1">{notice}</p>
+            )}
             {accounts.map((account) => (
               <div
                 key={account.id}
@@ -115,22 +127,33 @@ export const IntegrationAccountChooser = ({
 
             {hasAccounts && <hr className="my-2 border-stroke" />}
 
-            <ChooserOption
-              icon={<FaPlus className="size-4" />}
-              title={
-                hasAccounts
-                  ? `Connect another ${name} account`
-                  : `Connect a ${name} account`
-              }
-              description={connect.description}
-              onClick={connect.onClick}
-            />
-            <ChooserOption
-              icon={<FaArrowUpRightFromSquare className="size-4" />}
-              title="Import once"
-              description="Sign in for this import only. Nothing is saved, and it won't stay in sync."
-              onClick={onImportOnce}
-            />
+            {connect && (
+              <ChooserOption
+                icon={<FaPlus className="size-4" />}
+                title={
+                  hasAccounts
+                    ? `Connect another ${name} account`
+                    : `Connect a ${name} account`
+                }
+                description={connect.description}
+                onClick={connect.onClick}
+              />
+            )}
+            {onImportOnce && (
+              <ChooserOption
+                icon={<FaArrowUpRightFromSquare className="size-4" />}
+                title="Import once"
+                description="Sign in for this import only. Nothing is saved, and it won't stay in sync."
+                onClick={onImportOnce}
+              />
+            )}
+            {publicLink && (
+              <PublicLinkOption
+                key={String(isOpen)}
+                config={publicLink}
+                defaultOpen={!canSignIn && !hasAccounts}
+              />
+            )}
           </div>
         </DialogBody>
         <DialogFooter>

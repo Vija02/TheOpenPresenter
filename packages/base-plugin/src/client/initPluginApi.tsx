@@ -194,8 +194,10 @@ export function initPluginApi<
       removeError: misc.errorHandler.removeError,
     },
     dispose: () => {
-      unbindScene();
-      unbindRenderer();
+      setTimeout(() => {
+        unbindScene();
+        unbindRenderer();
+      }, 0);
 
       sceneWatcher.dispose();
       rendererWatcher.dispose();

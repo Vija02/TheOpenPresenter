@@ -31,6 +31,26 @@ export class CanvaUserActionableError extends Error {
   }
 }
 
+class CanvaApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "CanvaApiError";
+  }
+}
+
+/** The account can't open the design (not owned or shared with it). */
+export class CanvaNoAccessError extends CanvaUserActionableError {
+  constructor() {
+    super(
+      "This Canva account can't open that design. Open the link in Canva while signed in to it, then try again.",
+    );
+    this.name = "CanvaNoAccessError";
+  }
+}
+
 const canvaFetch = async <T>(
   accessToken: string,
   path: string,
@@ -59,7 +79,10 @@ const canvaFetch = async <T>(
         "Canva is rate limiting this account. Please wait a few minutes and try again.",
       );
     }
-    throw new Error(`Canva API ${path} failed (${res.status}): ${message}`);
+    throw new CanvaApiError(
+      `Canva API ${path} failed (${res.status}): ${message}`,
+      res.status,
+    );
   }
 
   return JSON.parse(text) as T;
@@ -84,6 +107,31 @@ export const listDesigns = (
     accessToken,
     `/designs?${params.toString()}`,
   );
+};
+
+/**
+ * One design, if this account can open it. A share link only grants access
+ * once its account has opened it in Canva, so say how to fix that.
+ */
+export const getDesign = async (
+  accessToken: string,
+  designId: string,
+): Promise<CanvaDesign> => {
+  try {
+    const { design } = await canvaFetch<{ design: CanvaDesign }>(
+      accessToken,
+      `/designs/${encodeURIComponent(designId)}`,
+    );
+    return design;
+  } catch (err) {
+    if (
+      err instanceof CanvaApiError &&
+      (err.status === 403 || err.status === 404)
+    ) {
+      throw new CanvaNoAccessError();
+    }
+    throw err;
+  }
 };
 
 type ExportJob = {
