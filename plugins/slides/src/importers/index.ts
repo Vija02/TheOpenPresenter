@@ -15,6 +15,10 @@ import type {
   PptImportData,
 } from "../types";
 import { createImageProcessor } from "./googleSlides/cacheGoogleSlideImage";
+import {
+  downloadDriveFile,
+  getDrivePowerPointType,
+} from "./googleSlides/drivePowerPoint";
 import { createDriveVideoFetcher } from "./googleSlides/driveVideos";
 import { googleUrl } from "./googleSlides/oauth";
 import { processHtml } from "./googleSlides/processHtml";
@@ -325,6 +329,33 @@ export const createImporters = (
       presentationId,
       replaceImportId,
     });
+
+    // A PowerPoint in Drive has no Slides embed: import it as a PowerPoint
+    const powerPoint = token
+      ? await getDrivePowerPointType(presentationId, token)
+      : null;
+    if (powerPoint) {
+      log.info("Picked file is a PowerPoint, importing as one");
+      const context = loadedContext[pluginId]!;
+      const buffer = await downloadDriveFile(presentationId, token!);
+      const uploaded = await serverPluginApi.uploadMedia(
+        buffer,
+        powerPoint.extension,
+        {
+          organizationId: context.organizationId,
+          userId,
+          isGuest: userId == null,
+          attachTo: { projectId: context.projectId, pluginId },
+        },
+      );
+      return importPpt({
+        pluginId,
+        mediaName: uploaded.fileName,
+        name: name ?? powerPoint.name ?? undefined,
+        replaceImportId,
+        userId,
+      });
+    }
     const loadedPlugin = loadedPlugins[pluginId]!;
     const loadedContextData = loadedContext[pluginId]!;
     const loadedYjs = loadedYjsData[pluginId]!;

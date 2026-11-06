@@ -1,3 +1,5 @@
+import { PICKER_PRESENTATION_MIME_TYPES } from "../../src/importers/googleSlides/driveMimeTypes";
+
 type PickedDeck = { id: string; name?: string; token: string };
 
 const loadScript = (src: string) =>
@@ -45,7 +47,7 @@ export const openGooglePicker = async ({
   return new Promise<PickedDeck | null>((resolve) => {
     const view = new google.picker.DocsView(
       google.picker.ViewId.PRESENTATIONS,
-    ).setMimeTypes("application/vnd.google-apps.presentation");
+    ).setMimeTypes(PICKER_PRESENTATION_MIME_TYPES);
 
     const picker = new google.picker.PickerBuilder()
       .setAppId(appId)

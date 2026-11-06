@@ -1,4 +1,5 @@
 /** Standalone pages for the Google sign-in and the cloud-hosted picker. */
+import { PICKER_PRESENTATION_MIME_TYPES } from "./driveMimeTypes";
 
 const safeJson = (value: unknown) =>
   JSON.stringify(value).replace(/</g, "\\u003c");
@@ -176,7 +177,7 @@ export const renderPickPage = ({
             .setFileIds(config.fileIds.join(","))
             .setMode(google.picker.DocsViewMode.LIST)
         : new google.picker.DocsView(google.picker.ViewId.PRESENTATIONS)
-            .setMimeTypes("application/vnd.google-apps.presentation");
+            .setMimeTypes(${safeJson(PICKER_PRESENTATION_MIME_TYPES)});
       var builder = new google.picker.PickerBuilder()
         .setAppId(config.appId)
         .setOAuthToken(config.accessToken)

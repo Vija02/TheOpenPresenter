@@ -4,6 +4,7 @@ import {
 } from "@googleworkspace/drive-picker-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { PICKER_PRESENTATION_MIME_TYPES } from "../../../src/importers/googleSlides/driveMimeTypes";
 import { usePluginAPI } from "../../pluginApi";
 
 export type PickerDocument = {
@@ -105,7 +106,7 @@ export const SlidePicker = ({
           onOauthResponse={handleOAuthResponse}
         >
           <DrivePickerDocsView
-            mime-types="application/vnd.google-apps.presentation"
+            mime-types={PICKER_PRESENTATION_MIME_TYPES}
             mode="LIST"
           />
         </DrivePicker>

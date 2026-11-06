@@ -167,8 +167,12 @@ const StoredGoogleSlides = ({
   });
 
   const tokenMutation = trpc.slides.googleSlidesPickerToken.useMutation();
-  const selectMutation = trpc.slides.selectGoogleSlide.useMutation();
-  const importOnceMutation = trpc.slides.googleSlidesImportOnce.useMutation();
+  const selectMutation = trpc.slides.selectGoogleSlide.useMutation({
+    onError: (err) => pluginApi.remote.toast.error(err.message),
+  });
+  const importOnceMutation = trpc.slides.googleSlidesImportOnce.useMutation({
+    onError: (err) => pluginApi.remote.toast.error(err.message),
+  });
   const disconnectMutation = trpc.slides.googleSlidesDisconnect.useMutation();
 
   const openWithAccount = useCallback(
@@ -271,31 +275,22 @@ const StoredGoogleSlides = ({
         onFileSelected={(doc, accessToken) => {
           const connectionId = connectionIdRef.current;
           const replaceImportId = launchContextRef.current.replaceImportId;
-          const onError = (err: { message: string }) =>
-            pluginApi.remote.toast.error(err.message);
-
           if (connectionId) {
-            selectMutation.mutate(
-              {
-                pluginId,
-                connectionId,
-                presentationId: doc.id,
-                name: doc.name,
-                replaceImportId,
-              },
-              { onError },
-            );
+            selectMutation.mutate({
+              pluginId,
+              connectionId,
+              presentationId: doc.id,
+              name: doc.name,
+              replaceImportId,
+            });
           } else {
-            importOnceMutation.mutate(
-              {
-                pluginId,
-                token: accessToken,
-                presentationId: doc.id,
-                name: doc.name,
-                replaceImportId,
-              },
-              { onError },
-            );
+            importOnceMutation.mutate({
+              pluginId,
+              token: accessToken,
+              presentationId: doc.id,
+              name: doc.name,
+              replaceImportId,
+            });
           }
           launchContextRef.current.onComplete?.();
         }}
@@ -396,8 +391,12 @@ const RemoteGoogleSlides = ({ children }: IntegrationControllerProps) => {
   const handledIntentRef = useRef<string | null>(null);
 
   const beginMutation = trpc.slides.googleSlidesBeginPick.useMutation();
-  const selectMutation = trpc.slides.selectGoogleSlide.useMutation();
-  const importOnceMutation = trpc.slides.googleSlidesImportOnce.useMutation();
+  const selectMutation = trpc.slides.selectGoogleSlide.useMutation({
+    onError: (err) => pluginApi.remote.toast.error(err.message),
+  });
+  const importOnceMutation = trpc.slides.googleSlidesImportOnce.useMutation({
+    onError: (err) => pluginApi.remote.toast.error(err.message),
+  });
   const disconnectMutation = trpc.slides.googleSlidesDisconnect.useMutation();
 
   const statusQuery = trpc.slides.googleSlidesPickStatus.useQuery(
@@ -427,20 +426,11 @@ const RemoteGoogleSlides = ({ children }: IntegrationControllerProps) => {
         name: result.name ?? undefined,
         replaceImportId: pending.context.replaceImportId,
       };
-      const onError = (err: { message: string }) =>
-        pluginApi.remote.toast.error(err.message);
-
       if (result.connectionId) {
-        selectMutation.mutate(
-          { ...common, connectionId: result.connectionId },
-          { onError },
-        );
+        selectMutation.mutate({ ...common, connectionId: result.connectionId });
       } else if (result.accessToken) {
         // "Import once": the cloud handed back a short-lived token instead
-        importOnceMutation.mutate(
-          { ...common, token: result.accessToken },
-          { onError },
-        );
+        importOnceMutation.mutate({ ...common, token: result.accessToken });
       }
       // A new account may have been connected on the way
       void refetchAccounts();
