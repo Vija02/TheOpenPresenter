@@ -19,7 +19,11 @@ import {
   valtioActivationTarget,
 } from "../../src/slides/activation";
 import { computeGlobalSlideClickCount } from "../../src/slides/autoplay";
-import { parseSlideRef, resolveSlide } from "../../src/slides/order";
+import {
+  getClickCountForSlide,
+  parseSlideRef,
+  resolveSlide,
+} from "../../src/slides/order";
 import { usePluginAPI } from "../pluginApi";
 import { useAutoplay } from "../utils/useAutoplay";
 import CustomSlideEditorModal from "./CustomSlides/CustomSlideEditorModal";
@@ -28,6 +32,7 @@ import { DriveVideoAccess } from "./DriveVideoAccess";
 import Landing from "./Landing";
 import PresenterView from "./PresenterView";
 import SettingsModal from "./SettingsModal";
+import { StepBadge, StepControls } from "./SlideSteps";
 import { UploadLinksDialog } from "./UploadLinks/UploadLinksDialog";
 import "./index.css";
 import { useSlideMediaPicker } from "./integrations";
@@ -205,7 +210,11 @@ const RemoteHandler = ({
     [pluginData, rendererData.displayModes],
   );
 
-  const { shouldAutoPlay, calculatedAutoplaySlideIndex } = useAutoplay({
+  const {
+    shouldAutoPlay,
+    calculatedAutoplaySlideIndex,
+    calculatedAutoplayClickCount,
+  } = useAutoplay({
     baseIndex,
     baseClickCount,
     globalSlideClickCount,
@@ -218,6 +227,11 @@ const RemoteHandler = ({
 
     return baseIndex;
   }, [shouldAutoPlay, calculatedAutoplaySlideIndex, baseIndex]);
+
+  const activeClickCount =
+    shouldAutoPlay && calculatedAutoplayClickCount !== null
+      ? calculatedAutoplayClickCount
+      : baseClickCount;
 
   const totalSlides = pluginData.slideOrder?.length ?? 0;
 
@@ -256,13 +270,20 @@ const RemoteHandler = ({
           ? slide.importData
           : null;
         const isCustom = customImport !== null;
+        const isActive = index === activeIndex;
+        // Only slides played natively (Google Slides / PowerPoint) have steps
+        const totalSteps = getClickCountForSlide(
+          pluginData,
+          index,
+          rendererData.displayModes,
+        );
 
         return (
           <Slide
             key={slide.rawRef}
             pluginAPI={pluginApi}
             heading={`Slide ${index + 1}`}
-            isActive={index === activeIndex}
+            isActive={isActive}
             headingRight={
               isCustom ? (
                 <div
@@ -296,7 +317,7 @@ const RemoteHandler = ({
             }}
           >
             {() => (
-              <div className="center relative h-full w-full">
+              <div className="group/slide center relative h-full w-full">
                 <div
                   className="h-full w-full bg-black"
                   onDoubleClick={
@@ -315,6 +336,17 @@ const RemoteHandler = ({
                     frame={{ index: index + 1, total: totalSlides }}
                   />
                 </div>
+                {totalSteps > 0 &&
+                  (isActive ? (
+                    <StepControls
+                      slideIndex={index}
+                      clickCount={activeClickCount}
+                      totalSteps={totalSteps}
+                      className="absolute inset-x-0 bottom-0 h-7"
+                    />
+                  ) : (
+                    <StepBadge totalSteps={totalSteps} />
+                  ))}
                 {isReplacing && (
                   <div className="absolute bottom-1 right-1 flex items-center justify-center rounded-full bg-black/60 p-1 text-white">
                     <LoadingInline className="size-3" />

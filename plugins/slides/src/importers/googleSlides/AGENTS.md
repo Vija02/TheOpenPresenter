@@ -59,6 +59,12 @@ the key-press handler in `../../index.ts` (lines 185-317).
 - `goToSlide` (type digits + Enter, see `RenderView.tsx`) always lands on build
   0, regardless of direction. To land mid-slide you must fire `clickCount`
   `next()` presses afterwards — that's what `jumpToPosition` does.
+- **Except onto the slide it's already on: then `goToSlide` does nothing** and
+  the builds stay as they are (measured: `1,1: goto 1, R` lands on slide 2).
+  A jump within one slide steps there instead, one `prev()`/`next()` per build
+  from where the embed is. Quick presses (50ms) each move a build both ways
+  there (measured: `3,3: L L` → `3,1`; `3,0: R R` → `3,2`); only the press that
+  would leave the slide is absorbed while the last build is still playing.
 
 ## 2. Position model
 
@@ -167,7 +173,8 @@ controller-internal — nothing reads it.
   so the duration is clock-skew-free; the local deadline uses `Date.now()`.
 - Flat delta `-1` → one `prev()`, and arm the window the same way. Only a
   backward slide crossing has one; the controller closes it for builds.
-- Any other delta → `jumpToPosition` (goToSlide + steps), window cleared.
+- Any other delta → `jumpToPosition` (goToSlide + steps, or just steps when it
+  stays on the same slide), window cleared.
 - Delta `0` but `targetClickCount` differs → the `-1` autoplay sub-step: one
   `prev()`/`next()`.
 - Delta `0`, `transitionEndsAt === 0`, local window still open → that's the
