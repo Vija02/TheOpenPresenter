@@ -9,10 +9,11 @@ import {
   valtioActivationTarget,
 } from "../../../src/slides/activation";
 import { settledStep } from "../../../src/slides/navigation";
-import { resolveSlide } from "../../../src/slides/order";
+import { getClickCountForSlide, resolveSlide } from "../../../src/slides/order";
 import type { ResolvedSlide } from "../../../src/types";
 import { usePluginAPI } from "../../pluginApi";
 import { useDisplayedSlide } from "../../utils/useDisplayedSlide";
+import { StepControls } from "../SlideSteps";
 import { MainSlide } from "./MainSlide";
 import { PreviewStep, SidePreviews } from "./SidePreviews";
 import { SlideOverview } from "./SlideOverview";
@@ -37,6 +38,10 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
   const [inkTool, setInkTool] = useState<InkTool | null>(null);
 
   const totalSlides = pluginData.slideOrder?.length ?? 0;
+  const totalSteps =
+    globalSlideIndex >= 0
+      ? getClickCountForSlide(pluginData, globalSlideIndex, displayModes)
+      : 0;
 
   // Where a press would land, once the current step has finished
   const stepTowards = useCallback(
@@ -104,7 +109,17 @@ export const PresenterView = ({ onClose }: PresenterViewProps) => {
         <MainSlide
           slide={resolvedSlide}
           overlay={
-            inkTool && <InkSurface tool={inkTool} slide={resolvedSlide} />
+            <>
+              {inkTool && <InkSurface tool={inkTool} slide={resolvedSlide} />}
+              {totalSteps > 0 && (
+                <StepControls
+                  slideIndex={globalSlideIndex}
+                  clickCount={clickCount}
+                  totalSteps={totalSteps}
+                  className="absolute inset-x-0 bottom-0 h-9"
+                />
+              )}
+            </>
           }
         />
 

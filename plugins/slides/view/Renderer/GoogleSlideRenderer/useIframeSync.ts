@@ -55,6 +55,8 @@ export const useIframeSync = ({
   // Click count actually applied to the iframe. Tracked separately because
   // clickCount -1 (the autoplay-rewind sub-step) shares a flat position with 0.
   const localClickCountRef = useRef(0);
+  // Slide the iframe is on, valid while localFlatPosition >= 0
+  const localSlideIndexRef = useRef(0);
 
   // Read through a ref, so a new function doesn't re-run the sync
   const videoFinishAtRef = useRef(videoFinishAt);
@@ -89,8 +91,31 @@ export const useIframeSync = ({
   // Land at an arbitrary position: goToSlide lands on click count 0, then step to the
   // target click count. Negative click count is the autoplay-rewind sub-step.
   const jumpToPosition = useCallback(
-    (slideIndex: number, clickCount: number) => {
+    (
+      slideIndex: number,
+      clickCount: number,
+      /** Where the iframe is now, if known */
+      from?: { slideIndex: number; clickCount: number },
+    ) => {
       cancelFinish();
+
+      // goToSlide does nothing when the embed is already on that slide, so its
+      // builds would stay put. Step there instead: within a slide every press
+      // moves one build, even quick ones (-1 is just one more Left)
+      if (from && from.slideIndex === slideIndex) {
+        const diff = clickCount - from.clickCount;
+        for (let i = 0; i < Math.abs(diff); i++) {
+          setTimeout(
+            () => (diff < 0 ? ref.current?.prev() : ref.current?.next()),
+            STEP_MS * i,
+          );
+        }
+        if (diff > 0) {
+          scheduleFinish(slideIndex, clickCount, STEP_MS * diff);
+        }
+        return;
+      }
+
       ref.current?.goToSlide(slideIndex);
       if (clickCount < 0) {
         for (let i = 0; i < -clickCount; i++) {
@@ -113,6 +138,7 @@ export const useIframeSync = ({
       jumpToPosition(targetSlideIndex, targetClickCount);
       setLocalFlatPosition(targetFlatPosition);
       localClickCountRef.current = targetClickCount;
+      localSlideIndexRef.current = targetSlideIndex;
     }
     setInitialized(true);
   }, [
@@ -181,7 +207,16 @@ export const useIframeSync = ({
     // else is a discontinuity and lands directly.
     const sequential = Math.abs(delta) === 1 && localFlatPosition >= 0;
     if (!sequential) {
-      jumpToPosition(targetSlideIndex, targetClickCount);
+      jumpToPosition(
+        targetSlideIndex,
+        targetClickCount,
+        localFlatPosition >= 0
+          ? {
+              slideIndex: localSlideIndexRef.current,
+              clickCount: localClickCountRef.current,
+            }
+          : undefined,
+      );
       boundaryEndsAtRef.current = 0;
     } else {
       cancelFinish();
@@ -208,6 +243,7 @@ export const useIframeSync = ({
 
     setLocalFlatPosition(targetFlatPosition);
     localClickCountRef.current = targetClickCount;
+    localSlideIndexRef.current = targetSlideIndex;
   }, [
     initialized,
     targetSlideIndex,
