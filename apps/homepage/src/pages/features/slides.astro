@@ -1,0 +1,253 @@
+---
+import { Image } from "astro:assets";
+import DefaultLayout from "../../layouts/DefaultLayout.astro";
+import PageIllustration from "../../components/PageIllustration.astro";
+import FeatureClip from "../../components/feature/FeatureClip.astro";
+import FeatureFrame from "../../components/feature/FeatureFrame.astro";
+import FeatureList from "../../components/feature/FeatureList.astro";
+import FeatureRow from "../../components/feature/FeatureRow.astro";
+import SourceIcon from "../../components/feature/SourceIcon.astro";
+import SignageFaq from "../../components/signage/SignageFaq.astro";
+import CtaSignup from "../../components/CtaSignup.astro";
+import settings from "../../assets/images/features/slides/settings.jpg";
+import uploadLink from "../../assets/images/features/slides/uploadlink.jpg";
+import guest from "../../assets/images/features/slides/guest.jpg";
+
+const CLIPS = "/videos/features/slides";
+
+const sources = [
+  {
+    icons: ["google-slides", "canva"],
+    title: "Google Slides & Canva",
+    body: "Sign in and pick the deck. Google Slides keeps its animations and videos.",
+    href: "/features/google-slides-canva",
+  },
+  {
+    icons: ["powerpoint"],
+    title: "PowerPoint",
+    body: "Drag in a .pptx. Animations and transitions play as they do in PowerPoint.",
+    href: "/features/powerpoint",
+  },
+  {
+    icons: ["pdf"],
+    title: "PDF and images",
+    body: "Drag them in, and each page or picture becomes a slide.",
+  },
+] as const;
+
+const faqs = [
+  {
+    q: "Will my clicker work?",
+    a: "Most clickers will. They send the arrow or Page Up/Down keys, and those move the slides.",
+  },
+  {
+    q: "Can the stage screen show what's next?",
+    a: "Yes. Give a screen the confidence monitor look, and it shows the live slide, the next one, the slide number and your notes.",
+  },
+  {
+    q: "Can slides play on their own, like a loop before the service?",
+    a: "Yes. Turn on autoplay in the slide settings and choose how many seconds each slide stays up.",
+  },
+  {
+    q: "Can I make slides in TheOpenPresenter?",
+    a: "Yes. Start from a blank slide or a layout, like a title, a quote or two columns, and add your own text and images.",
+  },
+  {
+    q: "Which files can I bring in?",
+    a: "PowerPoint (.pptx and .ppt), PDF and images, plus Google Slides and Canva straight from your account.",
+  },
+];
+---
+
+<DefaultLayout
+  title="Church Presentation Slides | TheOpenPresenter"
+  description="Bring in Google Slides, Canva, PowerPoint, PDF or images, then present with speaker notes, draw on the live slide, or run it from your phone."
+  demoWidget={false}
+>
+  <div class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1" aria-hidden="true">
+    <PageIllustration />
+  </div>
+
+  <!-- Hero -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-12 md:pb-20">
+        <div class="max-w-3xl mx-auto text-center">
+          <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-3" data-aos="fade-down">
+            Slides
+          </div>
+          <h1
+            class="h1 lg:text-5xl mb-4 font-red-hat-display font-black leading-tight"
+            data-aos="fade-down"
+            data-aos-delay="50"
+          >
+            Every deck,
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-accent-500">run from anywhere</span>
+          </h1>
+          <p class="text-lg lg:text-xl text-gray-700 dark:text-gray-300 leading-relaxed mb-8" data-aos="fade-down" data-aos-delay="100">
+            Bring in Google Slides, Canva, PowerPoint, PDF or images. Then
+            present with speaker notes, draw on the live slide, or run it from
+            your phone.
+          </p>
+          <div class="flex flex-col sm:flex-row justify-center gap-3" data-aos="fade-down" data-aos-delay="150">
+            <a class="btn text-on-brand bg-brand-500 hover:bg-brand-400" href="/register">Start free</a>
+            <a
+              class="btn text-brand-500 bg-white hover:bg-gray-50 border border-brand-500 dark:bg-transparent dark:hover:bg-gray-800"
+              href="#speaker"
+            >
+              See how it works
+            </a>
+          </div>
+        </div>
+
+        <!-- Where slides come from -->
+        <div class="grid gap-4 sm:grid-cols-3 max-w-5xl mx-auto mt-14 md:mt-16" data-aos="fade-up" data-aos-delay="200">
+          {
+            sources.map((s) => {
+              const Tag = "href" in s ? "a" : "div";
+              return (
+                <Tag
+                  href={"href" in s ? s.href : undefined}
+                  class:list={[
+                    "rounded-lg p-5 ring-1 ring-gray-200 dark:ring-gray-700 bg-white dark:bg-gray-800 text-left",
+                    "href" in s && "group hover:ring-brand-500 transition",
+                  ]}
+                >
+                  <div class="flex gap-2 mb-3">
+                    {s.icons.map((i) => (
+                      <SourceIcon source={i} class="w-7 h-7" />
+                    ))}
+                  </div>
+                  <div class="font-red-hat-display font-black text-lg mb-1 group-hover:text-brand-500">
+                    {s.title}
+                    {"href" in s && " →"}
+                  </div>
+                  <p class="text-gray-600 dark:text-gray-400">{s.body}</p>
+                </Tag>
+              );
+            })
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <FeatureRow id="speaker" eyebrow="Speaker view" title="Notes, what's next, and a timer">
+    <p>
+      Made for the pastor. Open the speaker view on a laptop or tablet at
+      the pulpit to see the live slide, the ones either side, your notes and
+      a timer, and move the slides yourself. Notes come in from Google Slides
+      and PowerPoint, and you can edit them right there.
+    </p>
+    <FeatureList
+      items={[
+        "Arrow keys and Page Up/Down move the slides, so most clickers just work",
+        "Jump to any slide from the overview",
+      ]}
+    />
+    <Fragment slot="media">
+      <FeatureClip
+        src={`${CLIPS}/speaker`}
+        label="Speaker view stepping through the sermon: the live slide, previous and next slides, speaker notes and a running timer"
+        width={1280}
+        height={800}
+      />
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureRow id="draw" eyebrow="Draw on slides" title="Point it out, on the big screen" flip>
+    <p>
+      Circle a word or underline a verse while you speak. Pick the pencil,
+      highlighter or laser, and your marks show up on the big screen straight
+      away.
+    </p>
+    <Fragment slot="media">
+      <FeatureClip
+        src={`${CLIPS}/ink`}
+        label="Drawing with the pencil in speaker view: underlining and circling 'the boat'"
+        width={1280}
+        height={800}
+      />
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureRow id="phone" eyebrow="Remote" title="Run it from your phone">
+    <p>
+      Open the same project on your phone and tap a slide to put it up. The
+      preacher can run their own slides, or a volunteer can from the front
+      row.
+    </p>
+    <Fragment slot="media">
+      <FeatureClip
+        src={`${CLIPS}/phone`}
+        label="TheOpenPresenter on a phone, tapping through the sermon slides"
+        width={540}
+        height={1168}
+        frame="phone"
+        class="max-w-[280px] mx-auto"
+      />
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureRow id="guest" eyebrow="Guest speakers" title="Collect slides with a link" flip>
+    <p>
+      Send your guest speaker a link. They upload their slides, or pick them
+      from their own Google Slides or Canva, and the slides land in your
+      project. No account needed on their side.
+    </p>
+    <Fragment slot="media">
+      <div class="relative pb-16 sm:pb-24">
+        <FeatureFrame frame="card" class="w-[85%]">
+          <Image
+            src={uploadLink}
+            widths={[600, 1200]}
+            sizes="(min-width: 768px) 560px, 85vw"
+            alt="Collect slides from others: a link labelled 'Sam, speaking on 9 March', ready to copy"
+            class="w-full h-auto"
+          />
+        </FeatureFrame>
+        <!-- The link, sent: a paper plane flying from the link to the guest's page -->
+        <svg class="absolute left-[22%] -top-[16%] w-[24%] text-brand-500 z-10" viewBox="0 0 120 80" fill="none" aria-hidden="true">
+          <path d="M6 66 C 24 30, 52 22, 78 36" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 6" />
+          <path d="M82 22 L118 50 L76 58 L88 44 Z" fill="currentColor" />
+          <path d="M88 44 L118 50" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <FeatureFrame frame="browser" class="absolute right-0 bottom-0 w-[62%]">
+          <Image
+            src={guest}
+            widths={[480, 900]}
+            sizes="(min-width: 768px) 420px, 62vw"
+            alt="The guest's page: Send your slides, Hope Church asked for: Sam, speaking on 9 March, with upload, Google Slides and Canva options"
+            class="w-full h-auto"
+          />
+        </FeatureFrame>
+      </div>
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureRow id="mix" eyebrow="One set" title="Mix decks in one set">
+    <p>
+      Put the notices from Canva and the sermon from Google Slides in the
+      same set, and move through them as one. Each deck keeps how it plays
+      best.
+    </p>
+    <Fragment slot="media">
+      <FeatureFrame frame="card" class="max-w-xl mx-auto">
+        <Image
+          src={settings}
+          widths={[600, 1200]}
+          sizes="(min-width: 768px) 576px, 100vw"
+          alt="Slides settings listing two decks in one set: Hope in the storm from Google Slides and Notices from Canva"
+          class="w-full h-auto"
+        />
+      </FeatureFrame>
+    </Fragment>
+  </FeatureRow>
+
+  <SignageFaq faqs={faqs} />
+  <CtaSignup
+    title="Put this Sunday's slides up"
+    highlight="Start free."
+    body="Bring in your deck and run it from your laptop or phone. No card needed."
+  />
+</DefaultLayout>

@@ -1,0 +1,39 @@
+---
+// A frame for a feature screenshot or clip: a browser window, a phone, or a
+// plain card (for dialogs).
+interface Props {
+  frame?: "browser" | "phone" | "card";
+  class?: string;
+}
+
+const { frame = "browser", class: className = "" } = Astro.props;
+---
+
+{
+  frame === "browser" && (
+    <div class:list={["rounded-lg overflow-hidden bg-white shadow-2xl ring-1 ring-black/10 dark:ring-white/10", className]}>
+      <div class="flex items-center gap-1.5 px-3 h-6 sm:h-7 bg-gray-100 border-b border-gray-200" aria-hidden="true">
+        <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-gray-300" />
+        <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-gray-300" />
+        <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-gray-300" />
+      </div>
+      <slot />
+    </div>
+  )
+}
+{
+  frame === "phone" && (
+    <div class:list={["rounded-[2.2rem] bg-gray-900 p-2 shadow-2xl ring-1 ring-black/20 dark:ring-white/15", className]}>
+      <div class="rounded-[1.7rem] overflow-hidden bg-white">
+        <slot />
+      </div>
+    </div>
+  )
+}
+{
+  frame === "card" && (
+    <div class:list={["rounded-lg overflow-hidden bg-white shadow-2xl ring-1 ring-black/10 dark:ring-white/10", className]}>
+      <slot />
+    </div>
+  )
+}

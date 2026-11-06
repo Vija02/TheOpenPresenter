@@ -1,0 +1,244 @@
+---
+import { getImage } from "astro:assets";
+import DefaultLayout from "../../layouts/DefaultLayout.astro";
+import PageIllustration from "../../components/PageIllustration.astro";
+import FeatureLinks from "../../components/feature/FeatureLinks.astro";
+import FeatureList from "../../components/feature/FeatureList.astro";
+import SourceIcon from "../../components/feature/SourceIcon.astro";
+import SignageFaq from "../../components/signage/SignageFaq.astro";
+import CtaSignup from "../../components/CtaSignup.astro";
+import guest from "../../assets/images/features/slides/guest.jpg";
+
+// What plays, from plugins/slides/src/office/SUPPORT.md. Keep in step.
+const CLIPS = "/videos/features/slides";
+const guestShot = await getImage({ src: guest, width: 640, format: "webp" });
+
+const steps = [
+  { title: "Drag in your .pptx", body: "Or a .ppt. Fonts, SmartArt and charts look just as they do in PowerPoint." },
+  { title: "Present, click by click", body: "Each click plays the next animation, like in PowerPoint. Going back plays the transition in reverse." },
+  { title: "No internet needed on the day", body: "Importing needs a connection. Once it's in, the show runs without one." },
+];
+
+const support = [
+  {
+    title: "Animations",
+    yes: [
+      "On click, with previous, after previous, delays and repeats",
+      "Text animated by paragraph, word or letter",
+      "Fade, Fly In, Wipe, Zoom, Float, Grow & Turn and about 30 more entrances and exits",
+      "Grow/Shrink, Spin, Pulse, Teeter and other emphasis effects",
+      "Motion paths",
+    ],
+    approx: "Colour changes fade to the end colour. Blinds, Checkerboard and Dissolve are close, not exact.",
+  },
+  {
+    title: "Transitions",
+    yes: [
+      "Fade, Push, Cover, Wipe, Split, Flip, Cube and more, with their speed and direction",
+      "Played in reverse when you go back",
+    ],
+    approx: "Morph moves, resizes and turns objects, but a square won't bend into a circle. 3D transitions like Vortex play as a fade.",
+  },
+  {
+    title: "Video",
+    yes: [
+      "Embedded video, with its volume, trimming and looping",
+      "Starts on its animation step or when the slide opens",
+      "In step on every screen",
+    ],
+    approx: "You can't pause or seek a video from the remote.",
+  },
+  {
+    title: "Presenting",
+    yes: [
+      "Speaker notes, including on decks with hidden slides",
+      "Hidden slides left out, like a PowerPoint show",
+      "A preview of the next animation in speaker view",
+      "Jump to any slide, with its animations already played",
+    ],
+    approx: "Rehearsed timings, custom shows and links or action buttons don't work.",
+  },
+];
+
+const faqs = [
+  {
+    q: "Do I need the internet?",
+    a: "Only while you bring the deck in. After that, the show runs offline.",
+  },
+  {
+    q: "Will my fonts and layouts look right?",
+    a: "Yes. Fonts, SmartArt, charts and effects come across, so it looks as it does in PowerPoint.",
+  },
+  {
+    q: "What doesn't work?",
+    a: "Triggers (start when a shape is clicked), links and action buttons, custom shows, transition sounds, background music and rehearsed timings.",
+  },
+  {
+    q: "What if a deck won't come in properly?",
+    a: "If its animations can't be brought across, the deck comes in as still images, one per slide. Files that can't be opened at all are turned away straight away, with a message saying why.",
+  },
+  {
+    q: "Can I use Keynote?",
+    a: "Not directly. Export it from Keynote as PowerPoint or PDF, then drag that in.",
+  },
+];
+---
+
+<DefaultLayout
+  title="PowerPoint for Church Screens, Animations and All | TheOpenPresenter"
+  description="Drag in a PowerPoint deck and present it with its animations, transitions and videos. Run it from a phone, with speaker notes, and offline once it's in."
+  demoWidget={false}
+>
+  <div class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1" aria-hidden="true">
+    <PageIllustration />
+  </div>
+
+  <!-- Hero -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-12 md:pb-20">
+        <div class="max-w-3xl mx-auto text-center">
+          <div class="flex justify-center items-center gap-2.5 mb-6 text-base sm:text-lg font-bold text-gray-800 dark:text-gray-100" data-aos="fade-down">
+            <SourceIcon source="powerpoint" class="w-8 h-8 text-lg" />
+            PowerPoint
+          </div>
+          <h1
+            class="h1 lg:text-5xl mb-4 font-red-hat-display font-black leading-tight"
+            data-aos="fade-down"
+            data-aos-delay="50"
+          >
+            Your PowerPoint,
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-accent-500">animations and all</span>
+          </h1>
+          <p class="text-lg lg:text-xl text-gray-700 dark:text-gray-300 leading-relaxed mb-8" data-aos="fade-down" data-aos-delay="100">
+            Many church presentation apps turn your PowerPoint into pictures.
+            Here, the animations, transitions and embedded videos play as they do
+            in PowerPoint, with nothing to install.
+          </p>
+          <div class="flex flex-col sm:flex-row justify-center gap-3" data-aos="fade-down" data-aos-delay="150">
+            <a class="btn text-on-brand bg-brand-500 hover:bg-brand-400" href="/register">Start free</a>
+            <a
+              class="btn text-brand-500 bg-white hover:bg-gray-50 border border-brand-500 dark:bg-transparent dark:hover:bg-gray-800"
+              href="#what-plays"
+            >
+              See what plays
+            </a>
+          </div>
+        </div>
+
+        <ol class="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto mt-14 md:mt-16">
+          {
+            steps.map((s, i) => (
+              <li class="flex gap-4" data-aos="fade-up" data-aos-delay={200 + i * 80}>
+                <span class="w-8 h-8 shrink-0 rounded bg-brand-500 text-on-brand font-black flex items-center justify-center">
+                  {i + 1}
+                </span>
+                <div>
+                  <div class="font-red-hat-display font-black text-lg">{s.title}</div>
+                  <p class="text-gray-600 dark:text-gray-400">{s.body}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pictures elsewhere vs the real thing here -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <div class="max-w-3xl mx-auto text-center pb-10 md:pb-12">
+          <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2">Not just pictures</div>
+          <h2 class="h3 md:text-3xl mb-3 font-red-hat-display font-black">Your animations, actually playing</h2>
+          <p class="text-lg text-gray-600 dark:text-gray-400">
+            Bring a PowerPoint into most church software and you usually get a
+            picture of each slide. The ones that keep the animations tend to
+            need PowerPoint installed on the presenting computer.
+          </p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+          <div class="rounded-lg p-6 ring-1 ring-gray-200 dark:ring-gray-700">
+            <h3 class="font-red-hat-display font-black text-xl mb-4 text-gray-500 dark:text-gray-400">Imported as pictures</h3>
+            <ul class="space-y-3 text-gray-600 dark:text-gray-400">
+              {
+                [
+                  "Animated slides show up already finished",
+                  "Transitions and animations are lost",
+                  "Embedded videos are left behind",
+                  "Or PowerPoint has to be installed to play it",
+                ].map((t) => (
+                  <li class="flex items-start gap-2">
+                    <svg class="w-3 h-3 mt-1.5 shrink-0 text-red-500" viewBox="0 0 12 12" aria-hidden="true">
+                      <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    {t}
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+          <div class="rounded-lg p-6 ring-2 ring-brand-500 bg-white dark:bg-gray-800">
+            <h3 class="font-red-hat-display font-black text-xl mb-4">With TheOpenPresenter</h3>
+            <FeatureList
+              items={[
+                "Animations play in, one click at a time",
+                "Transitions play, and reverse when you go back",
+                "Embedded videos play, in step on every screen",
+                "Nothing to install, and it runs offline once it's in",
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What plays -->
+  <section id="what-plays" class="scroll-mt-24">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <div class="max-w-3xl mx-auto text-center pb-10 md:pb-12">
+          <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2">What plays</div>
+          <h2 class="h3 md:text-3xl mb-3 font-red-hat-display font-black">What comes across from PowerPoint</h2>
+          <p class="text-lg text-gray-600 dark:text-gray-400">
+            And the few places it differs.
+          </p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2">
+          {
+            support.map((g) => (
+              <div class="rounded-lg p-6 ring-1 ring-gray-200 dark:ring-gray-700 bg-white dark:bg-gray-800">
+                <h3 class="font-red-hat-display font-black text-xl mb-4">{g.title}</h3>
+                <FeatureList items={g.yes} />
+                <p class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
+                  <span class="font-semibold text-gray-700 dark:text-gray-300">Not quite: </span>
+                  {g.approx}
+                </p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <FeatureLinks
+    eyebrow="Then present it"
+    title="Run it like any slides"
+    body="Once it's in, every deck gets the same tools."
+    items={[
+      { title: "Speaker view", body: "Notes, the next slide and a timer.", href: "/features/slides#speaker", image: `${CLIPS}/speaker.webp` },
+      { title: "Draw on slides", body: "Circle and underline, live on the screen.", href: "/features/slides#draw", image: `${CLIPS}/ink.webp` },
+      { title: "Collect slides with a link", body: "Guest speakers can upload their PowerPoint.", href: "/features/slides#guest", image: guestShot.src },
+    ]}
+  />
+
+  <SignageFaq faqs={faqs} />
+  <CtaSignup
+    title="Bring your PowerPoint"
+    highlight="Start free."
+    body="Drag in your deck and run it from your laptop or phone. No card needed."
+  />
+</DefaultLayout>

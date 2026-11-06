@@ -1,0 +1,39 @@
+---
+// Cards linking to related feature pages, each with a still from its clip.
+interface Props {
+  eyebrow?: string;
+  title: string;
+  body?: string;
+  items: { title: string; body: string; href: string; image: string }[];
+}
+
+const { eyebrow, title, body, items } = Astro.props;
+---
+
+<section>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="max-w-3xl mx-auto text-center pb-10 md:pb-12">
+        {eyebrow && <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2">{eyebrow}</div>}
+        <h2 class="h3 md:text-3xl mb-3 font-red-hat-display font-black">{title}</h2>
+        {body && <p class="text-lg text-gray-600 dark:text-gray-400">{body}</p>}
+      </div>
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          items.map((item) => (
+            <a
+              href={item.href}
+              class="group rounded-lg overflow-hidden bg-white dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700 hover:ring-brand-500 transition"
+            >
+              <img src={item.image} alt="" loading="lazy" class="w-full aspect-[16/10] object-cover object-top" />
+              <div class="p-5">
+                <div class="font-red-hat-display font-black text-lg mb-1 group-hover:text-brand-500">{item.title} →</div>
+                <p class="text-gray-600 dark:text-gray-400">{item.body}</p>
+              </div>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

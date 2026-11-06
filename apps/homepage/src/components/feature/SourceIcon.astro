@@ -1,0 +1,40 @@
+---
+import canvaLogo from "../../assets/illustrations/canva-logo.svg";
+
+// Icons for where slides come from. Canva is an <img>: inlined twice, its
+// gradient ids would clash and it would render flat purple.
+interface Props {
+  source: "google-slides" | "canva" | "powerpoint" | "pdf";
+  class?: string;
+}
+
+const { source, class: className = "w-8 h-8" } = Astro.props;
+---
+
+{source === "canva" && <img src={canvaLogo.src} alt="" width="32" height="32" class={className} />}
+{source === "google-slides" && <span class:list={["source-icon slides", className]} aria-hidden="true" />}
+{source === "powerpoint" && <span class:list={["source-icon letter bg-[#c43e1c]", className]} aria-hidden="true">P</span>}
+{source === "pdf" && <span class:list={["source-icon letter bg-[#d93025] text-[0.5em]", className]} aria-hidden="true">PDF</span>}
+
+<style>
+  .source-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 4px;
+  }
+  /* Google Slides-style: a yellow page with a white slide on it */
+  .slides {
+    border-radius: 3px;
+    background:
+      linear-gradient(#fff, #fff) center 62% / 62% 30% no-repeat,
+      #f4b400;
+  }
+  .letter {
+    color: #fff;
+    font-weight: 800;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1;
+  }
+</style>

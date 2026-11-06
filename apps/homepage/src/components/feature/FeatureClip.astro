@@ -1,0 +1,40 @@
+---
+import FeatureFrame from "./FeatureFrame.astro";
+
+// A short looping screen recording. `src` is the path in public/ without the
+// extension; each clip has an .mp4 and a .webp poster (the last frame).
+// It plays while on screen, and stays on the poster with reduced motion
+// (src/scripts/feature-clips.ts).
+interface Props {
+  src: string;
+  /** What the clip shows, for screen readers */
+  label: string;
+  width: number;
+  height: number;
+  frame?: "browser" | "phone" | "card";
+  class?: string;
+}
+
+const { src, label, width, height, frame, class: className } = Astro.props;
+---
+
+<FeatureFrame frame={frame} class={className}>
+  <video
+    data-feature-clip
+    class="block w-full h-auto"
+    width={width}
+    height={height}
+    poster={`${src}.webp`}
+    muted
+    loop
+    playsinline
+    preload="none"
+    aria-label={label}
+  >
+    <source src={`${src}.mp4`} type="video/mp4" />
+  </video>
+</FeatureFrame>
+
+<script>
+  import "../../scripts/feature-clips";
+</script>

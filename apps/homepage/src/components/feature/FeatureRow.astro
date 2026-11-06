@@ -1,0 +1,31 @@
+---
+// One section of a feature page: copy on one side, a clip or screenshot
+// (the "media" slot) on the other. `flip` puts the media on the left.
+interface Props {
+  eyebrow?: string;
+  title: string;
+  flip?: boolean;
+  id?: string;
+}
+
+const { eyebrow, title, flip = false, id } = Astro.props;
+---
+
+<section id={id} class="scroll-mt-24">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+      <div class="md:grid md:grid-cols-12 md:gap-12 lg:gap-16 items-center">
+        <div class:list={["md:col-span-5 mb-10 md:mb-0", flip && "md:order-2"]}>
+          {eyebrow && <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2">{eyebrow}</div>}
+          <h2 class="h3 md:text-3xl mb-4 font-red-hat-display font-black">{title}</h2>
+          <div class="text-lg text-gray-600 dark:text-gray-400 space-y-4 [&_ul]:text-base [&_li]:flex [&_li]:items-start [&_li]:mb-2">
+            <slot />
+          </div>
+        </div>
+        <div class:list={["md:col-span-7", flip && "md:order-1"]} data-aos="fade-up">
+          <slot name="media" />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

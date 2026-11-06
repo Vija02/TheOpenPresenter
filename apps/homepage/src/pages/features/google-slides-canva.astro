@@ -1,0 +1,215 @@
+---
+import { Image, getImage } from "astro:assets";
+import DefaultLayout from "../../layouts/DefaultLayout.astro";
+import PageIllustration from "../../components/PageIllustration.astro";
+import FeatureLinks from "../../components/feature/FeatureLinks.astro";
+import SourceIcon from "../../components/feature/SourceIcon.astro";
+import FeatureFrame from "../../components/feature/FeatureFrame.astro";
+import FeatureList from "../../components/feature/FeatureList.astro";
+import FeatureRow from "../../components/feature/FeatureRow.astro";
+import SignageFaq from "../../components/signage/SignageFaq.astro";
+import CtaSignup from "../../components/CtaSignup.astro";
+import pickerCanva from "../../assets/images/features/slides/picker-canva.jpg";
+import pickerGoogle from "../../assets/images/features/slides/picker-google.jpg";
+import settings from "../../assets/images/features/slides/settings.jpg";
+import guest from "../../assets/images/features/slides/guest.jpg";
+
+const CLIPS = "/videos/features/slides";
+
+const guestShot = await getImage({ src: guest, width: 640, format: "webp" });
+
+const googleItems = [
+  "Animations and transitions, step by step",
+  "YouTube videos, and Drive videos once you give access",
+  "Speaker notes",
+];
+const canvaItems = [
+  "Every page of the design becomes a slide",
+  "Shared with your whole team once connected",
+];
+
+const faqs = [
+  {
+    q: "Does it stay in sync with Google Slides?",
+    a: "Not automatically. When you change the deck, open the slide settings and press Replace to bring in the new version.",
+  },
+  {
+    q: "Can I pick a PowerPoint file from Google Drive?",
+    a: "Not from the Google Slides picker, which only lists Google Slides files. Download the .pptx and drag it in instead.",
+  },
+  {
+    q: "Do I need a paid Canva account?",
+    a: "No, but designs that use premium elements you haven't paid for can't be exported from Canva.",
+  },
+  {
+    q: "Can a guest speaker send their Google Slides or Canva?",
+    a: "Yes. Send them an upload link, and they can pick from their own Google Slides or Canva, or upload a file.",
+  },
+];
+---
+
+<DefaultLayout
+  title="Google Slides and Canva for Church Screens | TheOpenPresenter"
+  description="Put your Google Slides and Canva designs on the church screen. Import in a couple of clicks, then run them with speaker notes, drawing on slides, and your phone as the remote."
+  demoWidget={false}
+>
+  <div class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1" aria-hidden="true">
+    <PageIllustration />
+  </div>
+
+  <!-- Hero -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-12 md:pb-20">
+        <div class="max-w-3xl mx-auto text-center">
+          <!-- The two sources, as they appear in the app -->
+          <div class="flex justify-center items-center gap-6 mb-6 text-base sm:text-lg font-bold text-gray-800 dark:text-gray-100" data-aos="fade-down">
+            <span class="flex items-center gap-2.5">
+              <SourceIcon source="google-slides" class="w-7 h-8" />
+              Google Slides
+            </span>
+            <span class="flex items-center gap-2.5">
+              <SourceIcon source="canva" class="w-8 h-8" />
+              Canva
+            </span>
+          </div>
+          <h1
+            class="h1 lg:text-5xl mb-4 font-red-hat-display font-black leading-tight"
+            data-aos="fade-down"
+            data-aos-delay="50"
+          >
+            Your Google Slides and Canva,
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-accent-500">directly imported</span>
+          </h1>
+          <p class="text-lg lg:text-xl text-gray-700 dark:text-gray-300 leading-relaxed mb-8" data-aos="fade-down" data-aos-delay="100">
+            Bring in the sermon deck and this week's notices in a couple of
+            clicks. Then run them with speaker notes, draw on the live slide,
+            or use your phone as the remote.
+          </p>
+          <div class="flex flex-col sm:flex-row justify-center gap-3" data-aos="fade-down" data-aos-delay="150">
+            <a class="btn text-on-brand bg-brand-500 hover:bg-brand-400" href="/register">Start free</a>
+            <a
+              class="btn text-brand-500 bg-white hover:bg-gray-50 border border-brand-500 dark:bg-transparent dark:hover:bg-gray-800"
+              href="#import"
+            >
+              See how it works
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <FeatureRow id="import" eyebrow="Import" title="Straight from Google Slides or Canva">
+    <p>
+      Sign in to Google or Canva and pick the deck. It stays connected, so
+      next week you just pick again.
+    </p>
+    <FeatureList
+      items={[
+        "Google Slides keeps its animations, transitions and videos",
+        "Canva designs come in as one slide per page",
+        "Or drag in PowerPoint, PDF or images",
+        "Mix decks in one set: notices from Canva, the sermon from Google Slides",
+      ]}
+    />
+    <Fragment slot="media">
+      <div class="relative pb-[30%]">
+        <FeatureFrame frame="card" class="w-[82%] ml-auto">
+          <Image
+            src={pickerCanva}
+            widths={[600, 899]}
+            sizes="(min-width: 768px) 520px, 82vw"
+            alt="Import from Canva: a grid of the church's Canva designs to pick from, like Youth camp 2026, Prayer night and Hope in the storm"
+            class="w-full h-auto"
+          />
+        </FeatureFrame>
+        <FeatureFrame frame="card" class="absolute left-0 bottom-0 w-[72%]">
+          <Image
+            src={pickerGoogle}
+            widths={[500, 792]}
+            sizes="(min-width: 768px) 460px, 72vw"
+            alt="Google Drive's file picker listing the church's Google Slides decks by week"
+            class="w-full h-auto"
+          />
+        </FeatureFrame>
+      </div>
+    </Fragment>
+  </FeatureRow>
+
+  <!-- What comes across from each -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="py-12 md:py-20 border-t border-gray-200 dark:border-gray-800">
+        <div class="max-w-3xl mx-auto text-center pb-10 md:pb-12">
+          <div class="text-sm font-semibold tracking-wide uppercase text-brand-500 mb-2">What comes across</div>
+          <h2 class="h3 md:text-3xl font-red-hat-display font-black">How each one plays</h2>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+          {
+            [
+              { icon: "google-slides", name: "Google Slides", items: googleItems, missing: "" },
+              { icon: "canva", name: "Canva", items: canvaItems, missing: "Animations, videos and notes. Pages come in as still images for now." },
+            ].map((c) => (
+              <div class="rounded-lg p-6 ring-1 ring-gray-200 dark:ring-gray-700 bg-white dark:bg-gray-800">
+                <div class="flex items-center gap-3 mb-4 font-red-hat-display font-black text-xl">
+                  <SourceIcon source={c.icon as "google-slides" | "canva"} class="w-8 h-8" />
+                  {c.name}
+                </div>
+                <FeatureList items={c.items} />
+                {c.missing && (
+                  <p class="flex items-start gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-base text-gray-500 dark:text-gray-400">
+                    <!-- A clock: not yet -->
+                    <svg class="w-4 h-4 mt-1 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+                      <circle cx="8" cy="8" r="6.5" />
+                      <path d="M8 4.5V8l2.5 1.5" />
+                    </svg>
+                    <span><span class="font-semibold text-gray-700 dark:text-gray-300">Not yet: </span>{c.missing}</span>
+                  </p>
+                )}
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <FeatureRow eyebrow="Last-minute changes" title="Changed the deck? Replace it" flip>
+    <p>
+      Edited the slides on Saturday night? Open the settings, press Replace,
+      and pick the deck again. The new version takes the old one's place in
+      the set.
+    </p>
+    <Fragment slot="media">
+      <FeatureFrame frame="card" class="max-w-xl mx-auto">
+        <Image
+          src={settings}
+          widths={[600, 1200]}
+          sizes="(min-width: 768px) 576px, 100vw"
+          alt="Slides settings listing two imports, Hope in the storm from Google Slides and Notices from Canva, each with Replace and Delete buttons"
+          class="w-full h-auto"
+        />
+      </FeatureFrame>
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureLinks
+    eyebrow="Then present it"
+    title="Run it like any slides"
+    body="Once it's in, every deck gets the same tools."
+    items={[
+      { title: "Speaker view", body: "Notes, the next slide and a timer.", href: "/features/slides#speaker", image: `${CLIPS}/speaker.webp` },
+      { title: "Draw on slides", body: "Circle and underline, live on the screen.", href: "/features/slides#draw", image: `${CLIPS}/ink.webp` },
+      { title: "Collect slides with a link", body: "Guest speakers can send theirs from Google Slides or Canva.", href: "/features/slides#guest", image: guestShot.src },
+    ]}
+  />
+
+  <SignageFaq faqs={faqs} />
+  <CtaSignup
+    title="Put this Sunday's slides up"
+    highlight="Start free."
+    body="Import your Google Slides or Canva deck and run it from your laptop or phone. No card needed."
+  />
+</DefaultLayout>
+
