@@ -211,6 +211,22 @@ const EditorSurface = <T extends EditorItem>({
   const idOf = (el: HTMLElement | SVGElement): string | null =>
     (el as HTMLElement).dataset?.layId ?? null;
 
+  const selectedAt = (
+    x: number,
+    y: number,
+    ids: string[],
+  ): { id: string; node: HTMLElement } | null => {
+    if (ids.length === 0) return null;
+    const stack = document.elementsFromPoint(x, y);
+    for (const el of stack) {
+      const id = idOf(el as HTMLElement);
+      if (id && ids.includes(id)) {
+        return { id, node: el as HTMLElement };
+      }
+    }
+    return null;
+  };
+
   const beginGesture = useCallback(
     (elements: (HTMLElement | SVGElement)[]) => {
       framesRef.current.clear();
@@ -356,7 +372,12 @@ const EditorSurface = <T extends EditorItem>({
             ]
               .filter(Boolean)
               .join(" ")}
-            onDoubleClick={() => onItemDoubleClick?.(item.id)}
+            onDoubleClick={(event) => {
+              // Same priority as dragging: a selected item under the pointer
+              // beats the one painted on top.
+              const hit = selectedAt(event.clientX, event.clientY, selectedIds);
+              onItemDoubleClick?.(hit?.id ?? item.id);
+            }}
             ref={nodeRef(item.id)}
             style={{
               left: px.left,
@@ -520,7 +541,7 @@ const EditorSurface = <T extends EditorItem>({
           selectByClick
           selectFromInside={false}
           toggleContinueSelect="shift"
-          preventDragFromInside={false}
+          preventDragFromInside
           onDragStart={(e) => {
             const target = e.inputEvent.target as HTMLElement;
             // Let Moveable own the gesture when it starts on its control box or
@@ -536,6 +557,19 @@ const EditorSurface = <T extends EditorItem>({
               )
             ) {
               e.stop();
+              return;
+            }
+
+            // Pressed where a selected item sits under another item: drag the
+            // selected one. Shift keeps the normal behavior so you can still
+            // add the item on top to the selection.
+            if (!e.inputEvent.shiftKey) {
+              const hit = selectedAt(e.clientX, e.clientY, selectableIds);
+              if (hit) {
+                e.stop();
+                e.inputEvent.preventDefault();
+                moveableRef.current?.dragStart(e.inputEvent, hit.node);
+              }
             }
           }}
           onSelectEnd={(e) => {
@@ -543,6 +577,26 @@ const EditorSurface = <T extends EditorItem>({
               .map((el) => idOf(el as HTMLElement))
               .filter((id): id is string => !!id);
             onSelectionChange(ids);
+
+            // Press on an unselected item: hand the same pointer gesture to
+            // Moveable so it selects and drags in one go
+            if (e.isDragStart) {
+              const movable = ids.filter(
+                (id) => !itemsById.get(id)?.locked && id !== editingId,
+              );
+              const current = new Set(targets.map((t) => idOf(t)));
+              const changes =
+                movable.length > 0 &&
+                (movable.length !== current.size ||
+                  movable.some((id) => !current.has(id)));
+              if (changes) {
+                e.inputEvent.preventDefault();
+                const moveable = moveableRef.current;
+                moveable?.waitToChangeTarget().then(() => {
+                  moveable.dragStart(e.inputEvent);
+                });
+              }
+            }
 
             // Get arrow key nudge working
             if (ids.length > 0) surface.focus({ preventScroll: true });
