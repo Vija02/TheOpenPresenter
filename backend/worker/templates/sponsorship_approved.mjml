@@ -1,0 +1,62 @@
+<mjml>
+  <mj-head>
+    <mj-include path="./common/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#FDFDFD">
+    <mj-include path="./common/header.mjml" />
+
+    <mj-section background-color="#ffffff" padding-top="20px">
+      <mj-column width="100%">
+        <mj-text
+          align="center"
+          color="#444"
+          font-size="32px"
+          font-family="Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+          ><strong>Your sponsorship is approved</strong></mj-text
+        >
+        <mj-text
+          color="#444"
+          font-size="16px"
+          line-height="24px"
+          font-family="Inter,Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+        >
+          Hi [[applicantName]],<br /><br />
+          Good news! [[organizationName]] now has the full Cloud plan for free
+          through our small-church sponsorship, storage and AI credits
+          included. There's nothing else you need to do. It's already active.
+        </mj-text>
+        <mj-text
+          color="#444"
+          font-size="16px"
+          line-height="24px"
+          font-family="Inter,Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+        >
+          If you have any questions, just reply to this email.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#ffffff" padding="20px 0">
+      <mj-column width="100%">
+        <mj-button
+          mj-class="text"
+          background-color="#38A169"
+          color="#FFF"
+          font-weight="bold"
+          border="none"
+          padding="0px 30px"
+          border-radius="5px"
+          href="[[link]]"
+          font-family="Inter, Helvetica"
+          padding-bottom="20px"
+          >View your plan</mj-button
+        >
+      </mj-column>
+    </mj-section>
+
+    <mj-include path="./common/footer_transactional.mjml" />
+  </mj-body>
+</mjml>

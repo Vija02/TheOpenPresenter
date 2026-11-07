@@ -26,6 +26,7 @@ export * from "./components/ui/slider";
 export * from "./components/ui/switch";
 export * from "./components/ui/table";
 export * from "./components/ui/tabs";
+export * from "./components/ui/textarea";
 export * from "./components/ui/toggle";
 export * from "./components/ui/toggle-group";
 export * from "./components/ui/tooltip";

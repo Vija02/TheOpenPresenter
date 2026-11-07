@@ -8,6 +8,7 @@ In [src/index.ts](src/index.ts) you'll find some settings that are used in
 various places in the app, for example:
 
 - `fromEmail` - the email address to send emails from.
+- `sponsorshipEmail` - where new small-church sponsorship applications are sent.
 - `awsRegion` - used for sending emails with Amazon SES.
 - `projectName` - sourced from `package.json`; the name of your project!
 - `companyName` - for copyright ownership.
