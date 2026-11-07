@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TmLWoIueawJY5RIYGz15SyicM8x2Qv4Vr3vqvvRmfe2nJ8lU5NW6JJgc8ZFc0Oz
+\restrict uHywn3w1IWy707ThBT1nNWUe4OROE7uBcHObmNJXDecajF2okUpYTZbGLdBpl71
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -201,7 +201,8 @@ CREATE TYPE app_public.organization_billing_info AS (
 	cancel_at_period_end boolean,
 	cancel_at timestamp with time zone,
 	lifetime_room_count integer,
-	effective_room_count integer
+	effective_room_count integer,
+	is_sponsored boolean
 );
 
 
@@ -304,6 +305,17 @@ CREATE TYPE app_public.screen_on_takeover_policy AS ENUM (
 
 
 --
+-- Name: sponsorship_application_summary; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.sponsorship_application_summary AS (
+	status text,
+	submitted_at timestamp with time zone,
+	decided_at timestamp with time zone
+);
+
+
+--
 -- Name: video_transcode_stage; Type: TYPE; Schema: app_public; Owner: -
 --
 
@@ -338,6 +350,73 @@ CREATE FUNCTION app_hidden.organization_id_by_slug(p_slug text) RETURNS uuid
     SET search_path TO 'pg_catalog', 'public', 'pg_temp'
     AS $$
   select id from app_public.organizations where slug = p_slug;
+$$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: organization_sponsorships; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.organization_sponsorships (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    started_at timestamp with time zone DEFAULT now() NOT NULL,
+    review_at timestamp with time zone NOT NULL,
+    ended_at timestamp with time zone,
+    note text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT organization_sponsorships_check CHECK ((review_at > started_at)),
+    CONSTRAINT organization_sponsorships_check1 CHECK (((ended_at IS NULL) OR (ended_at >= started_at)))
+);
+
+
+--
+-- Name: TABLE organization_sponsorships; Type: COMMENT; Schema: app_private; Owner: -
+--
+
+COMMENT ON TABLE app_private.organization_sponsorships IS 'Free Cloud plan granted to small churches. `review_at` is when we want to check in on it again; the sponsorship keeps working past that date until `ended_at` is set.';
+
+
+--
+-- Name: approve_sponsorship_application(uuid, interval, text); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.approve_sponsorship_application(application_id uuid, review_after interval DEFAULT '1 year'::interval, note text DEFAULT NULL::text) RETURNS app_private.organization_sponsorships
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_app app_private.sponsorship_applications;
+  v_slug citext;
+  v_row app_private.organization_sponsorships;
+begin
+  select * into v_app from app_private.sponsorship_applications where id = application_id;
+  if v_app.id is null then
+    raise exception 'No application with id "%"', application_id using errcode = 'NTFND';
+  end if;
+  if v_app.status <> 'pending' then
+    raise exception 'Application is already %', v_app.status using errcode = 'DUPOF';
+  end if;
+
+  select slug into v_slug from app_public.organizations where id = v_app.organization_id;
+
+  v_row := app_private.grant_sponsorship(
+    v_slug,
+    review_after,
+    coalesce(note, 'Applied with ~' || v_app.weekly_attendance || ' weekly attendance')
+  );
+
+  update app_private.sponsorship_applications
+  set status = 'approved', decided_at = now(), decision_note = note
+  where id = application_id;
+
+  return v_row;
+end;
 $$;
 
 
@@ -395,10 +474,6 @@ begin
 end;
 $_$;
 
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
 
 --
 -- Name: screen_guest_sessions; Type: TABLE; Schema: app_public; Owner: -
@@ -532,6 +607,95 @@ $$;
 
 
 --
+-- Name: sponsorship_applications; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.sponsorship_applications (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    user_id uuid,
+    weekly_attendance integer NOT NULL,
+    about_church text NOT NULL,
+    intended_use text,
+    status text DEFAULT 'pending'::text NOT NULL,
+    decision_note text,
+    decided_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT sponsorship_applications_about_church_check CHECK (((length(TRIM(BOTH FROM about_church)) >= 1) AND (length(TRIM(BOTH FROM about_church)) <= 2000))),
+    CONSTRAINT sponsorship_applications_intended_use_check CHECK (((intended_use IS NULL) OR (length(intended_use) <= 2000))),
+    CONSTRAINT sponsorship_applications_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'declined'::text]))),
+    CONSTRAINT sponsorship_applications_weekly_attendance_check CHECK (((weekly_attendance > 0) AND (weekly_attendance < 100000)))
+);
+
+
+--
+-- Name: decline_sponsorship_application(uuid, text, boolean); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.decline_sponsorship_application(application_id uuid, note text DEFAULT NULL::text, send_email boolean DEFAULT true) RETURNS app_private.sponsorship_applications
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_app app_private.sponsorship_applications;
+begin
+  update app_private.sponsorship_applications
+  set status = 'declined', decided_at = now(), decision_note = note
+  where id = application_id and status = 'pending'
+  returning * into v_app;
+
+  if v_app.id is null then
+    raise exception 'No pending application with id "%"', application_id using errcode = 'NTFND';
+  end if;
+
+  if send_email then
+    perform graphile_worker.add_job(
+      'sponsorship_applications__send_declined',
+      json_build_object('id', v_app.id)
+    );
+  end if;
+
+  return v_app;
+end;
+$$;
+
+
+--
+-- Name: end_sponsorship(public.citext, text); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.end_sponsorship(org_slug public.citext, note text DEFAULT NULL::text) RETURNS app_private.organization_sponsorships
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_row app_private.organization_sponsorships;
+begin
+  update app_private.organization_sponsorships s
+  set
+    ended_at = now(),
+    note = case
+      when end_sponsorship.note is null then s.note
+      when s.note is null then end_sponsorship.note
+      else s.note || E'\n' || end_sponsorship.note
+    end,
+    updated_at = now()
+  from app_public.organizations o
+  where o.id = s.organization_id
+    and o.slug = org_slug
+    and s.ended_at is null
+  returning s.* into v_row;
+
+  if v_row.id is null then
+    raise exception 'Organization "%" has no active sponsorship', org_slug using errcode = 'NTFND';
+  end if;
+
+  return v_row;
+end;
+$$;
+
+
+--
 -- Name: generate_screen_code(); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
@@ -616,6 +780,40 @@ $$;
 --
 
 COMMENT ON FUNCTION app_private.generate_unique_username(base text) IS 'Sanitises the given string into a valid username, appending a discriminator if needed to make it unique.';
+
+
+--
+-- Name: grant_sponsorship(public.citext, interval, text); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.grant_sponsorship(org_slug public.citext, review_after interval DEFAULT '1 year'::interval, note text DEFAULT NULL::text) RETURNS app_private.organization_sponsorships
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_org_id uuid;
+  v_row app_private.organization_sponsorships;
+begin
+  select id into v_org_id from app_public.organizations where slug = org_slug;
+  if v_org_id is null then
+    raise exception 'No organization with slug "%"', org_slug using errcode = 'NTFND';
+  end if;
+
+  if exists (
+    select 1 from app_private.organization_sponsorships
+    where organization_id = v_org_id and ended_at is null
+  ) then
+    raise exception 'Organization "%" is already sponsored; use renew_sponsorship instead', org_slug
+      using errcode = 'DUPOF';
+  end if;
+
+  insert into app_private.organization_sponsorships (organization_id, review_at, note)
+  values (v_org_id, now() + review_after, grant_sponsorship.note)
+  returning * into v_row;
+
+  return v_row;
+end;
+$$;
 
 
 --
@@ -1006,6 +1204,41 @@ $$;
 --
 
 COMMENT ON FUNCTION app_private.register_user(f_service character varying, f_identifier character varying, f_profile json, f_auth_details json, f_email_is_verified boolean) IS 'Used to register a user from information gleaned from OAuth. Primarily used by link_or_register_user';
+
+
+--
+-- Name: renew_sponsorship(public.citext, interval, text); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.renew_sponsorship(org_slug public.citext, review_after interval DEFAULT '1 year'::interval, note text DEFAULT NULL::text) RETURNS app_private.organization_sponsorships
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_row app_private.organization_sponsorships;
+begin
+  update app_private.organization_sponsorships s
+  set
+    review_at = now() + review_after,
+    note = case
+      when renew_sponsorship.note is null then s.note
+      when s.note is null then renew_sponsorship.note
+      else s.note || E'\n' || renew_sponsorship.note
+    end,
+    updated_at = now()
+  from app_public.organizations o
+  where o.id = s.organization_id
+    and o.slug = org_slug
+    and s.ended_at is null
+  returning s.* into v_row;
+
+  if v_row.id is null then
+    raise exception 'Organization "%" has no active sponsorship', org_slug using errcode = 'NTFND';
+  end if;
+
+  return v_row;
+end;
+$$;
 
 
 --
@@ -1695,6 +1928,77 @@ begin
   );
 end;
 $$;
+
+
+--
+-- Name: apply_for_sponsorship(uuid, integer, text, text); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.apply_for_sponsorship(organization_id uuid, weekly_attendance integer, about_church text, intended_use text DEFAULT NULL::text) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_user app_public.users;
+begin
+  if app_public.current_user_id() is null then
+    raise exception 'You must log in to apply' using errcode = 'LOGIN';
+  end if;
+
+  select * into v_user from app_public.users where id = app_public.current_user_id();
+  if not v_user.is_verified then
+    raise exception 'Please verify your email address before applying' using errcode = 'VRFY2';
+  end if;
+
+  if not exists (
+    select 1 from app_public.organization_memberships m
+    where m.organization_id = apply_for_sponsorship.organization_id
+      and m.user_id = v_user.id
+      and (m.is_owner or m.is_billing_contact)
+  ) then
+    raise exception 'Only the organization owner or billing contact can apply' using errcode = 'DNIED';
+  end if;
+
+  if exists (
+    select 1 from app_private.organization_sponsorships s
+    where s.organization_id = apply_for_sponsorship.organization_id
+      and s.ended_at is null
+  ) then
+    raise exception 'This organization is already sponsored' using errcode = 'DUPOF';
+  end if;
+
+  if exists (
+    select 1 from app_private.sponsorship_applications a
+    where a.organization_id = apply_for_sponsorship.organization_id
+      and a.status = 'pending'
+  ) then
+    raise exception 'You already have an application waiting for review' using errcode = 'DUPOF';
+  end if;
+
+  if about_church is null or length(trim(about_church)) = 0 then
+    raise exception 'Please tell us a little about your church' using errcode = 'CHECK';
+  end if;
+
+  insert into app_private.sponsorship_applications
+    (organization_id, user_id, weekly_attendance, about_church, intended_use)
+  values (
+    apply_for_sponsorship.organization_id,
+    v_user.id,
+    apply_for_sponsorship.weekly_attendance,
+    trim(apply_for_sponsorship.about_church),
+    nullif(trim(apply_for_sponsorship.intended_use), '')
+  );
+
+  return true;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION apply_for_sponsorship(organization_id uuid, weekly_attendance integer, about_church text, intended_use text); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.apply_for_sponsorship(organization_id uuid, weekly_attendance integer, about_church text, intended_use text) IS 'Apply for the small-church sponsorship (a free Cloud plan). Only the organization owner or billing contact can apply.';
 
 
 --
@@ -2693,6 +2997,7 @@ CREATE FUNCTION app_public.organizations_billing_info(org app_public.organizatio
   select
     case
       when coalesce(b.lifetime_room_count, 0) > 0 then 'business'
+      when sp.id is not null then 'business'
       else coalesce(b.plan, 'free')
     end::text,
     b.stripe_subscription_status,
@@ -2702,9 +3007,15 @@ CREATE FUNCTION app_public.organizations_billing_info(org app_public.organizatio
     coalesce(b.cancel_at_period_end, false),
     b.cancel_at,
     coalesce(b.lifetime_room_count, 0),
-    coalesce(b.subscribed_room_count, 0) + coalesce(b.lifetime_room_count, 0)
+    greatest(
+      coalesce(b.subscribed_room_count, 0) + coalesce(b.lifetime_room_count, 0),
+      case when sp.id is not null then 1 else 0 end
+    ),
+    sp.id is not null
   from app_public.organizations o
   left join app_private.organization_billing b on b.organization_id = o.id
+  left join app_private.organization_sponsorships sp
+    on sp.organization_id = o.id and sp.ended_at is null
   where o.id = org.id
     and o.id in (
       select app_public.current_user_member_organization_ids()
@@ -2716,7 +3027,7 @@ $$;
 -- Name: FUNCTION organizations_billing_info(org app_public.organizations); Type: COMMENT; Schema: app_public; Owner: -
 --
 
-COMMENT ON FUNCTION app_public.organizations_billing_info(org app_public.organizations) IS 'Current billing plan and Stripe subscription status for the organization. `plan` reflects effective entitlement, so a Lifetime purchase reads as ''business'' with no active subscription.';
+COMMENT ON FUNCTION app_public.organizations_billing_info(org app_public.organizations) IS 'Current billing plan and Stripe subscription status for the organization. `plan` reflects effective entitlement, so a Lifetime purchase or an active sponsorship reads as ''business'' with no active subscription.';
 
 
 --
@@ -2762,6 +3073,31 @@ CREATE FUNCTION app_public.organizations_public_search(search_string text) RETUR
     AS $$
   select * from app_public.organizations o where o.is_public is true AND o.name ILIKE '%' || search_string || '%';
 $$;
+
+
+--
+-- Name: organizations_sponsorship_application(app_public.organizations); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.organizations_sponsorship_application(org app_public.organizations) RETURNS app_public.sponsorship_application_summary
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select a.status, a.created_at, a.decided_at
+  from app_private.sponsorship_applications a
+  where a.organization_id = org.id
+    and org.id in (select app_public.current_user_member_organization_ids())
+  -- A pending application always wins, otherwise the most recent decision
+  order by (a.status = 'pending') desc, a.created_at desc
+  limit 1;
+$$;
+
+
+--
+-- Name: FUNCTION organizations_sponsorship_application(org app_public.organizations); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.organizations_sponsorship_application(org app_public.organizations) IS 'The latest sponsorship application for this organization, if any.';
 
 
 --
@@ -3770,6 +4106,66 @@ CREATE VIEW app_private.renderer_session_durations AS
 
 
 --
+-- Name: organization_memberships; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.organization_memberships (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    organization_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    is_owner boolean DEFAULT false NOT NULL,
+    is_billing_contact boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: sponsorship_applications_pending; Type: VIEW; Schema: app_private; Owner: -
+--
+
+CREATE VIEW app_private.sponsorship_applications_pending AS
+ SELECT a.id,
+    o.slug,
+    o.name,
+    a.weekly_attendance,
+    a.about_church,
+    a.intended_use,
+    u.name AS applicant_name,
+    app_public.users_primary_email(u.*) AS applicant_email,
+    ( SELECT count(*) AS count
+           FROM app_public.organization_memberships m
+          WHERE (m.organization_id = o.id)) AS member_count,
+    a.created_at
+   FROM ((app_private.sponsorship_applications a
+     JOIN app_public.organizations o ON ((o.id = a.organization_id)))
+     LEFT JOIN app_public.users u ON ((u.id = a.user_id)))
+  WHERE (a.status = 'pending'::text)
+  ORDER BY a.created_at;
+
+
+--
+-- Name: sponsorships_overview; Type: VIEW; Schema: app_private; Owner: -
+--
+
+CREATE VIEW app_private.sponsorships_overview AS
+ SELECT o.slug,
+    o.name,
+    s.started_at,
+    s.review_at,
+    s.ended_at,
+    ((s.ended_at IS NULL) AND (s.review_at <= now())) AS review_due,
+    ( SELECT count(*) AS count
+           FROM app_public.organization_memberships m
+          WHERE (m.organization_id = o.id)) AS member_count,
+    s.note,
+    s.organization_id,
+    s.id
+   FROM (app_private.organization_sponsorships s
+     JOIN app_public.organizations o ON ((o.id = s.organization_id)))
+  ORDER BY (s.ended_at IS NOT NULL), s.review_at;
+
+
+--
 -- Name: unregistered_email_password_resets; Type: TABLE; Schema: app_private; Owner: -
 --
 
@@ -4137,20 +4533,6 @@ CREATE TABLE app_public.organization_join_requests (
 
 
 --
--- Name: organization_memberships; Type: TABLE; Schema: app_public; Owner: -
---
-
-CREATE TABLE app_public.organization_memberships (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    organization_id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    is_owner boolean DEFAULT false NOT NULL,
-    is_billing_contact boolean DEFAULT false NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
 -- Name: project_medias; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -4349,6 +4731,14 @@ ALTER TABLE ONLY app_private.organization_lifetime_purchases
 
 
 --
+-- Name: organization_sponsorships organization_sponsorships_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_sponsorships
+    ADD CONSTRAINT organization_sponsorships_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: renderer_sessions renderer_sessions_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
 --
 
@@ -4370,6 +4760,14 @@ ALTER TABLE ONLY app_private.connect_pg_simple_sessions
 
 ALTER TABLE ONLY app_private.sessions
     ADD CONSTRAINT sessions_pkey PRIMARY KEY (uuid);
+
+
+--
+-- Name: sponsorship_applications sponsorship_applications_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.sponsorship_applications
+    ADD CONSTRAINT sponsorship_applications_pkey PRIMARY KEY (id);
 
 
 --
@@ -4736,6 +5134,13 @@ CREATE INDEX organization_lifetime_purchases_organization_id_idx ON app_private.
 
 
 --
+-- Name: organization_sponsorships_one_active_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE UNIQUE INDEX organization_sponsorships_one_active_idx ON app_private.organization_sponsorships USING btree (organization_id) WHERE (ended_at IS NULL);
+
+
+--
 -- Name: renderer_sessions_open_idx; Type: INDEX; Schema: app_private; Owner: -
 --
 
@@ -4782,6 +5187,27 @@ CREATE INDEX renderer_sessions_user_id_idx ON app_private.renderer_sessions USIN
 --
 
 CREATE INDEX sessions_user_id_idx ON app_private.sessions USING btree (user_id);
+
+
+--
+-- Name: sponsorship_applications_one_pending_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE UNIQUE INDEX sponsorship_applications_one_pending_idx ON app_private.sponsorship_applications USING btree (organization_id) WHERE (status = 'pending'::text);
+
+
+--
+-- Name: sponsorship_applications_organization_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX sponsorship_applications_organization_id_idx ON app_private.sponsorship_applications USING btree (organization_id);
+
+
+--
+-- Name: sponsorship_applications_user_id_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE INDEX sponsorship_applications_user_id_idx ON app_private.sponsorship_applications USING btree (user_id);
 
 
 --
@@ -5408,6 +5834,20 @@ CREATE TRIGGER _200_clear_password_reset_required BEFORE UPDATE ON app_private.u
 
 
 --
+-- Name: sponsorship_applications _500_notify; Type: TRIGGER; Schema: app_private; Owner: -
+--
+
+CREATE TRIGGER _500_notify AFTER INSERT ON app_private.sponsorship_applications FOR EACH ROW EXECUTE FUNCTION app_private.tg__add_job('sponsorship_applications__notify');
+
+
+--
+-- Name: sponsorship_applications _500_send_approved; Type: TRIGGER; Schema: app_private; Owner: -
+--
+
+CREATE TRIGGER _500_send_approved AFTER UPDATE OF status ON app_private.sponsorship_applications FOR EACH ROW WHEN (((old.status IS DISTINCT FROM 'approved'::text) AND (new.status = 'approved'::text))) EXECUTE FUNCTION app_private.tg__add_job('sponsorship_applications__send_approved');
+
+
+--
 -- Name: categories _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -5855,6 +6295,14 @@ ALTER TABLE ONLY app_private.organization_lifetime_purchases
 
 
 --
+-- Name: organization_sponsorships organization_sponsorships_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.organization_sponsorships
+    ADD CONSTRAINT organization_sponsorships_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: renderer_sessions renderer_sessions_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
 --
 
@@ -5892,6 +6340,22 @@ ALTER TABLE ONLY app_private.renderer_sessions
 
 ALTER TABLE ONLY app_private.sessions
     ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES app_public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: sponsorship_applications sponsorship_applications_organization_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.sponsorship_applications
+    ADD CONSTRAINT sponsorship_applications_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: sponsorship_applications sponsorship_applications_user_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.sponsorship_applications
+    ADD CONSTRAINT sponsorship_applications_user_id_fkey FOREIGN KEY (user_id) REFERENCES app_public.users(id) ON DELETE SET NULL;
 
 
 --
@@ -6385,10 +6849,22 @@ ALTER TABLE app_private.connect_pg_simple_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_private.integration_intents ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: organization_sponsorships; Type: ROW SECURITY; Schema: app_private; Owner: -
+--
+
+ALTER TABLE app_private.organization_sponsorships ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: sessions; Type: ROW SECURITY; Schema: app_private; Owner: -
 --
 
 ALTER TABLE app_private.sessions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: sponsorship_applications; Type: ROW SECURITY; Schema: app_private; Owner: -
+--
+
+ALTER TABLE app_private.sponsorship_applications ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: user_authentication_secrets; Type: ROW SECURITY; Schema: app_private; Owner: -
@@ -7221,6 +7697,13 @@ GRANT ALL ON FUNCTION app_hidden.organization_id_by_slug(p_slug text) TO theopen
 
 
 --
+-- Name: FUNCTION approve_sponsorship_application(application_id uuid, review_after interval, note text); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.approve_sponsorship_application(application_id uuid, review_after interval, note text) FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION assert_valid_password(new_password text); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -7263,6 +7746,20 @@ REVOKE ALL ON FUNCTION app_private.current_session_can_control_screen(p_screen_i
 
 
 --
+-- Name: FUNCTION decline_sponsorship_application(application_id uuid, note text, send_email boolean); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.decline_sponsorship_application(application_id uuid, note text, send_email boolean) FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION end_sponsorship(org_slug public.citext, note text); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.end_sponsorship(org_slug public.citext, note text) FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION generate_screen_code(); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -7274,6 +7771,13 @@ REVOKE ALL ON FUNCTION app_private.generate_screen_code() FROM PUBLIC;
 --
 
 REVOKE ALL ON FUNCTION app_private.generate_unique_username(base text) FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION grant_sponsorship(org_slug public.citext, review_after interval, note text); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.grant_sponsorship(org_slug public.citext, review_after interval, note text) FROM PUBLIC;
 
 
 --
@@ -7337,6 +7841,13 @@ REVOKE ALL ON FUNCTION app_private.really_create_user(username public.citext, em
 --
 
 REVOKE ALL ON FUNCTION app_private.register_user(f_service character varying, f_identifier character varying, f_profile json, f_auth_details json, f_email_is_verified boolean) FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION renew_sponsorship(org_slug public.citext, review_after interval, note text); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.renew_sponsorship(org_slug public.citext, review_after interval, note text) FROM PUBLIC;
 
 
 --
@@ -7486,6 +7997,14 @@ GRANT ALL ON FUNCTION app_public.accept_invitation_to_organization(invitation_id
 
 REVOKE ALL ON FUNCTION app_public.accept_join_request_to_organization(request_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.accept_join_request_to_organization(request_id uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION apply_for_sponsorship(organization_id uuid, weekly_attendance integer, about_church text, intended_use text); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.apply_for_sponsorship(organization_id uuid, weekly_attendance integer, about_church text, intended_use text) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.apply_for_sponsorship(organization_id uuid, weekly_attendance integer, about_church text, intended_use text) TO theopenpresenter_visitor;
 
 
 --
@@ -7871,6 +8390,14 @@ GRANT ALL ON FUNCTION app_public.organizations_public_search(search_string text)
 
 
 --
+-- Name: FUNCTION organizations_sponsorship_application(org app_public.organizations); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.organizations_sponsorship_application(org app_public.organizations) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.organizations_sponsorship_application(org app_public.organizations) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION project_by_org_and_slug(p_org_slug text, p_project_slug text); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -8233,6 +8760,13 @@ GRANT ALL ON FUNCTION public.uuid_v7_to_timestamptz(uuid) TO theopenpresenter_vi
 
 
 --
+-- Name: TABLE organization_memberships; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.organization_memberships TO theopenpresenter_visitor;
+
+
+--
 -- Name: TABLE categories; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -8499,13 +9033,6 @@ GRANT SELECT ON TABLE app_public.organization_join_requests TO theopenpresenter_
 
 
 --
--- Name: TABLE organization_memberships; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT SELECT ON TABLE app_public.organization_memberships TO theopenpresenter_visitor;
-
-
---
 -- Name: TABLE project_medias; Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -8684,5 +9211,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TmLWoIueawJY5RIYGz15SyicM8x2Qv4Vr3vqvvRmfe2nJ8lU5NW6JJgc8ZFc0Oz
+\unrestrict uHywn3w1IWy707ThBT1nNWUe4OROE7uBcHObmNJXDecajF2okUpYTZbGLdBpl71
 

@@ -163,7 +163,7 @@ it("hides the application from non-members", () =>
     ).rejects.toThrow(/permission denied/);
   }));
 
-it("queues an email to the church only when approved", () =>
+it("emails the church when approved or declined", () =>
   withRootDb(async (client) => {
     const { owner, org } = await setupOrg(client);
     await becomeUser(client, owner.id);
@@ -183,6 +183,12 @@ it("queues an email to the church only when approved", () =>
     expect(
       await getJobs(client, "sponsorship_applications__send_approved"),
     ).toHaveLength(0);
+    const declinedJobs = await getJobs(
+      client,
+      "sponsorship_applications__send_declined",
+    );
+    expect(declinedJobs).toHaveLength(1);
+    expect(declinedJobs[0].payload.id).toBe(first.id);
 
     await becomeUser(client, owner.id);
     await apply(client, org.id);
@@ -202,4 +208,26 @@ it("queues an email to the church only when approved", () =>
     );
     expect(jobs).toHaveLength(1);
     expect(jobs[0].payload.id).toBe(second.id);
+  }));
+
+it("can decline without emailing the church", () =>
+  withRootDb(async (client) => {
+    const { owner, org } = await setupOrg(client);
+    await becomeUser(client, owner.id);
+    await apply(client, org.id);
+    await becomeRoot(client);
+    await clearJobs(client);
+
+    const {
+      rows: [pending],
+    } = await client.query(
+      "select id from app_private.sponsorship_applications_pending",
+    );
+    await client.query(
+      "select app_private.decline_sponsorship_application($1, 'spam', false)",
+      [pending.id],
+    );
+    expect(
+      await getJobs(client, "sponsorship_applications__send_declined"),
+    ).toHaveLength(0);
   }));

@@ -54,7 +54,9 @@
           padding="20px 30px"
         >
           select * from app_private.approve_sponsorship_application('[[applicationId]]', '12 months', 'note');<br /><br />
-          select * from app_private.decline_sponsorship_application('[[applicationId]]', 'reason');
+          select * from app_private.decline_sponsorship_application('[[applicationId]]', 'reason');<br /><br />
+          -- Spam? Decline without emailing them:<br />
+          select * from app_private.decline_sponsorship_application('[[applicationId]]', 'spam', false);
         </mj-text>
       </mj-column>
     </mj-section>

@@ -1,0 +1,40 @@
+<mjml>
+  <mj-head>
+    <mj-include path="./common/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#FDFDFD">
+    <mj-include path="./common/header.mjml" />
+
+    <mj-section background-color="#ffffff" padding-top="20px">
+      <mj-column width="100%">
+        <mj-text
+          align="center"
+          color="#444"
+          font-size="32px"
+          font-family="Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+          ><strong>About your sponsorship application</strong></mj-text
+        >
+        <mj-text
+          color="#444"
+          font-size="16px"
+          line-height="24px"
+          font-family="Inter,Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+        >
+          Hi [[applicantName]],<br /><br />
+          Thank you for applying for the small-church sponsorship for
+          [[organizationName]], and for telling us about your church.<br /><br />
+          We're not able to offer the sponsorship this time. The programme is
+          for churches under 50 people, and we keep it for those who need it
+          most.<br /><br />
+          You can keep using TheOpenPresenter on the free plan, and you're
+          welcome to apply again if things change. If you think we've got it
+          wrong, or you'd like to talk it through, just reply to this email.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-include path="./common/footer_transactional.mjml" />
+  </mj-body>
+</mjml>
