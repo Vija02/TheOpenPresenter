@@ -32,13 +32,26 @@ fragment MediaWithMediaDependency on Media {
     transcodeStatus
     transcodeProgress
   }
-  dependencies: mediaDependenciesByParentMediaId {
+  # Ordered by id so the first image is the first page (ids follow creation)
+  dependencies: mediaDependenciesByParentMediaId(orderBy: CHILD_MEDIA_ID_ASC) {
     totalCount
     nodes {
       childMedia {
         id
         mediaName
         fileExtension
+        dependencies: mediaDependenciesByParentMediaId(
+          orderBy: CHILD_MEDIA_ID_ASC
+          first: 1
+        ) {
+          nodes {
+            childMedia {
+              id
+              mediaName
+              fileExtension
+            }
+          }
+        }
       }
     }
   }

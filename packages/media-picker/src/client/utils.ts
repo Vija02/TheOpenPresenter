@@ -7,6 +7,7 @@ import { VideoTranscodeStatus } from "@repo/graphql";
 import {
   extractMediaName,
   isAudioFile,
+  findThumbnailDependency,
   isImageFile,
   isMediaReady,
   isPdfFile,
@@ -123,12 +124,10 @@ export const buildMediaPickerResult = (
     };
   }
 
-  const imageDependency = media.dependencies.nodes.find((dep) =>
-    isImageFile(dep.childMedia?.fileExtension),
-  );
-  if (imageDependency?.childMedia) {
+  const imageDependency = findThumbnailDependency(media.dependencies);
+  if (imageDependency) {
     result.extraMeta = {
-      childThumbnailUrl: mediaDataPath(imageDependency.childMedia.mediaName),
+      childThumbnailUrl: mediaDataPath(imageDependency.mediaName),
     };
   }
 

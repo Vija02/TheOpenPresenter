@@ -1,6 +1,7 @@
 import { VideoTranscodeStatus } from "@repo/graphql";
 import {
   extractMediaName,
+  findThumbnailDependency,
   isAudioFile,
   isBrowserSupportedImageFile,
   isBrowserSupportedVideoFile,
@@ -50,6 +51,14 @@ export type MediaPreviewData = {
       childMedia?: {
         mediaName: string;
         fileExtension?: string | null;
+        dependencies?: {
+          nodes: Array<{
+            childMedia?: {
+              mediaName: string;
+              fileExtension?: string | null;
+            } | null;
+          }>;
+        } | null;
       } | null;
     }>;
   };
@@ -182,14 +191,9 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
       return resolveMediaUrl(extractMediaName(thumbnailMediaName));
     }
 
-    // Fallback to dependencies for any image
-    const imageDependency = media.dependencies?.nodes.find((dep) =>
-      isImageFile(dep.childMedia?.fileExtension),
-    );
-    if (imageDependency?.childMedia) {
-      return resolveMediaUrl(
-        extractMediaName(imageDependency.childMedia.mediaName),
-      );
+    const imageDependency = findThumbnailDependency(media.dependencies);
+    if (imageDependency) {
+      return resolveMediaUrl(extractMediaName(imageDependency.mediaName));
     }
 
     return null;
@@ -202,9 +206,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
       media.audioMetadata?.coverMediaId;
     const mediaName = thumbnailMediaId
       ? mediaIdFromUUID(thumbnailMediaId) + ".jpg"
-      : media.dependencies?.nodes.find((dep) =>
-          isImageFile(dep.childMedia?.fileExtension),
-        )?.childMedia?.mediaName;
+      : findThumbnailDependency(media.dependencies)?.mediaName;
     if (!mediaName) return null;
     const { mediaId, extension } = extractMediaName(mediaName);
     return { mediaId, extension };
