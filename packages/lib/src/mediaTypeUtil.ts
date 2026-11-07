@@ -59,3 +59,32 @@ export const isBrowserSupportedVideoFile = (
 export const isBrowserSupportedAudioFile = (
   extension: string | null | undefined,
 ): boolean => isExtensionInList(extension, BROWSER_SUPPORTED_AUDIO_EXTENSIONS);
+
+// ============================================================================
+// Thumbnails from processed files
+// ============================================================================
+
+type ThumbnailDependencyMedia = {
+  mediaName: string;
+  fileExtension?: string | null;
+  dependencies?: {
+    nodes: Array<{ childMedia?: ThumbnailDependencyMedia | null }>;
+  } | null;
+};
+
+export const findThumbnailDependency = (
+  dependencies: ThumbnailDependencyMedia["dependencies"],
+): { mediaName: string; fileExtension?: string | null } | null => {
+  const nodes = dependencies?.nodes ?? [];
+  const direct = nodes.find((dep) =>
+    isImageFile(dep.childMedia?.fileExtension),
+  );
+  if (direct?.childMedia) return direct.childMedia;
+  for (const dep of nodes) {
+    const nested = dep.childMedia?.dependencies?.nodes.find((child) =>
+      isImageFile(child.childMedia?.fileExtension),
+    );
+    if (nested?.childMedia) return nested.childMedia;
+  }
+  return null;
+};
