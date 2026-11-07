@@ -179,6 +179,7 @@ function BillingPageInner({
     ? new Date(billingInfo.currentPeriodEnd)
     : null;
   const hasLifetime = (billingInfo?.lifetimeRoomCount ?? 0) > 0;
+  const isSponsored = billingInfo?.isSponsored ?? false;
   const billingInterval = billingInfo?.billingInterval ?? "month";
   const scheduledCancel = billingInfo?.cancelAtPeriodEnd ?? false;
   const serverCancelAt = billingInfo?.cancelAt
@@ -224,7 +225,8 @@ function BillingPageInner({
 
             {org.organizationType === OrganizationType.Church &&
               !isActive &&
-              !hasLifetime && (
+              !hasLifetime &&
+              !isSponsored && (
                 <div className="rounded-md border border-teal-200 bg-teal-50 p-4 flex items-start gap-3 dark:border-teal-900/40 dark:bg-teal-950/20">
                   <MdStar className="size-5 text-teal-500 shrink-0 mt-0.5" />
                   <div className="space-y-1">
@@ -253,6 +255,7 @@ function BillingPageInner({
               periodEnd={periodEnd}
               isActive={isActive}
               hasLifetime={hasLifetime}
+              isSponsored={isSponsored}
               billingInterval={billingInterval}
               scheduledCancel={scheduledCancel}
               serverCancelAt={serverCancelAt}
@@ -261,7 +264,7 @@ function BillingPageInner({
               slug={slug}
             />
 
-            {canManage && (
+            {canManage && !isSponsored && (
               <UpgradePanel
                 org={org}
                 slug={slug}
@@ -285,6 +288,7 @@ function PlanOverviewCard({
   periodEnd,
   isActive,
   hasLifetime,
+  isSponsored,
   billingInterval,
   scheduledCancel,
   serverCancelAt,
@@ -296,6 +300,7 @@ function PlanOverviewCard({
   periodEnd: Date | null;
   isActive: boolean;
   hasLifetime: boolean;
+  isSponsored: boolean;
   billingInterval: string;
   scheduledCancel: boolean;
   serverCancelAt: Date | null;
@@ -359,7 +364,11 @@ function PlanOverviewCard({
         <div className="flex items-center gap-2.5">
           <MdCreditCard className="size-5 text-tertiary shrink-0" />
           <h2 className="font-semibold text-primary">
-            {isActive ? "Cloud plan" : hasLifetime ? "Lifetime" : "Free plan"}
+            {isActive || isSponsored
+              ? "Cloud plan"
+              : hasLifetime
+                ? "Lifetime"
+                : "Free plan"}
           </h2>
         </div>
         <div className="flex items-center gap-2">
@@ -373,6 +382,12 @@ function PlanOverviewCard({
             <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-semibold text-teal-800 dark:bg-teal-500/20 dark:text-teal-300">
               <MdStar className="size-3" />
               Lifetime
+            </span>
+          )}
+          {isSponsored && !isActive && !hasLifetime && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-semibold text-teal-800 dark:bg-teal-500/20 dark:text-teal-300">
+              <MdStar className="size-3" />
+              Sponsored
             </span>
           )}
           {status && status !== "active" && (
@@ -409,7 +424,7 @@ function PlanOverviewCard({
               {effectivePeriodEnd ? formatDate(effectivePeriodEnd) : "-"}
             </Stat>
           </div>
-        ) : hasLifetime ? (
+        ) : hasLifetime || isSponsored ? (
           <div className="grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
             <Stat label="Users">Unlimited</Stat>
             <Stat label="Displays">Unlimited</Stat>
@@ -432,6 +447,18 @@ function PlanOverviewCard({
               Lifetime licence owned
             </span>
             <span className="text-tertiary">· yours forever, no renewal</span>
+          </div>
+        )}
+
+        {isSponsored && !isActive && !hasLifetime && (
+          <div className="mt-5 flex flex-wrap items-center gap-2 text-sm">
+            <MdStar className="size-4 text-teal-500 shrink-0" />
+            <span className="font-medium text-primary">
+              Sponsored by TheOpenPresenter
+            </span>
+            <span className="text-tertiary">
+              · free through our small-church programme
+            </span>
           </div>
         )}
       </div>
