@@ -4310,7 +4310,7 @@ type Mutation {
 
 type Organization {
   """
-  Current billing plan and Stripe subscription status for the organization. `plan` reflects effective entitlement, so a Lifetime purchase reads as 'business' with no active subscription.
+  Current billing plan and Stripe subscription status for the organization. `plan` reflects effective entitlement, so a Lifetime purchase or an active sponsorship reads as 'business' with no active subscription.
   """
   billingInfo: OrganizationBillingInfo
 
@@ -4912,6 +4912,7 @@ type OrganizationBillingInfo {
   cancelAtPeriodEnd: Boolean
   currentPeriodEnd: Datetime
   effectiveRoomCount: Int
+  isSponsored: Boolean
   lifetimeRoomCount: Int
   plan: String
   subscribedRoomCount: Int
