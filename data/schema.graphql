@@ -51,6 +51,36 @@ input AllMediaOfProjectsInput {
   projectIds: [UUID!]
 }
 
+"""All input for the `applyForSponsorship` mutation."""
+input ApplyForSponsorshipInput {
+  aboutChurch: String!
+
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  intendedUse: String
+  organizationId: UUID!
+  weeklyAttendance: Int!
+}
+
+"""The output of our `applyForSponsorship` mutation."""
+type ApplyForSponsorshipPayload {
+  boolean: Boolean
+
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
 input AuthenticateScreenGuestInput {
   """Email or passcode"""
   passcode: String!
@@ -3680,6 +3710,16 @@ type Mutation {
     input: AcceptJoinRequestToOrganizationInput!
   ): AcceptJoinRequestToOrganizationPayload
 
+  """
+  Apply for the small-church sponsorship (a free Cloud plan). Only the organization owner or billing contact can apply.
+  """
+  applyForSponsorship(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: ApplyForSponsorshipInput!
+  ): ApplyForSponsorshipPayload
+
   """Verify a registered-guest entry"""
   authenticateScreenGuest(
     """
@@ -4776,6 +4816,9 @@ type Organization {
     orderBy: [ScreensOrderBy!] = [PRIMARY_KEY_ASC]
   ): ScreensConnection!
   slug: String!
+
+  """The latest sponsorship application for this organization, if any."""
+  sponsorshipApplication: SponsorshipApplicationSummary
 
   """Reads and enables pagination through a set of `Tag`."""
   tags(
@@ -8279,6 +8322,12 @@ type SetExistingProjectToScreenPayload {
     """The method to use when ordering `Screen`."""
     orderBy: [ScreensOrderBy!] = [PRIMARY_KEY_ASC]
   ): ScreensEdge
+}
+
+type SponsorshipApplicationSummary {
+  decidedAt: Datetime
+  status: String
+  submittedAt: Datetime
 }
 
 """

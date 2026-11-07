@@ -16,5 +16,10 @@ query OrganizationBillingPage($slug: String!) {
       cancelAt
       isSponsored
     }
+    sponsorshipApplication {
+      status
+      submittedAt
+      decidedAt
+    }
   }
 }

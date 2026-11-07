@@ -1,0 +1,17 @@
+mutation ApplyForSponsorship(
+  $organizationId: UUID!
+  $weeklyAttendance: Int!
+  $aboutChurch: String!
+  $intendedUse: String
+) {
+  applyForSponsorship(
+    input: {
+      organizationId: $organizationId
+      weeklyAttendance: $weeklyAttendance
+      aboutChurch: $aboutChurch
+      intendedUse: $intendedUse
+    }
+  ) {
+    boolean
+  }
+}

@@ -1,4 +1,5 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
+import SponsorshipApplicationModal from "@/containers/Billing/SponsorshipApplicationModal";
 import {
   useOrganizationLoading,
   useOrganizationSlug,
@@ -18,6 +19,7 @@ import {
   Alert,
   Button,
   LoadingFull,
+  OverlayToggle,
 } from "@repo/ui";
 import {
   EmbeddedCheckout,
@@ -110,7 +112,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "We're a small church. Is there help with the cost?",
-    a: "Churches under 50 weekly attendance get the full Cloud plan free through our sponsorship programme, storage and AI credits included. Get in touch and we'll set it up.",
+    a: "Churches under 50 weekly attendance get the full Cloud plan free through our sponsorship programme, storage and AI credits included. Apply from the banner at the top of this page and we'll get back to you by email.",
   },
   {
     q: "What happens when I cancel?",
@@ -155,7 +157,7 @@ const OrganizationBillingPage = () => {
 };
 
 function BillingPageInner({
-  query: [{ data }],
+  query: [{ data }, refetch],
 }: {
   query: UseQueryResponse<OrganizationBillingPageQuery>;
 }) {
@@ -227,27 +229,12 @@ function BillingPageInner({
               !isActive &&
               !hasLifetime &&
               !isSponsored && (
-                <div className="rounded-md border border-teal-200 bg-teal-50 p-4 flex items-start gap-3 dark:border-teal-900/40 dark:bg-teal-950/20">
-                  <MdStar className="size-5 text-teal-500 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-primary">
-                      Your church may be eligible for a free Cloud plan
-                    </p>
-                    <p className="text-sm text-secondary">
-                      Small churches get the full Cloud plan free through our
-                      sponsorship programme, storage and AI credits included.{" "}
-                      <a
-                        href="https://theopenpresenter.com/church/sponsorship"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline hover:no-underline font-medium text-teal-700 dark:text-teal-300"
-                      >
-                        Check eligibility and apply
-                      </a>
-                      .
-                    </p>
-                  </div>
-                </div>
+                <SponsorshipBanner
+                  organizationId={org.id}
+                  canManage={!!canManage}
+                  application={org.sponsorshipApplication}
+                  onSubmitted={() => refetch({ requestPolicy: "network-only" })}
+                />
               )}
 
             <PlanOverviewCard
@@ -279,6 +266,79 @@ function BillingPageInner({
       <div className="mt-5 lg:mt-0">
         <FaqSection />
       </div>
+    </div>
+  );
+}
+
+function SponsorshipBanner({
+  organizationId,
+  canManage,
+  application,
+  onSubmitted,
+}: {
+  organizationId: string;
+  canManage: boolean;
+  application: OrgData["sponsorshipApplication"];
+  onSubmitted: () => void;
+}) {
+  const isPending = application?.status === "pending";
+
+  return (
+    <div className="rounded-md border border-teal-200 bg-teal-50 p-4 flex items-start gap-3 dark:border-teal-900/40 dark:bg-teal-950/20">
+      <MdStar className="size-5 text-teal-500 shrink-0 mt-0.5" />
+      {isPending ? (
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-primary">
+            Sponsorship application received
+          </p>
+          <p className="text-sm text-secondary">
+            Thanks for applying
+            {application?.submittedAt
+              ? ` on ${formatDate(new Date(application.submittedAt))}`
+              : ""}
+            . We'll review it and get back to you by email.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-primary">
+              Your church may be eligible for a free Cloud plan
+            </p>
+            <p className="text-sm text-secondary">
+              Small churches get the full Cloud plan free through our
+              sponsorship programme, storage and AI credits included.{" "}
+              <a
+                href="https://theopenpresenter.com/church/sponsorship"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:no-underline font-medium text-teal-700 dark:text-teal-300"
+              >
+                Learn more
+              </a>
+              .
+            </p>
+          </div>
+          {canManage ? (
+            <OverlayToggle
+              toggler={({ onToggle }) => (
+                <Button size="sm" variant="success" onClick={onToggle}>
+                  Apply for sponsorship
+                </Button>
+              )}
+            >
+              <SponsorshipApplicationModal
+                organizationId={organizationId}
+                onSubmitted={onSubmitted}
+              />
+            </OverlayToggle>
+          ) : (
+            <p className="text-xs text-tertiary">
+              Ask your organization owner or billing contact to apply.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
