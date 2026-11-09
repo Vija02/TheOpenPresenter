@@ -7,6 +7,7 @@
     "setup:env": "node ./scripts/setup_env.js",
     "setup:db": "node ./scripts/setup_db.js",
     "lint": "turbo lint",
+    "check:media": "node ./scripts/check-media-size.mjs",
     "test": "node scripts/test.js",
     "test:watch": "node scripts/test.js --watch",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
