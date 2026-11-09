@@ -10,6 +10,7 @@ import {
   toCssText,
 } from "./annotation";
 import { getFontGeneration } from "./fontStatus";
+import { splitAtBreaks } from "./lines";
 
 export type MeasureSpec = {
   /** Markup mirroring what will actually render, so wrapping matches. */
@@ -62,7 +63,7 @@ export const spansToHtml = (
       const text = escapeHtml(s.text);
       if (!role) return text;
 
-      const css = [
+      const inner = [
         role.fontScale !== undefined ? `font-size:${role.fontScale}em` : "",
         role.verticalAlign !== undefined
           ? `vertical-align:${role.verticalAlign}`
@@ -70,14 +71,30 @@ export const spansToHtml = (
         role.fontWeight !== undefined ? `font-weight:${role.fontWeight}` : "",
         role.fontStyle !== undefined ? `font-style:${role.fontStyle}` : "",
         role.fontFamily !== undefined ? `font-family:${role.fontFamily}` : "",
+      ].filter(Boolean);
+      // Only on the run that ends the span, as in `renderStyledLines`
+      const margin =
         role.marginAfter !== undefined
-          ? `margin-right:${role.marginAfter}em`
-          : "",
-      ]
-        .filter(Boolean)
-        .join(";");
+          ? `margin-inline-end:${role.marginAfter}em`
+          : "";
+      const wrap = (run: string, css: string) =>
+        css ? `<span style="${css}">${run}</span>` : run;
 
-      return css ? `<span style="${css}">${text}</span>` : text;
+      if (!s.text.includes("\n")) {
+        return wrap(text, [...inner, margin].filter(Boolean).join(";"));
+      }
+      return splitAtBreaks(text)
+        .map((piece) =>
+          piece === "\n"
+            ? piece
+            : wrap(
+                piece.text,
+                [...inner, piece.isLast ? margin : ""]
+                  .filter(Boolean)
+                  .join(";"),
+              ),
+        )
+        .join("");
     })
     .join("");
 

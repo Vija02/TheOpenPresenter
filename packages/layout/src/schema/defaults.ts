@@ -53,6 +53,7 @@ export const defaultTextStyle: TextStyle = {
   shadows: [],
   outline: null,
   textTransform: "none",
+  direction: "auto",
   padding: 0,
   paddingIsLinked: true,
   paddingTop: 0,
