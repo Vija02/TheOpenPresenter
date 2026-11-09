@@ -1,0 +1,352 @@
+---
+import { Image } from "astro:assets";
+import DefaultLayout from "../../layouts/DefaultLayout.astro";
+import PageIllustration from "../../components/PageIllustration.astro";
+import FeatureClip from "../../components/feature/FeatureClip.astro";
+import FeatureFrame from "../../components/feature/FeatureFrame.astro";
+import FeatureList from "../../components/feature/FeatureList.astro";
+import FeatureRow from "../../components/feature/FeatureRow.astro";
+import SignageFaq from "../../components/signage/SignageFaq.astro";
+import CtaSignup from "../../components/CtaSignup.astro";
+import planningCenter from "../../assets/logos/planningcenter.svg?raw";
+import churchSuite from "../../assets/logos/churchsuite.svg?raw";
+import arrange from "../../assets/images/features/lyrics/arrange.jpg";
+import heroTablet from "../../assets/images/features/lyrics/hero-tablet.jpg";
+import worship from "../../assets/images/signage/main-room-worship.jpg";
+
+const CLIPS = "/videos/features/lyrics";
+
+const setlist = [
+  { title: "Come Thou Fount", key: "G" },
+  { title: "The Heart of Worship", key: "D", songbook: true },
+  { title: "Be Thou My Vision", key: "D" },
+];
+
+const faqs = [
+  {
+    q: "Do chords show on the big screen?",
+    a: "No. Chords are for the people on stage. The projected slides only ever show the words.",
+  },
+  {
+    q: "Can each musician use their own tablet?",
+    a: "Yes. Open the project and press Musician view. Text size, key and dark mode are saved on that device, so the bassist's settings don't change the keys player's.",
+  },
+  {
+    q: "What chord format do I type?",
+    a: "ChordPro, with chords in square brackets inside the line, like [G]Amazing [C]grace. Chords on their own line above the words work too: start that line with a dot.",
+  },
+  {
+    q: "Does it work with CCLI SongSelect?",
+    a: "Not yet. There's no SongSelect import or CCLI reporting. Import from Planning Center, ChurchSuite or MyWorshipList, or paste the lyrics in.",
+  },
+  {
+    q: "Can I take my songs elsewhere?",
+    a: "Yes. Export saves every song in the set as an OpenSong file.",
+  },
+];
+---
+
+<DefaultLayout
+  title="Worship Lyrics and Chord Charts for Church | TheOpenPresenter"
+  description="Import this week's setlist from Planning Center, ChurchSuite or MyWorshipList. Lyrics on the screen, the next line for the singers, and chords in any key for the band, all following the same slide."
+  demoWidget={false}
+>
+  <div class="relative max-w-6xl mx-auto h-0 pointer-events-none -z-1" aria-hidden="true">
+    <PageIllustration />
+  </div>
+
+  <!-- Hero -->
+  <section>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="pt-32 pb-12 md:pb-20">
+        <div class="max-w-3xl mx-auto text-center">
+          <h1
+            class="h1 lg:text-5xl mb-4 font-red-hat-display font-black leading-tight"
+            data-aos="fade-down"
+            data-aos-delay="50"
+          >
+            Lyrics anyone on the rota
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-accent-500">can run</span>
+          </h1>
+          <p class="text-lg lg:text-xl text-gray-700 dark:text-gray-300 leading-relaxed mb-8" data-aos="fade-down" data-aos-delay="100">
+            Import the setlist before Sunday and the slides are ready. On the
+            day, whoever's on the rota just taps the next one on their phone.
+          </p>
+          <div class="flex flex-col sm:flex-row justify-center gap-3" data-aos="fade-down" data-aos-delay="150">
+            <a class="btn text-on-brand bg-brand-500 hover:bg-brand-400" href="/register">Start free</a>
+            <a
+              class="btn text-brand-500 bg-white hover:bg-gray-50 border border-brand-500 dark:bg-transparent dark:hover:bg-gray-800"
+              href="#sunday"
+            >
+              See how it works
+            </a>
+          </div>
+        </div>
+
+        <!-- The chorus live on the main screen, the stage display and the band's tablet -->
+        <div
+          class="relative max-w-5xl mx-auto mt-14 md:mt-16 pb-[9%]"
+          role="img"
+          aria-label="The chorus of The Heart of Worship, live at once on the main screen over a motion background, on the stage display with the next lines in yellow, and highlighted in the chord chart on the band's tablet"
+          data-aos="fade-up"
+          data-aos-delay="200"
+        >
+          <!-- Main screen -->
+          <div class="relative w-[70%] ml-[6%] aspect-video rounded-lg overflow-hidden shadow-2xl ring-1 ring-black/20 bg-gray-900">
+            <video
+              data-feature-clip
+              class="absolute inset-0 w-full h-full object-cover"
+              poster="/videos/home/how-bg.jpg"
+              muted
+              loop
+              playsinline
+              preload="none"
+              aria-hidden="true"
+            >
+              <source src="/videos/home/how-bg.mp4" type="video/mp4" />
+            </video>
+            <div class="absolute inset-0 grid place-items-center text-center text-white font-bold leading-snug text-[clamp(0.7rem,2.3vw,1.6rem)] [text-shadow:0_2px_10px_rgba(0,0,0,.6)]">
+              <p>I'm coming back to the heart of worship<br />And it's all about You<br />It's all about You, Jesus</p>
+            </div>
+            <span class="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 flex items-center gap-1.5 whitespace-nowrap rounded bg-white/95 dark:bg-gray-900/90 ring-1 ring-gray-200 dark:ring-gray-700 shadow px-2 py-1 text-[11px] sm:text-xs font-semibold text-gray-800 dark:text-gray-100"><span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>Main screen</span>
+          </div>
+          <!-- Band's tablet: the real Musician view -->
+          <div class="absolute right-0 top-[3%] w-[26%] rounded-[clamp(0.6rem,1.6vw,1.4rem)] bg-gray-900 p-[0.9%] shadow-2xl ring-1 ring-white/10 rotate-2">
+            <Image
+              src={heroTablet}
+              widths={[300, 600]}
+              sizes="(min-width: 1024px) 270px, 26vw"
+              alt=""
+              class="w-full h-auto rounded-[clamp(0.4rem,1.1vw,1rem)]"
+              loading="eager"
+            />
+            <span class="absolute right-2 -top-3 z-10 flex items-center gap-1.5 whitespace-nowrap rounded bg-white/95 dark:bg-gray-900/90 ring-1 ring-gray-200 dark:ring-gray-700 shadow px-2 py-1 text-[11px] sm:text-xs font-semibold text-gray-800 dark:text-gray-100"><span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>Band</span>
+          </div>
+          <!-- Stage display: live, then next in yellow -->
+          <div class="absolute left-0 bottom-0 w-[32%] rounded-md bg-gray-900 p-[0.7%] shadow-2xl ring-1 ring-white/10 -rotate-1">
+            <div class="aspect-video rounded bg-black text-center font-bold leading-tight px-[5%] flex flex-col justify-center gap-[7%] text-[clamp(0.38rem,1.05vw,0.75rem)]">
+              <p class="text-white">I'm coming back to the heart of worship<br />And it's all about You<br />It's all about You, Jesus</p>
+              <p class="text-[#FACC15]">King of endless worth<br />No one could express</p>
+            </div>
+            <span class="absolute left-2 -top-3 z-10 flex items-center gap-1.5 whitespace-nowrap rounded bg-white/95 dark:bg-gray-900/90 ring-1 ring-gray-200 dark:ring-gray-700 shadow px-2 py-1 text-[11px] sm:text-xs font-semibold text-gray-800 dark:text-gray-100"><span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>Stage display</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <FeatureRow id="sunday" eyebrow="On Sunday" title="Control it from your phone">
+    <p>
+      Open the project on any phone and tap a slide to put it on the screen.
+      The songs are already split into slides, so there's nothing to type or
+      set up on the day. If the leader goes back to the chorus, tap the
+      chorus.
+    </p>
+    <FeatureList
+      items={[
+        "Nothing to install, it runs in the browser",
+        "Clear or Black the screen with one tap",
+        "Someone else can prepare it all from home",
+      ]}
+    />
+    <Fragment slot="media">
+      <FeatureClip
+        src={`${CLIPS}/phone`}
+        label="TheOpenPresenter on a phone, tapping through The Heart of Worship: verse 1, then the next part of the verse, then the chorus"
+        width={540}
+        height={1168}
+        frame="phone"
+        class="max-w-[280px] mx-auto"
+      />
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureRow id="setlist" eyebrow="Saturday night" title="Import this week's setlist in one go" flip>
+    <p>
+      Your worship leader already planned the songs. Connect Planning Center,
+      ChurchSuite or MyWorshipList and import the whole setlist, chords
+      included. No retyping, no copy and paste.
+    </p>
+    <FeatureList
+      items={[
+        "Songs already in your songbook can come in with your edits",
+        "Or search for a single song and add it",
+        "Or paste lyrics from anywhere",
+      ]}
+    />
+    <Fragment slot="media">
+      <!-- Sources flowing into one setlist -->
+      <div class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_auto_1fr] gap-4 sm:gap-6 items-center max-w-xl mx-auto">
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-3 rounded-xl bg-white text-gray-900 shadow-lg ring-1 ring-black/5 px-4 py-3 font-semibold">
+            <span class="w-7 h-7 shrink-0 [&_svg]:w-full [&_svg]:h-full" set:html={planningCenter} />
+            Planning Center
+          </div>
+          <div class="flex items-center gap-3 rounded-xl bg-white text-gray-900 shadow-lg ring-1 ring-black/5 px-4 py-3 font-semibold">
+            <span class="w-7 h-7 shrink-0 [&_svg]:w-full [&_svg]:h-full" set:html={churchSuite} />
+            ChurchSuite
+          </div>
+          <div class="flex items-center gap-3 rounded-xl bg-white text-gray-900 shadow-lg ring-1 ring-black/5 px-4 py-3 font-semibold">
+            <span class="w-7 h-7 shrink-0 rounded-full bg-gray-900 text-white grid place-items-center" aria-hidden="true">
+              <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><path d="M12 1.5v8.8a2.4 2.4 0 1 1-1.2-2.1V4.3L6 5.4v6.4a2.4 2.4 0 1 1-1.2-2.1V3.4z" /></svg>
+            </span>
+            MyWorshipList
+          </div>
+        </div>
+        <svg class="hidden sm:block w-12 text-brand-500" viewBox="0 0 48 24" fill="none" aria-hidden="true">
+          <path d="M2 12h38" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="4 5" />
+          <path d="M36 5l9 7-9 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div class="col-span-2 sm:col-span-1 rounded-xl bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-200 dark:ring-gray-700 p-4">
+          <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">Sunday 9 March</div>
+          <ol class="space-y-2">
+            {
+              setlist.map((s, i) => (
+                <li class="flex items-center gap-3">
+                  <span class="w-6 h-6 rounded-full bg-brand-500/15 text-brand-600 dark:text-brand-400 text-xs font-bold grid place-items-center">{i + 1}</span>
+                  <span class="flex-1 font-semibold text-gray-800 dark:text-gray-100">
+                    {s.title}
+                    {s.songbook && <span class="block text-xs font-normal text-gray-500 dark:text-gray-400">From your songbook</span>}
+                  </span>
+                  <span class="text-xs font-bold rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5">{s.key}</span>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+      </div>
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureRow id="format" eyebrow="AI Format" title="Paste a mess, get slides">
+    <p>
+      Lyrics copied from a website come out as long run-on lines. Press AI
+      Format and it breaks them into lines that fit the screen, groups them
+      into slides by the song's own phrasing, and marks the verses and
+      chorus. It never changes a word.
+    </p>
+    <p>
+      Often you won't need to paste at all. Type a song's name to search your
+      songbook and an online library of worship songs, then pick it.
+    </p>
+    <p>
+      Prefer to do it yourself? Put a section name in brackets, and a dash
+      starts a new slide. The preview updates as you type.
+    </p>
+    <Fragment slot="media">
+      <FeatureClip
+        src={`${CLIPS}/ai`}
+        label="Pasting The Heart of Worship as long lines, then pressing AI Format: the lyrics are split into short lines and slides, with Verse 1 and Chorus marked, and the preview updates"
+        width={1200}
+        height={1194}
+        frame="card"
+        class="max-w-lg mx-auto"
+      />
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureRow id="band" eyebrow="Musician view" title="Chords for the band, following along" flip>
+    <p>
+      Put a tablet on the music stand and open Musician view. The chord chart
+      highlights whatever is on the screen right now, so nobody loses their
+      place when the leader jumps back to the chorus.
+    </p>
+    <FeatureList
+      items={[
+        "Capo or a different singer? Change the key on your own device only",
+        "See the next song and its key before you get there",
+        "Fit the whole song on one screen, or scroll with it",
+        "Turn chords off for the singers' lyric sheet",
+      ]}
+    />
+    <Fragment slot="media">
+      <FeatureClip
+        src={`${CLIPS}/musician`}
+        label="Musician view on a tablet: the highlighted lines move from Verse 1 to the chorus to Verse 2 as the slides change, then the key changes from D to E"
+        width={1180}
+        height={820}
+        frame="card"
+      />
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureRow id="screens" eyebrow="Every screen" title="Type it once, every screen gets its version">
+    <p>
+      The same slide goes to every screen in the look that suits it. Your
+      background on the main screen, the live line and what's next on the
+      stage display, and a lower third over the livestream.
+    </p>
+    <FeatureList
+      items={[
+        "Motion video, image or colour backgrounds",
+        "Give one song its own background or layout",
+        "Show a whole song on one screen for a reflective moment",
+      ]}
+    />
+    <Fragment slot="media">
+      <div class="grid grid-cols-2 gap-3 sm:gap-4" aria-label="The chorus of The Heart of Worship on three screens: the main screen, the stage display and the livestream" role="img">
+        <!-- Main screen -->
+        <figure class="col-span-2">
+          <div class="relative aspect-video rounded-lg overflow-hidden shadow-lg ring-1 ring-black/10 bg-black">
+            <video data-feature-clip class="absolute inset-0 w-full h-full object-cover" poster="/videos/home/how-bg.jpg" muted loop playsinline preload="none" aria-hidden="true">
+              <source src="/videos/home/how-bg.mp4" type="video/mp4" />
+            </video>
+            <div class="absolute inset-0 grid place-items-center text-center text-white font-bold leading-snug text-[clamp(0.8rem,2.6vw,1.6rem)] [text-shadow:0_2px_10px_rgba(0,0,0,.6)]">
+              <p>I'm coming back to the heart of worship<br />And it's all about You<br />It's all about You, Jesus</p>
+            </div>
+          </div>
+          <figcaption class="mt-2 text-sm font-semibold text-gray-600 dark:text-gray-400">Main screen</figcaption>
+        </figure>
+        <!-- Stage display: live, then next in yellow -->
+        <figure>
+          <div class="aspect-video rounded-lg overflow-hidden shadow-lg ring-1 ring-black/10 bg-black text-center font-bold leading-tight p-[4%] flex flex-col justify-center gap-[6%] text-[clamp(0.45rem,1.3vw,0.8rem)]">
+            <p class="text-white">I'm coming back to the heart of worship<br />And it's all about You<br />It's all about You, Jesus</p>
+            <p class="text-[#FACC15]">King of endless worth<br />No one could express</p>
+          </div>
+          <figcaption class="mt-2 text-sm font-semibold text-gray-600 dark:text-gray-400">Stage display</figcaption>
+        </figure>
+        <!-- Livestream: camera shot with a lower third -->
+        <figure>
+          <div class="relative aspect-video rounded-lg overflow-hidden shadow-lg ring-1 ring-black/10 bg-black">
+            <Image src={worship} widths={[320, 640]} sizes="(min-width: 768px) 280px, 45vw" alt="" class="absolute inset-0 w-full h-full object-cover" />
+            <div class="absolute inset-x-[6%] bottom-[8%] rounded bg-black/70 text-white text-center font-bold leading-tight py-[2%] text-[clamp(0.4rem,1.1vw,0.7rem)]">
+              I'm coming back to the heart of worship
+            </div>
+          </div>
+          <figcaption class="mt-2 text-sm font-semibold text-gray-600 dark:text-gray-400">Livestream</figcaption>
+        </figure>
+      </div>
+    </Fragment>
+  </FeatureRow>
+
+  <FeatureRow id="arrange" eyebrow="Arrangement" title="Sing it the way your church sings it" flip>
+    <p>
+      Set the order once: verse, chorus, verse, chorus, chorus. The slides
+      follow it, so the operator just presses next. And when the leader
+      repeats the chorus anyway, tap it and it's up.
+    </p>
+    <Fragment slot="media">
+      <FeatureFrame frame="card" class="max-w-xl mx-auto">
+        <Image
+          src={arrange}
+          widths={[600, 1200]}
+          sizes="(min-width: 768px) 576px, 100vw"
+          alt="Arranging The Heart of Worship: Verse 1, Chorus, Verse 2, Chorus, Chorus, with a preview of the slides beside it"
+          class="w-full h-auto"
+        />
+      </FeatureFrame>
+    </Fragment>
+  </FeatureRow>
+
+
+  <SignageFaq faqs={faqs} />
+  <CtaSignup
+    title="Get this Sunday's songs up"
+    highlight="Start free."
+    body="Import your setlist and hand the band a tablet. No card needed."
+  />
+</DefaultLayout>
+
+<script>
+  import "../../scripts/feature-clips";
+</script>
