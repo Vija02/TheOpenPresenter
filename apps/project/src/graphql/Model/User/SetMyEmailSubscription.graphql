@@ -1,0 +1,14 @@
+mutation SetMyEmailSubscription(
+  $category: EmailCategory!
+  $subscribed: Boolean!
+) {
+  setMyEmailSubscription(
+    input: { category: $category, subscribed: $subscribed }
+  ) {
+    userEmailPreference {
+      userId
+      category
+      subscribed
+    }
+  }
+}

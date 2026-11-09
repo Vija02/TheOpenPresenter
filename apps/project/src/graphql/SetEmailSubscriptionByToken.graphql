@@ -1,0 +1,11 @@
+mutation SetEmailSubscriptionByToken(
+  $token: String!
+  $category: EmailCategory!
+  $subscribed: Boolean!
+) {
+  setEmailSubscriptionByToken(
+    input: { token: $token, category: $category, subscribed: $subscribed }
+  ) {
+    success
+  }
+}

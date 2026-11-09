@@ -1,0 +1,10 @@
+fragment EmailPreferences_User on User {
+  id
+  userEmailPreferences {
+    nodes {
+      userId
+      category
+      subscribed
+    }
+  }
+}

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QCCXN0NQfxxn2k4JLwzfzrRLOUt57bmAIe4UDei5hCuSqhNgMQIzbFKHOAgfxV3
+\restrict tzKzDE2D7XjIo2h7OtevWF8KXmYtewxaLKJTxWbzOj94StKFpgnc6zDAw176IKe
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -175,6 +175,22 @@ CREATE TYPE app_public.cloud_sync_trigger AS ENUM (
     'cloud_media_change',
     'reconnect'
 );
+
+
+--
+-- Name: email_category; Type: TYPE; Schema: app_public; Owner: -
+--
+
+CREATE TYPE app_public.email_category AS ENUM (
+    'onboarding'
+);
+
+
+--
+-- Name: TYPE email_category; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TYPE app_public.email_category IS 'Kinds of optional email a user can unsubscribe from.';
 
 
 --
@@ -1330,6 +1346,21 @@ $$;
 
 
 --
+-- Name: set_email_subscription(uuid, app_public.email_category, boolean); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.set_email_subscription(p_user_id uuid, p_category app_public.email_category, p_subscribed boolean) RETURNS void
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  insert into app_public.user_email_preferences (user_id, category, subscribed)
+  values (p_user_id, p_category, p_subscribed)
+  on conflict (user_id, category) do update
+    set subscribed = excluded.subscribed;
+$$;
+
+
+--
 -- Name: tg__add_audit_job(); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
@@ -1855,6 +1886,22 @@ $$;
 --
 
 COMMENT ON FUNCTION app_private.tg_user_secrets__insert_with_user() IS 'Ensures that every user record has an associated user_secret record.';
+
+
+--
+-- Name: user_wants_email(uuid, app_public.email_category); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.user_wants_email(p_user_id uuid, p_category app_public.email_category) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select coalesce(
+    (select subscribed from app_public.user_email_preferences
+      where user_id = p_user_id and category = p_category),
+    true
+  );
+$$;
 
 
 --
@@ -3543,6 +3590,39 @@ COMMENT ON FUNCTION app_public.screen_login_metadata(p_org_slug text, p_screen_s
 
 
 --
+-- Name: set_email_subscription_by_token(text, app_public.email_category, boolean); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.set_email_subscription_by_token(token text, category app_public.email_category, subscribed boolean) RETURNS boolean
+    LANGUAGE plpgsql STRICT SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_user_id uuid;
+begin
+  select user_id into v_user_id
+    from app_private.user_secrets
+    where email_unsubscribe_token = token;
+
+  if v_user_id is null then
+    return false;
+  end if;
+
+  perform app_private.set_email_subscription(v_user_id, category, subscribed);
+  return true;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION set_email_subscription_by_token(token text, category app_public.email_category, subscribed boolean); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.set_email_subscription_by_token(token text, category app_public.email_category, subscribed boolean) IS '@resultFieldName success
+Subscribe or unsubscribe using the link from an email, without logging in.';
+
+
+--
 -- Name: set_existing_project_to_screen(uuid, uuid); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -3581,6 +3661,65 @@ begin
   return result;
 end;
 $$;
+
+
+--
+-- Name: user_email_preferences; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.user_email_preferences (
+    user_id uuid NOT NULL,
+    category app_public.email_category NOT NULL,
+    subscribed boolean NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE user_email_preferences; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.user_email_preferences IS 'Optional email categories a user has opted in or out of. A missing row means subscribed.';
+
+
+--
+-- Name: COLUMN user_email_preferences.subscribed; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.user_email_preferences.subscribed IS 'Whether the user wants to receive emails in this category.';
+
+
+--
+-- Name: set_my_email_subscription(app_public.email_category, boolean); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.set_my_email_subscription(category app_public.email_category, subscribed boolean) RETURNS app_public.user_email_preferences
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_user_id uuid := app_public.current_user_id();
+  v_result app_public.user_email_preferences;
+begin
+  if v_user_id is null then
+    raise exception 'You must log in to change your email preferences' using errcode = 'LOGIN';
+  end if;
+
+  perform app_private.set_email_subscription(v_user_id, category, subscribed);
+
+  select * into v_result from app_public.user_email_preferences p
+    where p.user_id = v_user_id and p.category = set_my_email_subscription.category;
+  return v_result;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION set_my_email_subscription(category app_public.email_category, subscribed boolean); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.set_my_email_subscription(category app_public.email_category, subscribed boolean) IS 'Subscribe or unsubscribe the current user from a category of optional email.';
 
 
 --
@@ -4256,7 +4395,8 @@ CREATE TABLE app_private.user_secrets (
     first_failed_reset_password_attempt timestamp with time zone,
     delete_account_token text,
     delete_account_token_generated timestamp with time zone,
-    password_reset_required boolean DEFAULT false NOT NULL
+    password_reset_required boolean DEFAULT false NOT NULL,
+    email_unsubscribe_token text DEFAULT encode(public.gen_random_bytes(18), 'hex'::text) NOT NULL
 );
 
 
@@ -5074,6 +5214,14 @@ ALTER TABLE ONLY app_public.user_authentications
 
 
 --
+-- Name: user_email_preferences user_email_preferences_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.user_email_preferences
+    ADD CONSTRAINT user_email_preferences_pkey PRIMARY KEY (user_id, category);
+
+
+--
 -- Name: user_emails user_emails_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -5215,6 +5363,13 @@ CREATE INDEX sponsorship_applications_organization_id_idx ON app_private.sponsor
 --
 
 CREATE INDEX sponsorship_applications_user_id_idx ON app_private.sponsorship_applications USING btree (user_id);
+
+
+--
+-- Name: user_secrets_email_unsubscribe_token_idx; Type: INDEX; Schema: app_private; Owner: -
+--
+
+CREATE UNIQUE INDEX user_secrets_email_unsubscribe_token_idx ON app_private.user_secrets USING btree (email_unsubscribe_token);
 
 
 --
@@ -5936,6 +6091,13 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.tags FOR EA
 --
 
 CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.user_authentications FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
+
+
+--
+-- Name: user_email_preferences _100_timestamps; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.user_email_preferences FOR EACH ROW EXECUTE FUNCTION app_private.tg__timestamps();
 
 
 --
@@ -6830,6 +6992,14 @@ ALTER TABLE ONLY app_public.user_authentications
 
 
 --
+-- Name: user_email_preferences user_email_preferences_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.user_email_preferences
+    ADD CONSTRAINT user_email_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES app_public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: user_emails user_emails_user_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -7478,6 +7648,13 @@ CREATE POLICY select_own ON app_public.user_authentications FOR SELECT USING ((u
 
 
 --
+-- Name: user_email_preferences select_own; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own ON app_public.user_email_preferences FOR SELECT USING ((user_id = app_public.current_user_id()));
+
+
+--
 -- Name: user_emails select_own; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -7660,6 +7837,12 @@ CREATE POLICY update_self ON app_public.users FOR UPDATE USING ((id = app_public
 --
 
 ALTER TABLE app_public.user_authentications ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: user_email_preferences; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.user_email_preferences ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: user_emails; Type: ROW SECURITY; Schema: app_public; Owner: -
@@ -7865,6 +8048,13 @@ REVOKE ALL ON FUNCTION app_private.reset_password(user_id uuid, reset_token text
 
 
 --
+-- Name: FUNCTION set_email_subscription(p_user_id uuid, p_category app_public.email_category, p_subscribed boolean); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.set_email_subscription(p_user_id uuid, p_category app_public.email_category, p_subscribed boolean) FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION tg__add_audit_job(); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -7988,6 +8178,13 @@ REVOKE ALL ON FUNCTION app_private.tg_user_secrets__clear_password_reset_require
 --
 
 REVOKE ALL ON FUNCTION app_private.tg_user_secrets__insert_with_user() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION user_wants_email(p_user_id uuid, p_category app_public.email_category); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.user_wants_email(p_user_id uuid, p_category app_public.email_category) FROM PUBLIC;
 
 
 --
@@ -8595,11 +8792,34 @@ GRANT ALL ON FUNCTION app_public.screen_login_metadata(p_org_slug text, p_screen
 
 
 --
+-- Name: FUNCTION set_email_subscription_by_token(token text, category app_public.email_category, subscribed boolean); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.set_email_subscription_by_token(token text, category app_public.email_category, subscribed boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.set_email_subscription_by_token(token text, category app_public.email_category, subscribed boolean) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION set_existing_project_to_screen(screen_id uuid, project_id uuid); Type: ACL; Schema: app_public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION app_public.set_existing_project_to_screen(screen_id uuid, project_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_public.set_existing_project_to_screen(screen_id uuid, project_id uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE user_email_preferences; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.user_email_preferences TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION set_my_email_subscription(category app_public.email_category, subscribed boolean); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.set_my_email_subscription(category app_public.email_category, subscribed boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.set_my_email_subscription(category app_public.email_category, subscribed boolean) TO theopenpresenter_visitor;
 
 
 --
@@ -9218,5 +9438,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QCCXN0NQfxxn2k4JLwzfzrRLOUt57bmAIe4UDei5hCuSqhNgMQIzbFKHOAgfxV3
+\unrestrict tzKzDE2D7XjIo2h7OtevWF8KXmYtewxaLKJTxWbzOj94StKFpgnc6zDAw176IKe
 
