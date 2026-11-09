@@ -243,6 +243,27 @@ describe("idle unassign sweep (return to standby)", () => {
         projectId,
       );
     }));
+
+  test("leaves a cloud-synced screen to the cloud's sweep", () =>
+    withOrg(async (client, orgId) => {
+      const projectId = await createProject(client, orgId);
+      const screenId = await createScreen(client, orgId, {
+        currentProjectId: projectId,
+      });
+      await setHeartbeat(client, screenId, { guestAgo: 3600, adminAgo: 3600 });
+      await client.query(
+        `insert into app_public.cloud_connections
+           (organization_id, host, session_cookie, session_cookie_expiry)
+         values ($1, 'https://cloud.example', 's', now() + interval '1 day')`,
+        [orgId],
+      );
+
+      await client.query(SWEEP_IDLE_UNASSIGN_SQL);
+
+      expect((await getScreen(client, screenId)).current_project_id).toBe(
+        projectId,
+      );
+    }));
 });
 
 describe("heartbeat seeding trigger", () => {
