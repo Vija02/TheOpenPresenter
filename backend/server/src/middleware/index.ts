@@ -11,6 +11,7 @@ import installDeviceHostHandler from "./installDeviceHostHandler";
 import installDeviceServerHandler from "./installDeviceServerHandler";
 import installDiagnostics from "./installDiagnostics";
 import installE2EServerCommand from "./installE2EServerCommand";
+import installEmailUnsubscribe from "./installEmailUnsubscribe";
 import installErrorHandler from "./installErrorHandler";
 import installFileUpload from "./installFileUpload";
 import installForceSSL from "./installForceSSL";
@@ -53,6 +54,7 @@ export {
   installDeviceServerHandler,
   installDiagnostics,
   installE2EServerCommand,
+  installEmailUnsubscribe,
   installErrorHandler,
   installFileUpload,
   installForceSSL,

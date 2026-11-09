@@ -162,6 +162,7 @@ export async function makeApp({
   await middleware.installMediaProxyHandler(app);
   await middleware.installFileUpload(app);
   await middleware.installStripe(app);
+  await middleware.installEmailUnsubscribe(app);
   await middleware.installProjectImportExport(app);
   await middleware.installTrpc(app);
   await middleware.installInitDemo(app);

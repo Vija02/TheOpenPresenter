@@ -38,6 +38,7 @@ import SettingsEmailsPage from "./pages/settings/emails";
 import SettingsProfilePage from "./pages/settings/profile";
 import SettingsSecurityPage from "./pages/settings/security";
 import SetupScreenPage from "./pages/setup";
+import UnsubscribePage from "./pages/unsubscribe";
 import VerifyPage from "./pages/verify";
 
 const OnboardingPage = lazy(() => import("./pages/onboarding"));
@@ -220,6 +221,9 @@ function App() {
         </Route>
         <Route path="/reset">
           <ResetPage />
+        </Route>
+        <Route path="/unsubscribe">
+          <UnsubscribePage />
         </Route>
         <Route path="/verify">
           <VerifyPage />

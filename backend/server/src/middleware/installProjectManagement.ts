@@ -23,6 +23,7 @@ const paths = [
   "/login",
   "/register",
   "/reset",
+  "/unsubscribe",
   "/verify",
 ];
 

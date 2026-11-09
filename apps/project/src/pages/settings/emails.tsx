@@ -1,12 +1,16 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayoutLoggedIn } from "@/components/SharedLayoutLoggedIn";
+import { emailCategoryInfo } from "@/lib/emailCategories";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  EmailCategory,
+  EmailPreferences_UserFragment,
   EmailsForm_UserEmailFragment,
   useAddEmailMutation,
   useDeleteEmailMutation,
   useMakeEmailPrimaryMutation,
   useResendEmailVerificationMutation,
+  useSetMyEmailSubscriptionMutation,
   useSettingsEmailsPageQuery,
 } from "@repo/graphql";
 import { extractError } from "@repo/lib";
@@ -16,8 +20,10 @@ import {
   ErrorAlert,
   Form,
   InputControl,
+  Label,
   LoadingFull,
   PopConfirm,
+  Switch,
 } from "@repo/ui";
 import React from "react";
 import { useCallback, useState } from "react";
@@ -213,11 +219,64 @@ const Settings_Emails = () => {
               setError={setFormError}
             />
           )}
+
+          <EmailPreferences user={user} />
         </div>
       )}
     </SharedLayoutLoggedIn>
   );
 };
+
+function EmailPreferences({ user }: { user: EmailPreferences_UserFragment }) {
+  const [{ fetching }, setMyEmailSubscription] =
+    useSetMyEmailSubscriptionMutation();
+
+  const isSubscribed = (category: EmailCategory) =>
+    user.userEmailPreferences.nodes.find((p) => p.category === category)
+      ?.subscribed ?? true;
+
+  return (
+    <div className="mt-10">
+      <h2 className="text-xl font-bold mb-2">Email Preferences</h2>
+      <p className="mb-4 text-secondary">
+        Choose which optional emails you get. We'll always send important emails
+        about your account.
+      </p>
+      <div className="stack-col items-stretch gap-3">
+        {Object.values(EmailCategory).map((category) => {
+          const { label, description } = emailCategoryInfo[category];
+          const id = `email-preference-${category.toLowerCase()}`;
+          return (
+            <div
+              key={category}
+              className="stack-row items-center justify-between gap-4 border p-3"
+            >
+              <Label htmlFor={id} className="stack-col items-start gap-0.5">
+                <span className="font-medium">{label}</span>
+                <span className="text-tertiary text-sm font-normal">
+                  {description}
+                </span>
+              </Label>
+              <Switch
+                id={id}
+                data-testid={`settingsemails-switch-${category.toLowerCase()}`}
+                checked={isSubscribed(category)}
+                disabled={fetching}
+                onCheckedChange={async (subscribed) => {
+                  try {
+                    await setMyEmailSubscription({ category, subscribed });
+                  } catch {
+                    toast.error("Couldn't save. Please try again.");
+                  }
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const formSchema = z.object({
   email: z

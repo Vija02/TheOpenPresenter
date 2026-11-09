@@ -6,5 +6,6 @@ query SettingsEmailsPage {
     id
     isVerified
     ...EmailsForm_User
+    ...EmailPreferences_User
   }
 }

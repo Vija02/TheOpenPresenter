@@ -24,6 +24,7 @@ export interface SendEmailPayload {
     to: string | string[];
     replyTo?: string;
     subject: string;
+    headers?: Record<string, string>;
   };
   template?: string;
   html?: string;
