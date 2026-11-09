@@ -204,7 +204,9 @@ test.describe("Layout editor", () => {
     // Radix renders its items as role="radio" in a radiogroup. Matching the
     // aria-label sidesteps the primitive's role choice entirely.
     await dialog.getByLabel("Align left").click();
-    await expect.poll(() => textStyle(page, BODY, "text-align")).toBe("left");
+    // Text direction defaults to auto, where "left" means the start of each
+    // line (so Arabic sits on the right), hence the logical value.
+    await expect.poll(() => textStyle(page, BODY, "text-align")).toBe("start");
   });
 
   test("hover outlines the click target, and clicking off the slide deselects", async ({
@@ -960,9 +962,11 @@ test.describe("Adding elements", () => {
 
     // --- restyle ------------------------------------------------------------
     await dialog.getByLabel("Align left").click();
+    // Text direction defaults to auto, where "left" means the start of each
+    // line (so Arabic sits on the right), hence the logical value.
     await expect
       .poll(() => textStyle(page, '[data-lay-id="text-1"]', "text-align"))
-      .toBe("left");
+      .toBe("start");
 
     // --- inline edit --------------------------------------------------------
     // The caret lands at the end of the existing text, so this appends.
@@ -1155,9 +1159,11 @@ test.describe("Editor shortcuts", () => {
     await expect(source).toBeVisible();
 
     await dialog.getByLabel("Align left").click();
+    // Text direction defaults to auto, where "left" means the start of each
+    // line (so Arabic sits on the right), hence the logical value.
     await expect
       .poll(() => textStyle(page, '[data-lay-id="text-1"]', "text-align"))
-      .toBe("left");
+      .toBe("start");
 
     await page.keyboard.press("Control+c");
     await page.keyboard.press("Control+v");
@@ -1172,7 +1178,7 @@ test.describe("Editor shortcuts", () => {
     // The payload carries the whole element, not just its geometry.
     await expect
       .poll(() => textStyle(page, '[data-lay-id="text-2"]', "text-align"))
-      .toBe("left");
+      .toBe("start");
 
     // Cascaded rather than stacked exactly, so the copy is visibly its own
     // element rather than hiding under the original.
@@ -1437,6 +1443,13 @@ test.describe("Layout editor on a phone", () => {
 
     const stage = (await dialog.locator(".lay--editor").boundingBox())!;
     const DELTA_PX = 40;
+
+    // dragBy grabs the centre of the box as measured now. Until the new height
+    // has rendered the element is still ~17px tall, so that centre sits on a
+    // resize handle and the drag resizes instead of moving.
+    await expect
+      .poll(async () => (await reference.boundingBox())?.height ?? 0)
+      .toBeGreaterThan(30);
     const expected = (DELTA_PX / stage.width) * 100;
 
     // The point of running this at phone width: a rect is stored as a
