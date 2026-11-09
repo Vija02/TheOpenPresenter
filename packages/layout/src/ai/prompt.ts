@@ -9,6 +9,7 @@ import { shapeKinds } from "../schema/element";
 import { imageFitModes } from "../schema/paint";
 import {
   horizontalAlignments,
+  textDirections,
   textFitModes,
   textTransforms,
   verticalAlignments,
@@ -52,6 +53,7 @@ ENUMS
 - style "valign": ${list(verticalAlignments)}
 - style "fontStyle": "normal" | "italic"
 - style "textTransform": ${list(textTransforms)} — casing applied at render time. Use this to uppercase a title rather than rewriting "content", which would destroy the author's original text.
+- style "direction": ${list(textDirections)} — reading direction. "auto" (the default) follows the text, paragraph by paragraph, and is right for almost everything, including Arabic or Hebrew text. Force "rtl" or "ltr" only when asked. Under "auto", align "left" means the start of each line and "right" the end, so left-aligned Arabic sits on the right; under a forced direction they are physical.
 - image and video fill "fit": ${list(imageFitModes)}
 - shape "kind": ${list(shapeKinds)}
 - document "fitMode": ${list(layoutFitModes)}

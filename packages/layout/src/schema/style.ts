@@ -42,6 +42,10 @@ export const textTransforms = [
 ] as const;
 export type TextTransform = (typeof textTransforms)[number];
 
+/** Reading direction for RTL languages */
+export const textDirections = ["auto", "ltr", "rtl"] as const;
+export type TextDirection = (typeof textDirections)[number];
+
 /** Scalars are design units. Partial styles exist only as `TextStylePatch`. */
 export const textStyleValidator = z.object({
   fontFamily: z.string(),
@@ -59,6 +63,7 @@ export const textStyleValidator = z.object({
   /** Glyph outline */
   outline: strokeValidator.nullable(),
   textTransform: z.enum(textTransforms).default("none"),
+  direction: z.enum(textDirections).default("auto"),
   /** Inset between the element's box and its text, in design units. */
   padding: z.number().default(0),
   /** When true, `padding` applies to all four sides. */
@@ -117,11 +122,11 @@ export const resolveColumns = (
 
 /**
  * Omits what cannot apply to an inline span: `fontSize` is absolute design
- * units where a span needs `fontScale` off the resolved size, and `align`
- * /`valign` are block level.
+ * units where a span needs `fontScale` off the resolved size, and `align`,
+ * `valign` and `direction` are block level.
  */
 export const spanRoleStyleValidator = textStylePatchValidator
-  .omit({ fontSize: true, align: true, valign: true })
+  .omit({ fontSize: true, align: true, valign: true, direction: true })
   .extend({
     /** Multiplier of the element's resolved font size. */
     fontScale: z.number().optional(),

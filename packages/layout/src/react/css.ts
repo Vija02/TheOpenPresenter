@@ -166,6 +166,14 @@ export const paddingToCss = (
   };
 };
 
+const alignToCss = (
+  style: Pick<TextStyle, "align" | "direction">,
+): CSSProperties["textAlign"] => {
+  const forced = style.direction === "ltr" || style.direction === "rtl";
+  if (forced || style.align === "center") return style.align;
+  return style.align === "left" ? "start" : "end";
+};
+
 const alignToFlex = (
   valign: TextStyle["valign"],
 ): CSSProperties["justifyContent"] =>
@@ -180,7 +188,7 @@ export const textStyleToCss = (
   fontWeight: style.fontWeight,
   fontStyle: style.fontStyle,
   color: style.color,
-  textAlign: style.align,
+  textAlign: alignToCss(style),
   lineHeight: style.lineHeight,
   letterSpacing:
     style.letterSpacing !== 0 ? `${toPx(style.letterSpacing, m)}px` : undefined,

@@ -1,4 +1,10 @@
-import { CSSProperties, useMemo, useSyncExternalStore } from "react";
+import {
+  CSSProperties,
+  Fragment,
+  ReactNode,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 
 import { StageMetrics, rectToPx, toPx } from "../../geometry/scale";
 import {
@@ -27,11 +33,13 @@ import {
   fitColumns,
   startsBlock,
 } from "../text/columns";
+import { paragraphBidi, resolveTextDirection } from "../text/direction";
 import {
   getFontGeneration,
   getServerFontGeneration,
   subscribeToFonts,
 } from "../text/fontStatus";
+import { splitAtBreaks } from "../text/lines";
 import { fitFontSize, spansToHtml } from "../text/measure";
 import { FillLayer } from "./FillLayer";
 
@@ -45,9 +53,31 @@ const spanStyle = (role: SpanRoleStyle | undefined): CSSProperties => {
     fontFamily: role.fontFamily,
     color: role.color,
     opacity: role.opacity,
-    marginRight:
+    marginInlineEnd:
       role.marginAfter !== undefined ? `${role.marginAfter}em` : undefined,
   };
+};
+
+/** A styled span with line breaks, split by `splitAtBreaks`. */
+const renderStyledLines = (
+  text: string,
+  style: CSSProperties,
+  key: number,
+): ReactNode => {
+  const { marginInlineEnd, ...inner } = style;
+  return (
+    <Fragment key={key}>
+      {splitAtBreaks(text).map((piece, i) =>
+        piece === "\n" ? (
+          <Fragment key={i}>{"\n"}</Fragment>
+        ) : (
+          <span key={i} style={piece.isLast ? style : inner}>
+            {piece.text}
+          </span>
+        ),
+      )}
+    </Fragment>
+  );
 };
 
 const renderSpans = (
@@ -55,6 +85,13 @@ const renderSpans = (
   roles: Record<string, SpanRoleStyle> | null,
 ) =>
   spans.map((s, i) => {
+    if (!s.above && s.text.includes("\n")) {
+      return renderStyledLines(
+        s.text,
+        s.role !== null ? spanStyle(roles?.[s.role]) : {},
+        i,
+      );
+    }
     const text = (
       <span
         key={s.above ? undefined : i}
@@ -102,6 +139,12 @@ export const TextElementView = ({
   );
 
   const noWrap = element.fit === "fitNoWrap";
+
+  const direction = useMemo(
+    () => resolveTextDirection(style.direction, spans),
+    [style.direction, spans],
+  );
+  const bidi = paragraphBidi(style.direction);
 
   const columnGap = toPx(resolveColumns(style).columnGap, metrics);
 
@@ -185,6 +228,7 @@ export const TextElementView = ({
         isolation: "isolate",
         ...appearanceToCss(element, metrics),
         ...textStyleToCss(style, metrics),
+        direction,
         fontSize,
       }}
     >
@@ -213,11 +257,12 @@ export const TextElementView = ({
               {column.map((ref, i) => (
                 <div
                   key={i}
-                  style={
-                    startsBlock(column, i)
+                  style={{
+                    ...bidi,
+                    ...(startsBlock(column, i)
                       ? blockStartStyle(style.lineHeight)
-                      : undefined
-                  }
+                      : undefined),
+                  }}
                 >
                   {renderSpans(
                     columns.blocks[ref.block]![ref.line]!,
@@ -237,6 +282,7 @@ export const TextElementView = ({
             overflowWrap: "break-word",
             position: "relative",
             zIndex: 1,
+            ...bidi,
           }}
         >
           {renderSpans(spans, spanRoles)}

@@ -28,7 +28,7 @@ export const annotationStyle = (
   // Over the start of its text, whatever the element's alignment
   textAlign: "start",
   textTransform: "none",
-  paddingRight: "0.5em",
+  paddingInlineEnd: "0.5em",
 });
 
 export const annotatedTextStyle: CSSProperties = {
