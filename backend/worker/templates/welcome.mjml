@@ -1,0 +1,77 @@
+<mjml>
+  <mj-head>
+    <mj-include path="./common/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#FDFDFD">
+    <mj-include path="./common/header.mjml" />
+
+    <mj-section background-color="#ffffff" padding-top="20px">
+      <mj-column width="100%">
+        <mj-text
+          align="center"
+          color="#444"
+          font-size="32px"
+          font-family="Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+          ><strong>Welcome, [[name]]!</strong></mj-text
+        >
+        <mj-text
+          color="#444"
+          font-size="16px"
+          line-height="1.5"
+          font-family="Inter, Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+          >Thanks for signing up! Your account is all set. Here are a few easy
+          ways to get started.</mj-text
+        >
+        <mj-text
+          color="#444"
+          font-size="16px"
+          line-height="1.5"
+          font-family="Inter, Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+        >
+          <p style="margin: 0 0 12px">
+            <strong>1. Bring what you already have.</strong> Drag in a
+            PowerPoint, or import from Google Slides or Canva. There's nothing
+            to rebuild.
+          </p>
+          <p style="margin: 0 0 12px">
+            <strong>2. Use your phone as the remote.</strong> Open your project
+            on your phone and change slides from anywhere in the room.
+          </p>
+          <p style="margin: 0">
+            <strong>3. Start somewhere low-pressure.</strong>
+            [[lowPressureText]]
+          </p>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#ffffff" padding="10px 0 20px">
+      <mj-column width="100%">
+        <mj-button
+          background-color="#38A169"
+          color="#FFF"
+          font-weight="bold"
+          border="none"
+          border-radius="5px"
+          href="[[openLink]]"
+          font-family="Inter, Helvetica"
+          padding="0 30px 15px"
+          >Open [[projectName]]</mj-button
+        >
+        <mj-text
+          align="center"
+          color="#444"
+          font-size="14px"
+          font-family="Inter, Lato, Helvetica, Arial, sans-serif"
+          padding="5px 30px 0"
+          >Got a question? Just reply to this email.</mj-text
+        >
+      </mj-column>
+    </mj-section>
+
+    <mj-include path="./common/footer_optional.mjml" />
+  </mj-body>
+</mjml>

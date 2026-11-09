@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tzKzDE2D7XjIo2h7OtevWF8KXmYtewxaLKJTxWbzOj94StKFpgnc6zDAw176IKe
+\restrict W2BoB3fFTqQ765hzg4cm51C9CvcXhuu9Ec029xFdHQe75ZtvuX6XRICgDyOjfbB
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -1886,6 +1886,26 @@ $$;
 --
 
 COMMENT ON FUNCTION app_private.tg_user_secrets__insert_with_user() IS 'Ensures that every user record has an associated user_secret record.';
+
+
+--
+-- Name: tg_users__queue_welcome_email(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_users__queue_welcome_email() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  perform graphile_worker.add_job(
+    'user__send_welcome_email',
+    json_build_object('id', NEW.id),
+    run_at := now() + interval '30 minutes',
+    job_key := 'user__send_welcome_email:' || NEW.id
+  );
+  return NEW;
+end;
+$$;
 
 
 --
@@ -4380,6 +4400,24 @@ COMMENT ON COLUMN app_private.user_email_secrets.password_reset_email_sent_at IS
 
 
 --
+-- Name: user_lifecycle_emails; Type: TABLE; Schema: app_private; Owner: -
+--
+
+CREATE TABLE app_private.user_lifecycle_emails (
+    user_id uuid NOT NULL,
+    email_key text NOT NULL,
+    sent_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE user_lifecycle_emails; Type: COMMENT; Schema: app_private; Owner: -
+--
+
+COMMENT ON TABLE app_private.user_lifecycle_emails IS 'Lifecycle emails (e.g. welcome) already sent to each user.';
+
+
+--
 -- Name: user_secrets; Type: TABLE; Schema: app_private; Owner: -
 --
 
@@ -4939,6 +4977,14 @@ ALTER TABLE ONLY app_private.user_authentication_secrets
 
 ALTER TABLE ONLY app_private.user_email_secrets
     ADD CONSTRAINT user_email_secrets_pkey PRIMARY KEY (user_email_id);
+
+
+--
+-- Name: user_lifecycle_emails user_lifecycle_emails_pkey; Type: CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.user_lifecycle_emails
+    ADD CONSTRAINT user_lifecycle_emails_pkey PRIMARY KEY (user_id, email_key);
 
 
 --
@@ -6409,6 +6455,13 @@ CREATE TRIGGER _900_cloud_sync_hint_update AFTER UPDATE ON app_public.projects F
 
 
 --
+-- Name: users _900_queue_welcome_email; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_queue_welcome_email AFTER UPDATE OF is_verified ON app_public.users FOR EACH ROW WHEN (((old.is_verified IS FALSE) AND (new.is_verified IS TRUE))) EXECUTE FUNCTION app_private.tg_users__queue_welcome_email();
+
+
+--
 -- Name: user_emails _900_send_verification_email; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -6541,6 +6594,14 @@ ALTER TABLE ONLY app_private.user_authentication_secrets
 
 ALTER TABLE ONLY app_private.user_email_secrets
     ADD CONSTRAINT user_email_secrets_user_email_id_fkey FOREIGN KEY (user_email_id) REFERENCES app_public.user_emails(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_lifecycle_emails user_lifecycle_emails_user_id_fkey; Type: FK CONSTRAINT; Schema: app_private; Owner: -
+--
+
+ALTER TABLE ONLY app_private.user_lifecycle_emails
+    ADD CONSTRAINT user_lifecycle_emails_user_id_fkey FOREIGN KEY (user_id) REFERENCES app_public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -8181,6 +8242,13 @@ REVOKE ALL ON FUNCTION app_private.tg_user_secrets__insert_with_user() FROM PUBL
 
 
 --
+-- Name: FUNCTION tg_users__queue_welcome_email(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_users__queue_welcome_email() FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION user_wants_email(p_user_id uuid, p_category app_public.email_category); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -9438,5 +9506,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tzKzDE2D7XjIo2h7OtevWF8KXmYtewxaLKJTxWbzOj94StKFpgnc6zDAw176IKe
+\unrestrict W2BoB3fFTqQ765hzg4cm51C9CvcXhuu9Ec029xFdHQe75ZtvuX6XRICgDyOjfbB
 

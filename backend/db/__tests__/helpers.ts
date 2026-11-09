@@ -161,8 +161,14 @@ export const pruneHashes = (row: { [key: string]: unknown }) =>
     k.endsWith("_hash") && typeof v === "string" && v[0] === "$" ? "[hash]" : v,
   );
 
+/** Random secrets (e.g. `email_unsubscribe_token`) differ on every run */
+export const pruneTokens = (row: { [key: string]: unknown }) =>
+  mapValues(row, (v, k) =>
+    k.endsWith("_token") && typeof v === "string" ? "[token]" : v,
+  );
+
 export const snapshotSafe = (obj: { [key: string]: unknown }) =>
-  pruneHashes(pruneUUIDs(pruneIds(pruneDates(obj))));
+  pruneTokens(pruneHashes(pruneUUIDs(pruneIds(pruneDates(obj)))));
 
 export const deepSnapshotSafe = (obj: { [key: string]: unknown }): any => {
   if (Array.isArray(obj)) {
