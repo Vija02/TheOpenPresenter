@@ -23,9 +23,8 @@
           padding="10px 30px"
         >
           Hi [[applicantName]],<br /><br />
-          Good news! [[organizationName]] now has the full Cloud plan for free
-          through our small-church sponsorship, storage and AI credits
-          included. There's nothing else you need to do. It's already active.
+          Good news! [[organizationName]] now has the full Cloud plan for free,
+          storage and AI credits included. It's already active.
         </mj-text>
         <mj-text
           color="#444"
@@ -34,7 +33,61 @@
           font-family="Inter,Lato, Helvetica, Arial, sans-serif"
           padding="10px 30px"
         >
-          If you have any questions, just reply to this email.
+          <strong>What's included</strong>
+          <ul style="margin: 8px 0 0; padding-left: 20px">
+            <li>The Cloud plan, free for 12 months</li>
+            <li>
+              A short check-in after 12 months. If you're still under 50 people
+              and using it, we'll renew.
+            </li>
+            <li>
+              If you grow beyond 50, we'll talk together about what's fair. You
+              won't be cut off suddenly.
+            </li>
+          </ul>
+        </mj-text>
+        <mj-text
+          color="#444"
+          font-size="16px"
+          line-height="24px"
+          font-family="Inter,Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+        >
+          <strong>What we'd ask in return</strong>
+          <ul style="margin: 8px 0 0; padding-left: 20px">
+            <li>A short call after 1-2 months to hear how it's going</li>
+            <li>Let us know when you hit problems</li>
+            <li>
+              Permission to mention your church on the TheOpenPresenter website
+            </li>
+          </ul>
+        </mj-text>
+        <mj-text
+          color="#444"
+          font-size="16px"
+          line-height="24px"
+          font-family="Inter,Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+        >
+          <strong>Only if you're happy to</strong>
+          <span style="color: #888">(optional)</span>
+          <ul style="margin: 8px 0 0; padding-left: 20px">
+            <li>
+              A sentence or two about your experience later on. We can write it
+              for you to approve
+            </li>
+            <li>A photo of TheOpenPresenter in use that we could share</li>
+            <li>Mentioning it to other small churches you know</li>
+          </ul>
+        </mj-text>
+        <mj-text
+          color="#444"
+          font-size="16px"
+          line-height="24px"
+          font-family="Inter,Lato, Helvetica, Arial, sans-serif"
+          padding="10px 30px"
+        >
+          Thank you for reaching out. We're glad to support what you're doing.
         </mj-text>
       </mj-column>
     </mj-section>

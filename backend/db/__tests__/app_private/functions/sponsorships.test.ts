@@ -1,7 +1,17 @@
 import { PoolClient } from "pg";
 import { expect, it } from "vitest";
 
-import { becomeRoot, becomeUser, createUsers, withRootDb } from "../../helpers";
+import {
+  assertJobComplete,
+  becomeRoot,
+  becomeUser,
+  clearJobs,
+  createUsers,
+  getEmails,
+  getJobs,
+  runJobs,
+  withRootDb,
+} from "../../helpers";
 
 async function setupOrg(client: PoolClient, slug = "small-church") {
   const [user] = await createUsers(client, 1);
@@ -136,4 +146,46 @@ it("is not visible to normal users", () =>
     await expect(
       client.query("select * from app_private.organization_sponsorships"),
     ).rejects.toThrow(/permission denied/);
+  }));
+
+it("only emails the owner when send_email is true", () =>
+  withRootDb(async (client) => {
+    const { user, org } = await setupOrg(client);
+    await clearJobs(client);
+
+    // Default: no email
+    await client.query("select app_private.grant_sponsorship($1)", [
+      "small-church",
+    ]);
+    expect(
+      await getJobs(client, "organization_sponsorships__send_approved"),
+    ).toHaveLength(0);
+    await client.query("select app_private.end_sponsorship($1)", [
+      "small-church",
+    ]);
+
+    // Opted in: emails the owner the approval email
+    const {
+      rows: [sp],
+    } = await client.query(
+      "select * from app_private.grant_sponsorship($1, '12 months', 'Applied by email', true)",
+      ["small-church"],
+    );
+    const [job] = await getJobs(
+      client,
+      "organization_sponsorships__send_approved",
+    );
+    expect(job.payload.id).toBe(sp.id);
+
+    await runJobs(client);
+    await assertJobComplete(client, job);
+    const emails = getEmails();
+    expect(emails).toHaveLength(1);
+    const [email] = emails;
+    expect(email.envelope.to).toEqual([user._email]);
+    const message = JSON.parse(email.message);
+    expect(message.subject).toEqual(`${org.name} is now sponsored`);
+    expect(message.html).toContain(
+      `${process.env.ROOT_URL}/o/${org.slug}/billing`,
+    );
   }));

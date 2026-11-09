@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict uHywn3w1IWy707ThBT1nNWUe4OROE7uBcHObmNJXDecajF2okUpYTZbGLdBpl71
+\restrict QCCXN0NQfxxn2k4JLwzfzrRLOUt57bmAIe4UDei5hCuSqhNgMQIzbFKHOAgfxV3
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -783,10 +783,10 @@ COMMENT ON FUNCTION app_private.generate_unique_username(base text) IS 'Sanitise
 
 
 --
--- Name: grant_sponsorship(public.citext, interval, text); Type: FUNCTION; Schema: app_private; Owner: -
+-- Name: grant_sponsorship(public.citext, interval, text, boolean); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
-CREATE FUNCTION app_private.grant_sponsorship(org_slug public.citext, review_after interval DEFAULT '1 year'::interval, note text DEFAULT NULL::text) RETURNS app_private.organization_sponsorships
+CREATE FUNCTION app_private.grant_sponsorship(org_slug public.citext, review_after interval DEFAULT '1 year'::interval, note text DEFAULT NULL::text, send_email boolean DEFAULT false) RETURNS app_private.organization_sponsorships
     LANGUAGE plpgsql
     SET search_path TO 'pg_catalog', 'public', 'pg_temp'
     AS $$
@@ -810,6 +810,13 @@ begin
   insert into app_private.organization_sponsorships (organization_id, review_at, note)
   values (v_org_id, now() + review_after, grant_sponsorship.note)
   returning * into v_row;
+
+  if send_email then
+    perform graphile_worker.add_job(
+      'organization_sponsorships__send_approved',
+      json_build_object('id', v_row.id)
+    );
+  end if;
 
   return v_row;
 end;
@@ -7774,10 +7781,10 @@ REVOKE ALL ON FUNCTION app_private.generate_unique_username(base text) FROM PUBL
 
 
 --
--- Name: FUNCTION grant_sponsorship(org_slug public.citext, review_after interval, note text); Type: ACL; Schema: app_private; Owner: -
+-- Name: FUNCTION grant_sponsorship(org_slug public.citext, review_after interval, note text, send_email boolean); Type: ACL; Schema: app_private; Owner: -
 --
 
-REVOKE ALL ON FUNCTION app_private.grant_sponsorship(org_slug public.citext, review_after interval, note text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION app_private.grant_sponsorship(org_slug public.citext, review_after interval, note text, send_email boolean) FROM PUBLIC;
 
 
 --
@@ -9211,5 +9218,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict uHywn3w1IWy707ThBT1nNWUe4OROE7uBcHObmNJXDecajF2okUpYTZbGLdBpl71
+\unrestrict QCCXN0NQfxxn2k4JLwzfzrRLOUt57bmAIe4UDei5hCuSqhNgMQIzbFKHOAgfxV3
 
