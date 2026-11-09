@@ -794,3 +794,126 @@ describe("syncPluginTables", () => {
     });
   });
 });
+
+describe("screens", () => {
+  const SCREENS = "app_public.screens";
+  const PROJECT_A = "c2000000-0000-4000-8000-00000000000a";
+  const PROJECT_B = "c2000000-0000-4000-8000-00000000000b";
+
+  /** Projects here, as project sync leaves ones it pulled from the cloud. */
+  const pulledProjects = async () => {
+    const ids: Record<string, string> = {};
+    for (const [slug, cloudId] of [
+      ["a", PROJECT_A],
+      ["b", PROJECT_B],
+    ] as const) {
+      const [{ id }] = await query(
+        `insert into app_public.projects
+           (organization_id, slug, name, cloud_project_id, cloud_connection_id)
+         values ($1, $2, $5, $3, $4) returning id`,
+        [orgId, slug, cloudId, connection.id, slug.toUpperCase()],
+      );
+      ids[cloudId] = id;
+    }
+    return ids;
+  };
+
+  const cloudScreen = (
+    projectId: string | null,
+    updatedAt = "2026-01-01T00:00:00+00:00",
+  ): Row => ({
+    id: "5c000000-0000-4000-8000-000000000001",
+    organization_id: CLOUD_ORG_ID,
+    name: "Main hall",
+    slug: "main-hall",
+    current_project_id: projectId,
+    current_renderer_id: "1",
+    code: "ZZZZ",
+    idle_policy: "do_nothing",
+    created_at: "2026-01-01T00:00:00+00:00",
+    updated_at: updatedAt,
+  });
+
+  const localScreens = () =>
+    query(
+      `select id, slug, name, current_project_id, code
+       from ${SCREENS} where organization_id = $1`,
+      [orgId],
+    );
+
+  it("pulls a screen with its assignment and code, keeping its own id", async () => {
+    const local = await pulledProjects();
+    fake.tables.set(SCREENS, [cloudScreen(PROJECT_A)]);
+
+    expect(await sync()).toMatchObject({ pulled: 1, failedTables: 0 });
+    const [screen] = await localScreens();
+    expect(screen).toMatchObject({
+      slug: "main-hall",
+      current_project_id: local[PROJECT_A],
+    });
+    expect(screen.id).not.toBe("5c000000-0000-4000-8000-000000000001");
+    expect(screen.code).toBe("ZZZZ");
+
+    expect(await sync()).toMatchObject({ pulled: 0, pushed: 0 });
+  });
+
+  it("follows a reassignment made on the cloud", async () => {
+    const local = await pulledProjects();
+    fake.tables.set(SCREENS, [cloudScreen(PROJECT_A)]);
+    await sync();
+
+    fake.tables.set(SCREENS, [
+      cloudScreen(PROJECT_B, "2026-01-02T00:00:00+00:00"),
+    ]);
+    expect(await sync()).toMatchObject({ pulled: 1 });
+    expect(await localScreens()).toMatchObject([
+      { current_project_id: local[PROJECT_B] },
+    ]);
+  });
+
+  it("pushes a reassignment made here under the cloud's project id", async () => {
+    const local = await pulledProjects();
+    fake.tables.set(SCREENS, [cloudScreen(PROJECT_A)]);
+    await sync();
+
+    await query(
+      `update ${SCREENS} set current_project_id = $2 where organization_id = $1`,
+      [orgId, local[PROJECT_B]],
+    );
+    expect(await sync()).toMatchObject({ pushed: 1, pushRejected: 0 });
+    expect(fake.tables.get(SCREENS)).toMatchObject([
+      { slug: "main-hall", current_project_id: PROJECT_B },
+    ]);
+  });
+
+  it("creates a screen made here on the cloud, with its code", async () => {
+    await query(
+      `insert into ${SCREENS} (organization_id, name, slug, code)
+       values ($1, 'Foyer', 'foyer', 'YYYY')`,
+      [orgId],
+    );
+    expect(await sync()).toMatchObject({ pushed: 1, pushRejected: 0 });
+    expect(fake.tables.get(SCREENS)).toMatchObject([
+      { slug: "foyer", name: "Foyer", current_project_id: null, code: "YYYY" },
+    ]);
+  });
+
+  it("keeps a screen's own code when the cloud's is taken here", async () => {
+    const [{ id: otherOrg }] = await query(
+      `insert into app_public.organizations (slug, name)
+       values ($1, 'Other') returning id`,
+      [`${ORG_PREFIX}-other-${Date.now()}`],
+    );
+    await query(
+      `insert into ${SCREENS} (organization_id, name, slug, code)
+       values ($1, 'Taken', 'taken', 'ZZZZ')`,
+      [otherOrg],
+    );
+    fake.tables.set(SCREENS, [cloudScreen(null)]);
+
+    expect(await sync()).toMatchObject({ pulled: 1, failedTables: 0 });
+    const [screen] = await localScreens();
+    expect(screen.code).not.toBe("ZZZZ");
+    expect(await sync()).toMatchObject({ pulled: 0, pushed: 0 });
+  });
+});

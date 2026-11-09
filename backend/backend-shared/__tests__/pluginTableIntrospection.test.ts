@@ -217,6 +217,67 @@ describe("resolveCloudSyncTable", () => {
     ).toHaveProperty("error");
   });
 
+  it("leaves omitted columns out of sync", () => {
+    const table = resolveCloudSyncTable(
+      raw({
+        comment: "@cloudSync\n@cloudSyncOmit code, pin",
+        columns: ["id", "organization_id", "code", "pin", "updated_at"],
+      }),
+    );
+    expect(table).toMatchObject({
+      columns: ["id", "organization_id", "updated_at"],
+    });
+  });
+
+  it("refuses to omit a missing column, the key or updated_at", () => {
+    for (const omit of ["nope", "id", "updated_at"]) {
+      expect(
+        resolveCloudSyncTable(
+          raw({ comment: `@cloudSync\n@cloudSyncOmit ${omit}` }),
+        ),
+      ).toHaveProperty("error");
+    }
+  });
+
+  it("keys screens by slug within the organization", () => {
+    expect(
+      resolveCloudSyncTable(
+        raw({
+          schema_name: "app_public",
+          table_name: "screens",
+          comment: "Screens\n@cloudSync",
+          columns: [
+            "id",
+            "organization_id",
+            "slug",
+            "current_project_id",
+            "updated_at",
+            "code",
+          ],
+          unique_keys: [
+            { primary: true, columns: ["id"] },
+            { primary: false, columns: ["code"] },
+            { primary: false, columns: ["organization_id", "slug"] },
+          ],
+          foreign_keys: [
+            orgFk,
+            {
+              columns: ["current_project_id"],
+              references: "app_public.projects",
+              referenced_columns: ["id"],
+            },
+          ],
+        }),
+      ),
+    ).toMatchObject({
+      keyColumns: ["organization_id", "slug"],
+      rowKeyColumns: ["slug"],
+      localIdentityColumns: ["id"],
+      projectColumns: ["current_project_id"],
+      conflict: "cloudWins",
+    });
+  });
+
   describe("references to another plugin table", () => {
     const song = raw({ table_name: "song" });
     const usage = (overrides: Partial<RawCloudSyncTable> = {}) =>

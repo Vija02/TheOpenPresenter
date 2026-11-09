@@ -6,6 +6,11 @@ export const SWEEP_IDLE_UNASSIGN_SQL = `
     join app_public.screen_heartbeats h on h.screen_id = s.id
     where s.idle_policy = 'unassign'
       and s.current_project_id is not null
+      -- Synced screens may be in use through the cloud, which sweeps them.
+      and not exists (
+        select 1 from app_public.cloud_connections cc
+        where cc.organization_id = s.organization_id
+      )
       and s.idle_after_seconds is not null
       and s.idle_after_seconds > 0
       and s.unassign_after_idle_seconds is not null

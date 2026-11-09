@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict W2BoB3fFTqQ765hzg4cm51C9CvcXhuu9Ec029xFdHQe75ZtvuX6XRICgDyOjfbB
+\restrict DGFeujY6PVUe8NTugMrNv9PDnBVxFbCko2dlH7A8cW8QxtjGYEXIFaAcO0EaEhJ
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -1784,16 +1784,25 @@ $$;
 CREATE FUNCTION app_private.tg_screens__set_code() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'pg_catalog', 'public', 'pg_temp'
-    AS $$
+    AS $_$
 begin
-  -- Clients have no insert/update grant on this column, but be defensive
-  -- against superuser inserts that omit it.
-  if new.code is null then
-    new.code := app_private.generate_screen_code();
+  if new.code is null
+    or upper(new.code::text) !~ '^[2-9A-HJKMNP-Z]{4}$'
+    or exists (
+      select 1 from app_public.screens
+      where code = new.code and id <> new.id
+    )
+  then
+    new.code := coalesce(
+      case when TG_OP = 'UPDATE' then old.code end,
+      app_private.generate_screen_code()
+    );
+  else
+    new.code := upper(new.code::text);
   end if;
   return new;
 end;
-$$;
+$_$;
 
 
 --
@@ -3228,7 +3237,8 @@ CREATE TABLE app_public.screens (
 -- Name: TABLE screens; Type: COMMENT; Schema: app_public; Owner: -
 --
 
-COMMENT ON TABLE app_public.screens IS 'A persistent display identity in an organization. Configured once on the device, then any project can be assigned to it remotely.';
+COMMENT ON TABLE app_public.screens IS 'A persistent display identity in an organization. Configured once on the device, then any project can be assigned to it remotely.
+@cloudSync';
 
 
 --
@@ -6164,7 +6174,7 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.users FOR E
 -- Name: screens _150_set_screen_code; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
-CREATE TRIGGER _150_set_screen_code BEFORE INSERT ON app_public.screens FOR EACH ROW EXECUTE FUNCTION app_private.tg_screens__set_code();
+CREATE TRIGGER _150_set_screen_code BEFORE INSERT OR UPDATE OF code ON app_public.screens FOR EACH ROW EXECUTE FUNCTION app_private.tg_screens__set_code();
 
 
 --
@@ -6403,6 +6413,13 @@ CREATE TRIGGER _900_cloud_sync_hint AFTER INSERT OR DELETE ON app_public.project
 --
 
 CREATE TRIGGER _900_cloud_sync_hint AFTER INSERT OR DELETE OR UPDATE ON app_public.project_tags FOR EACH ROW EXECUTE FUNCTION app_private.tg__cloud_sync_hint('project_id', 'project');
+
+
+--
+-- Name: screens _900_cloud_sync_hint; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _900_cloud_sync_hint AFTER INSERT OR DELETE OR UPDATE ON app_public.screens FOR EACH ROW EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
 
 
 --
@@ -8723,84 +8740,91 @@ GRANT INSERT(current_renderer_id),UPDATE(current_renderer_id) ON TABLE app_publi
 -- Name: COLUMN screens.registered_guest_enabled; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(registered_guest_enabled) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(registered_guest_enabled),UPDATE(registered_guest_enabled) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.registered_guest_on_empty_policy; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(registered_guest_on_empty_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(registered_guest_on_empty_policy),UPDATE(registered_guest_on_empty_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.registered_guest_on_takeover_policy; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(registered_guest_on_takeover_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(registered_guest_on_takeover_policy),UPDATE(registered_guest_on_takeover_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.registered_guest_on_takeover_after_seconds; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(registered_guest_on_takeover_after_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(registered_guest_on_takeover_after_seconds),UPDATE(registered_guest_on_takeover_after_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.anon_guest_enabled; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(anon_guest_enabled) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(anon_guest_enabled),UPDATE(anon_guest_enabled) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.anon_guest_on_empty_policy; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(anon_guest_on_empty_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(anon_guest_on_empty_policy),UPDATE(anon_guest_on_empty_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.anon_guest_on_takeover_policy; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(anon_guest_on_takeover_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(anon_guest_on_takeover_policy),UPDATE(anon_guest_on_takeover_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.anon_guest_on_takeover_after_seconds; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(anon_guest_on_takeover_after_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(anon_guest_on_takeover_after_seconds),UPDATE(anon_guest_on_takeover_after_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.idle_policy; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(idle_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(idle_policy),UPDATE(idle_policy) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.idle_after_seconds; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(idle_after_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(idle_after_seconds),UPDATE(idle_after_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.unassign_after_idle_seconds; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(unassign_after_idle_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(unassign_after_idle_seconds),UPDATE(unassign_after_idle_seconds) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
 -- Name: COLUMN screens.show_bar_on_idle; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT UPDATE(show_bar_on_idle) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(show_bar_on_idle),UPDATE(show_bar_on_idle) ON TABLE app_public.screens TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN screens.code; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(code) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
@@ -9506,5 +9530,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict W2BoB3fFTqQ765hzg4cm51C9CvcXhuu9Ec029xFdHQe75ZtvuX6XRICgDyOjfbB
+\unrestrict DGFeujY6PVUe8NTugMrNv9PDnBVxFbCko2dlH7A8cW8QxtjGYEXIFaAcO0EaEhJ
 

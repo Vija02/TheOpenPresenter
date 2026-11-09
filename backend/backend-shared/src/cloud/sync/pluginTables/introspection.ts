@@ -16,6 +16,7 @@ import type { QueryResult, QueryResultRow } from "pg";
  *
  *   @cloudSyncConflict copy|cloudWins   override the default
  *   @cloudSyncCopyLabel <column>        text column suffixed on a kept copy
+ *   @cloudSyncOmit <column> [...]       columns each side keeps to itself
  */
 export type ConflictStrategy = "copy" | "cloudWins";
 
@@ -200,10 +201,19 @@ export const resolveCloudSyncTable = (
     return { error: `has no column "${copyLabelColumn}" to label copies with` };
   }
 
+  const omitted = (tags.get("cloudSyncOmit") ?? "")
+    .split(/[\s,]+/)
+    .filter(Boolean);
+  const unknown = omitted.find((c) => !raw.columns.includes(c));
+  if (unknown) return { error: `has no column "${unknown}" to omit` };
+  if (omitted.some((c) => key.columns.includes(c) || c === "updated_at")) {
+    return { error: "cannot omit its key or updated_at" };
+  }
+
   return {
     schema: raw.schema_name,
     table: raw.table_name,
-    columns: raw.columns,
+    columns: raw.columns.filter((c) => !omitted.includes(c)),
     organizationColumn,
     keyColumns: key.columns,
     rowKeyColumns: key.columns.filter((c) => c !== organizationColumn),
