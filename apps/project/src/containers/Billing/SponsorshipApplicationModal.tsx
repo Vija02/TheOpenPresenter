@@ -5,6 +5,7 @@ import { captureEvent } from "@repo/observability/initAnalytics";
 import {
   Alert,
   Button,
+  CheckboxControl,
   Dialog,
   DialogBody,
   DialogContent,
@@ -37,6 +38,9 @@ const formSchema = z.object({
     .string()
     .trim()
     .max(MAX_TEXT, `Please keep this under ${MAX_TEXT} characters`),
+  acceptedAsks: z
+    .boolean()
+    .refine((v) => v, "Please confirm you're happy with this"),
 });
 
 type FormInputs = z.infer<typeof formSchema>;
@@ -60,6 +64,7 @@ const SponsorshipApplicationModal = ({
       weeklyAttendance: undefined,
       aboutChurch: "",
       intendedUse: "",
+      acceptedAsks: false,
     },
   });
 
@@ -94,7 +99,7 @@ const SponsorshipApplicationModal = ({
     <Dialog open={isOpen ?? false} onOpenChange={onToggle}>
       <Form {...form}>
         <DialogContent
-          className="max-w-lg"
+          className="max-w-2xl"
           render={<form onSubmit={form.handleSubmit(handleSubmit)} />}
         >
           <DialogHeader>
@@ -141,6 +146,59 @@ const SponsorshipApplicationModal = ({
               label="How will you use TheOpenPresenter? (optional)"
               rows={4}
               placeholder="e.g. To control lyrics and slides with our phones"
+            />
+
+            <div className="rounded-sm border border-stroke bg-surface-secondary p-4 space-y-3 text-sm">
+              <div>
+                <p className="font-semibold text-primary">What's included</p>
+                <ul className="mt-1 list-disc pl-5 space-y-0.5 text-secondary">
+                  <li>The Cloud plan, free for 12 months</li>
+                  <li>
+                    A short check-in after 12 months. If you're still under 50
+                    people and using it, we'll renew.
+                  </li>
+                  <li>
+                    If you grow beyond 50, we'll talk together about what's
+                    fair. You won't be cut off suddenly.
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-semibold text-primary">
+                  What we'd ask in return
+                </p>
+                <ul className="mt-1 list-disc pl-5 space-y-0.5 text-secondary">
+                  <li>A short call after 1-2 months to hear how it's going</li>
+                  <li>Let us know when you hit problems</li>
+                  <li>
+                    Permission to mention your church on the TheOpenPresenter
+                    website
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-semibold text-primary">
+                  Only if you're happy to{" "}
+                  <span className="font-normal text-tertiary">(optional)</span>
+                </p>
+                <ul className="mt-1 list-disc pl-5 space-y-0.5 text-secondary">
+                  <li>
+                    A sentence or two about your experience later on. We can
+                    write it for you to approve
+                  </li>
+                  <li>
+                    A photo of TheOpenPresenter in use that we could share
+                  </li>
+                  <li>Mentioning it to other small churches you know</li>
+                </ul>
+              </div>
+            </div>
+
+            <CheckboxControl
+              control={form.control}
+              name="acceptedAsks"
+              label="We're happy with what you'd ask in return"
+              description="The optional items are up to you."
             />
           </DialogBody>
           <DialogFooter>

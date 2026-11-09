@@ -208,6 +208,10 @@ it("emails the church when approved or declined", () =>
     );
     expect(jobs).toHaveLength(1);
     expect(jobs[0].payload.id).toBe(second.id);
+    // ...and not the direct-grant email as well
+    expect(
+      await getJobs(client, "organization_sponsorships__send_approved"),
+    ).toHaveLength(0);
   }));
 
 it("can decline without emailing the church", () =>
