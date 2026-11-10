@@ -15,8 +15,9 @@ import {
   updateSettings,
 } from "../settings/store";
 import { refreshMenu } from "./menu";
+import { localPageFor } from "./samePage";
 import { refreshSetupBar } from "./setupBar";
-import { showAppWindow } from "./windows";
+import { getMainWindow, showAppWindow } from "./windows";
 
 /**
  * Online is the account's server; Local is this computer. Switching keeps
@@ -28,6 +29,8 @@ export async function switchServer(
   rootUrl?: string,
   organizationSlug?: string,
 ): Promise<ConnectionSummary> {
+  const before = getSettings();
+  const shown = getMainWindow()?.webContents.getURL() ?? "";
   const patch: Partial<Settings> = { mode };
   if (mode === "local") {
     patch.autoStartRuntime = true;
@@ -61,7 +64,11 @@ export async function switchServer(
     throw new Error("That server is not available.");
   }
 
-  showAppWindow(url, organizationSlug);
+  const samePage =
+    mode === "local" && before.mode !== "local" && before.rootUrl
+      ? await localUrlFor(shown, before.rootUrl, url)
+      : null;
+  showAppWindow(samePage ?? url, organizationSlug);
   refreshMenu();
   const summary = describeConnection(getSettings(), runtime.url);
   // Settings may be open on another window, showing the old mode.
@@ -71,3 +78,27 @@ export async function switchServer(
   return summary;
 }
 
+/** The page being shown online, on the local server; null if there is none. */
+async function localUrlFor(
+  shown: string,
+  rootUrl: string,
+  localUrl: string,
+): Promise<string | null> {
+  try {
+    const { allOrganizations, hasProjectCopy } = await import(
+      "../cloud/connection"
+    );
+    const page = localPageFor(shown, rootUrl, await allOrganizations(localUrl));
+    if (!page) return null;
+    const found =
+      !page.project ||
+      (await hasProjectCopy(
+        localUrl,
+        page.project.organizationSlug,
+        page.project.slug,
+      ));
+    return new URL(found ? page.path : page.fallback, localUrl).toString();
+  } catch {
+    return null;
+  }
+}

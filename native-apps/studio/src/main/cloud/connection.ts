@@ -349,6 +349,37 @@ export async function startSync(
   );
 }
 
+/**
+ * Whether this server has a copy of the project, in that organization. Only a
+ * copy counts: a project made here can hold the slug when the copy could not.
+ */
+export async function hasProjectCopy(
+  base: string,
+  organizationSlug: string,
+  projectSlug: string,
+): Promise<boolean> {
+  const data = await graphql<{
+    organizationBySlug: {
+      projects: { nodes: { cloudProjectId: string | null }[] };
+    } | null;
+  }>(
+    base,
+    `
+      query ($organizationSlug: String!, $projectSlug: String!) {
+        organizationBySlug(slug: $organizationSlug) {
+          projects(condition: { slug: $projectSlug }) {
+            nodes {
+              cloudProjectId
+            }
+          }
+        }
+      }
+    `,
+    { organizationSlug, projectSlug },
+  );
+  return !!data.organizationBySlug?.projects.nodes[0]?.cloudProjectId;
+}
+
 export type SyncProgress = {
   status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
   syncedProjects: number;
