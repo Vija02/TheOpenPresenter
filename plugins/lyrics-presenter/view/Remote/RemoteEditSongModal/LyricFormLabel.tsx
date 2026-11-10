@@ -1,6 +1,6 @@
 import { Button, FormLabel } from "@repo/ui";
 
-import { AiFormatButton } from "./AiFormatButton";
+import { FormatMenu } from "./FormatMenu";
 import { SongEditInfo } from "./SongEditInfo";
 
 export const LyricFormLabel = ({
@@ -35,7 +35,7 @@ export const LyricFormLabel = ({
             {showChords ? "Hide chords" : "Show chords"}
           </Button>
         )}
-        <AiFormatButton content={content} onFormatted={onFormatted} />
+        <FormatMenu content={content} onFormatted={onFormatted} />
         {canReset && (
           <Button size="xs" onClick={onReset}>
             Reset

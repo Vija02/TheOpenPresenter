@@ -4,7 +4,7 @@ import { VscEdit } from "react-icons/vsc";
 
 import { Song } from "../../../../src";
 import { usePluginAPI } from "../../../pluginApi";
-import { AiFormatButton } from "../../RemoteEditSongModal/AiFormatButton";
+import { FormatMenu } from "../../RemoteEditSongModal/FormatMenu";
 import { SongViewSlides } from "../../SongViewSlides";
 import { SectionHeading } from "../SectionHeading";
 
@@ -38,7 +38,7 @@ export const SongPreview = ({
             <VscEdit />
             Edit
           </Button>
-          <AiFormatButton
+          <FormatMenu
             content={importSongContent ?? ""}
             onFormatted={setImportSongContent}
           />
