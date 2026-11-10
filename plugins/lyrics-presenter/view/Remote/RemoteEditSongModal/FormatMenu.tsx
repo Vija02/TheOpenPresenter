@@ -30,11 +30,12 @@ type FormatEvent = {
   message?: string;
 };
 
+const AI_ENABLED = appData.getAiEnabled();
+
 /**
  * Auto format song as slides.
  * Whether 2, 4, or AI
  */
-const AI_ENABLED = appData.getAiEnabled();
 export const FormatMenu = ({
   content,
   onFormatted,
