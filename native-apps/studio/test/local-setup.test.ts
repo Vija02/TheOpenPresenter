@@ -104,6 +104,41 @@ describe("LocalSetup", () => {
     });
   });
 
+  it("offers the switch only once the organizations are connected", async () => {
+    let connected = false;
+    const setup = new LocalSetup(
+      fakeDeps({
+        connectOrganization: vi.fn(async () => {
+          await Promise.resolve();
+          connected = true;
+          return { id: "conn-0", localOrganizationSlug: "grace-local" };
+        }),
+      }),
+    );
+    const seen: { canSwitch: boolean; connected: boolean; slug?: string }[] =
+      [];
+    setup.on("state", (s) =>
+      seen.push({
+        canSwitch: s.canSwitch,
+        connected,
+        slug: setup.target?.organizationSlug ?? undefined,
+      }),
+    );
+
+    await setup.begin(plan);
+
+    const first = seen.find((s) => s.canSwitch);
+    expect(first).toEqual({
+      canSwitch: true,
+      connected: true,
+      slug: "grace-local",
+    });
+    expect(seen.filter((s) => !s.connected).every((s) => !s.canSwitch)).toBe(
+      true,
+    );
+    expect(setup.copies).toEqual([{ id: "conn-0", name: "Grace" }]);
+  });
+
   it("offers the switch only once the local server is running", async () => {
     const setup = new LocalSetup(fakeDeps());
     const states = record(setup);
