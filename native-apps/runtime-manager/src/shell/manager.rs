@@ -53,6 +53,10 @@ pub struct Manager {
     /// a newer runtime activated while this one served waits for a
     /// deliberate restart, not one mid-service.
     preferred_version: Option<String>,
+    /// Pid of a runtime this manager joined rather than spawned. Nothing
+    /// reports its exit to us (its pipes belong to whoever started it), so
+    /// `pump` watches the pid instead.
+    joined_pid: Option<u32>,
 }
 
 impl Manager {
@@ -72,6 +76,7 @@ impl Manager {
             restarts: Vec::new(),
             preferred_port: None,
             preferred_version: None,
+            joined_pid: None,
         })
     }
 
@@ -114,6 +119,7 @@ impl Manager {
                         supervisor.stop().ok();
                     }
                     self.running = None;
+                    self.joined_pid = None;
                     self.holders.clear();
                     crate::storage::lock::release(self.layout.root());
                 }
@@ -356,6 +362,7 @@ impl Manager {
                 stop_by_pid(pid);
             }
             self.running = None;
+            self.joined_pid = None;
         } else {
             // Deliberately leaked: dropping the Supervisor would close the
             // runtime's stdin, and killing it here is exactly what the
@@ -411,6 +418,7 @@ impl Manager {
             stop_by_pid(pid);
         }
         self.running = None;
+        self.joined_pid = None;
         Ok(serde_json::json!({ "stopped": true, "holders": [] }))
     }
 
@@ -425,6 +433,7 @@ impl Manager {
         {
             self.supervisor = None;
             self.running = None;
+            self.joined_pid = None;
             self.holders.clear();
         }
 
@@ -465,6 +474,7 @@ impl Manager {
                 crate::storage::lock::hold(self.layout.root(), &name, &lock)?;
                 self.holders.insert(name);
                 self.running = Some((port, existing.version.clone().unwrap_or_default()));
+                self.joined_pid = existing.runtime_pid;
                 return Ok(serde_json::json!({
                     "url": format!("http://localhost:{port}"),
                     "httpPort": port,
@@ -602,6 +612,7 @@ impl Manager {
         }
 
         self.running = Some((config.http_port, version.clone()));
+        self.joined_pid = None;
         self.holders.insert(name.clone());
         let _ = crate::storage::lock::hold(
             self.layout.root(),
@@ -631,6 +642,8 @@ impl Manager {
     /// Output forwarding happens on the pump thread started by `start`; this
     /// only handles state transitions, which can wait until the next command.
     pub fn pump(&mut self) {
+        self.watch_joined();
+
         let Some(supervisor) = self.supervisor.as_ref() else {
             return;
         };
@@ -663,6 +676,7 @@ impl Manager {
         let holders = std::mem::take(&mut self.holders);
         self.supervisor = None;
         self.running = None;
+        self.joined_pid = None;
 
         // Only a runtime that got as far as serving, and that someone still
         // wants. One that dies during startup is `start`'s error to report,
@@ -706,6 +720,43 @@ impl Manager {
             if !reverted {
                 self.preferred_version = serving_version;
             }
+            self.restart(port, holders);
+        }
+    }
+
+    /// Notice a joined runtime going away and start one of our own in its
+    /// place. Without this the app keeps the dead address: the runtime was
+    /// started by an earlier session, so no exit ever reaches us.
+    fn watch_joined(&mut self) {
+        let Some(pid) = self.joined_pid else {
+            return;
+        };
+        if crate::storage::lock::process_alive(pid) {
+            return;
+        }
+
+        let port = self.running.as_ref().map(|(port, _)| *port);
+        let version = self.running.as_ref().map(|(_, version)| version.clone());
+        let holders = std::mem::take(&mut self.holders);
+        self.joined_pid = None;
+        self.running = None;
+
+        // Not a crash of ours, so no crash count or revert: it may simply
+        // have been stopped by the session that started it.
+        let restart_port = port.filter(|_| !holders.is_empty() && self.may_restart());
+        if restart_port.is_none() {
+            crate::storage::lock::release(self.layout.root());
+        }
+
+        tracing::warn!("The runtime this manager joined (pid {pid}) is gone");
+        emit(&Event::Exited {
+            code: None,
+            reverted_to: None,
+            restarting: restart_port.is_some(),
+        });
+
+        if let Some(port) = restart_port {
+            self.preferred_version = version;
             self.restart(port, holders);
         }
     }

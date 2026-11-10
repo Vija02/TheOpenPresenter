@@ -1759,3 +1759,61 @@ fn shutdown_stops_a_joined_runtime_when_it_is_the_last_holder() {
         "the last holder quitting should stop a runtime it joined"
     );
 }
+
+/// A joined runtime belongs to another session, which may stop it at any
+/// time (it quit, say). Its exit never reaches the manager that joined it,
+/// so without a watch the app keeps a dead address. The joiner must notice
+/// and start its own in the same place.
+#[test]
+fn a_joined_runtime_that_goes_away_is_replaced_on_its_port() {
+    let (root, cdn, key, pubkey) = fixture();
+    publish(
+        cdn.path(),
+        &key,
+        "1.0.0",
+        1,
+        "run_server.mjs",
+        &[("run_server.mjs", SHARED_SERVER.as_bytes())],
+    );
+
+    let mut first = Manager::start(root.path(), cdn.path(), &pubkey);
+    first.request(
+        1,
+        serde_json::json!({"cmd": "ensure", "channel": "stable", "activate": true}),
+    );
+    let started = first.request(2, serde_json::json!({"cmd": "start", "holder": "window"}));
+    let port = started["result"]["httpPort"].as_u64().unwrap();
+
+    let mut second = Manager::start(root.path(), cdn.path(), &pubkey);
+    let joined = second.request(
+        1,
+        serde_json::json!({"cmd": "start", "holder": "desktop-shell"}),
+    );
+    assert_eq!(joined["result"]["foreign"], true, "should join: {joined}");
+
+    // The session that started it stops it, though the second still holds it.
+    let stopped = first.request(
+        3,
+        serde_json::json!({"cmd": "stop", "holder": "window", "force": true}),
+    );
+    assert_eq!(stopped["result"]["stopped"], true, "{stopped}");
+
+    status_until(&mut second, 2, |m| !m.events("restarted").is_empty());
+
+    let exited = second.events("exited");
+    assert_eq!(exited.len(), 1, "{exited:?}");
+    assert_eq!(exited[0]["restarting"], true);
+
+    let restarted = second.events("restarted")[0].clone();
+    assert_eq!(restarted["port"].as_u64(), Some(port), "{restarted}");
+    assert!(
+        top_runtime_manager::runtime::supervise::wait_for_http(
+            port as u16,
+            std::time::Duration::from_secs(10)
+        ),
+        "the replacement should be answering on the old port"
+    );
+
+    // Someone else stopping it is not a crash of this version.
+    assert_eq!(crash_count(root.path()), 0);
+}
