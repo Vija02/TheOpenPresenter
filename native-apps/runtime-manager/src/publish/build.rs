@@ -29,6 +29,7 @@ pub struct BuildConfig {
     pub trace: TraceSection,
     #[serde(default)]
     pub verify: VerifySection,
+    pub node: Option<super::node::NodeSection>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -113,6 +114,10 @@ pub fn assemble(config: &BuildConfig, repo: &Path, into: &Path, log: &dyn Fn(&st
 
     copy_plugins(config, repo, &inner, log)?;
     copy_dependencies(config, repo, into, log)?;
+    if let Some(node) = &config.node {
+        let platform = crate::storage::platform::Platform::current();
+        super::node::bundle(node, platform.as_str(), into, log)?;
+    }
     verify(config, into)?;
     Ok(())
 }

@@ -3428,6 +3428,7 @@ dependencies = [
  "base64 0.22.1",
  "directories",
  "ed25519-dalek 2.2.0",
+ "flate2",
  "hex",
  "iroh",
  "iroh-base",
