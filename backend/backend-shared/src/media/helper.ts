@@ -34,3 +34,12 @@ export const multerProcessFileName = (
 
   return { fileExtension };
 };
+
+/**
+ * Whether sharp can be used in this process. Under Electron on Linux it
+ * crashes the whole process on its first image: Electron loads the system
+ * GLib and sharp's libvips brings its own, and the two clash. The studio runs
+ * its local server on Electron, so there images are served as they are.
+ */
+export const canProcessImages = (): boolean =>
+  !(process.versions.electron && process.platform === "linux");

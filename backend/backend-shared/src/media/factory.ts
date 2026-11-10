@@ -16,7 +16,7 @@ import { TypeId, toUUID, typeidUnboxed } from "typeid-js";
 
 import { WithPgClient } from "../types";
 import { OurDataStore } from "./OurDataStore";
-import { multerProcessFileName } from "./helper";
+import { canProcessImages, multerProcessFileName } from "./helper";
 import {
   MediaHandlerConstructor,
   MediaHandlerInterface,
@@ -392,8 +392,9 @@ export const createMediaHandler = <T extends OurDataStore>(
         "." + fileExtension.toLowerCase(),
       );
 
-      // For images: extract and store metadata
-      if (isImage) {
+      // For images: extract and store metadata. Left empty where images
+      // cannot be read, as for older media.
+      if (isImage && canProcessImages()) {
         try {
           const readable = await this.store.getReadable(mediaName);
           const metadata = await new Promise<sharp.Metadata>(
