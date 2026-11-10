@@ -8,6 +8,7 @@ import {
 } from "../settings/store";
 import { openExternalSafely } from "../shell/external";
 import { backToShellUI, refetchServerWindows } from "../shell/windows";
+import { registerAccountsIPC, rememberAccount } from "./accounts";
 import {
   BrowserLoginUnavailable,
   type LoginHandle,
@@ -38,6 +39,7 @@ const DEMO_ORGANIZATION_SLUG = "demo";
 /** Signing in, and linking this install to a cloud organisation. */
 export function registerCloudIPC(): void {
   startLiveRefresh();
+  registerAccountsIPC();
 
   // -- Host / session -------------------------------------------------------
   ipcMain.handle("host:check", (_event, url: string) => checkHost(url));
@@ -98,6 +100,7 @@ export function registerCloudIPC(): void {
         handle.completed
           .then(() => {
             activeLogin = null;
+            rememberAccount(url);
             event.sender.send("auth:completed", { rootUrl: url });
           })
           .catch((err: Error) => {
