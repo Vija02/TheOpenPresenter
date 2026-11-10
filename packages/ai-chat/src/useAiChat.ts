@@ -7,6 +7,7 @@ import {
   urlToReferenceImage,
 } from "./image/referenceImage";
 import type { AiChatPickedImage } from "./image/types";
+import { type AiStatus, useAiStatus } from "./status";
 import {
   AiMessage,
   toPromptHistory,
@@ -54,6 +55,8 @@ export type AiChat = {
   undo: () => void;
   /** Wipes this scene's transcript. */
   clear: () => void;
+  /** Why AI can't run for this organization, or null when it can. */
+  unavailable: AiStatus | null;
 };
 
 type Options<TDoc> = {
@@ -63,6 +66,8 @@ type Options<TDoc> = {
   /** Scopes the transcript. */
   threadKey: string;
   pluginApi?: AiChatPluginApi;
+  /** Defaults to the plugin's own organization. */
+  organizationId?: string;
 };
 
 let counter = 0;
@@ -75,7 +80,14 @@ export const useAiChat = <TDoc>({
   onRequest,
   threadKey,
   pluginApi,
+  organizationId,
 }: Options<TDoc>): AiChat => {
+  const status = useAiStatus(
+    organizationId ?? pluginApi?.pluginContext.organizationId,
+  );
+  // While the first answer is on its way, offer the input: AI usually works.
+  const unavailable = status && status.state !== "available" ? status : null;
+
   const [pending, setPending] = useState(false);
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -349,5 +361,6 @@ export const useAiChat = <TDoc>({
     clearImage,
     undo,
     clear,
+    unavailable,
   };
 };

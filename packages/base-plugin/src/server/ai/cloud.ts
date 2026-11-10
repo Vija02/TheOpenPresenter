@@ -22,6 +22,9 @@ export const CONNECT_FOR_AI_REASON =
 export const AI_SIGN_IN_EXPIRED_REASON =
   "Your TheOpenPresenter Cloud sign-in has expired. Reconnect to the cloud to use AI.";
 
+export const AI_NEEDS_UPGRADE_REASON =
+  "Your TheOpenPresenter Cloud plan doesn't include AI. Upgrade to use it.";
+
 export class AiUnavailableError extends Error {
   constructor(message: string) {
     super(message);
@@ -95,6 +98,9 @@ export async function* forwardAiToCloud(
   if (res.status === 401 || res.status === 403) {
     throw new AiUnavailableError(AI_SIGN_IN_EXPIRED_REASON);
   }
+  if (res.status === 402) {
+    throw new AiUnavailableError(AI_NEEDS_UPGRADE_REASON);
+  }
   if (res.status === 404) {
     throw new AiUnavailableError(
       "TheOpenPresenter Cloud doesn't have this AI feature yet.",
@@ -167,4 +173,59 @@ export const withoutOrganizationId = (raw: unknown): unknown => {
     unknown
   >;
   return rest;
+};
+
+export type AiStatus =
+  | { state: "available" }
+  | { state: "connect"; actionUrl: string | null }
+  | { state: "reconnect"; actionUrl: string | null }
+  | { state: "offline" }
+  | { state: "upgrade"; actionUrl: string };
+
+const REACHABLE_FOR_MS = 20_000;
+const PROBE_TIMEOUT_MS = 3_000;
+const reachability = new Map<string, { reachable: boolean; at: number }>();
+
+/** Whether the cloud answers at all. Any response counts; only silence does not. */
+export const isCloudReachable = async (
+  host: string,
+  fetchImpl: typeof fetch = fetch,
+  now: () => number = Date.now,
+): Promise<boolean> => {
+  const known = reachability.get(host);
+  if (known && now() - known.at < REACHABLE_FOR_MS) return known.reachable;
+
+  const reachable = await fetchImpl(new URL("/csrf-token", host), {
+    method: "HEAD",
+    signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+  }).then(
+    () => true,
+    () => false,
+  );
+  reachability.set(host, { reachable, at: now() });
+  return reachable;
+};
+
+export const aiStatus = async (
+  integrations: IntegrationsApi,
+  req: RequestWithSession,
+  organizationId: string | undefined,
+  reachable: (host: string) => Promise<boolean> = isCloudReachable,
+): Promise<AiStatus> => {
+  const placement = await placeAiRequest(integrations, req, organizationId);
+  if (placement.mode === "local") return { state: "available" };
+  if (placement.mode === "cloud") {
+    return (await reachable(placement.connection.host))
+      ? { state: "available" }
+      : { state: "offline" };
+  }
+
+  // Linking happens on the organization's own cloud page.
+  const slug = organizationId
+    ? await integrations.getOrganizationSlug(organizationId)
+    : null;
+  const actionUrl = slug ? `/o/${encodeURIComponent(slug)}/cloud` : null;
+  return placement.reason === AI_SIGN_IN_EXPIRED_REASON
+    ? { state: "reconnect", actionUrl }
+    : { state: "connect", actionUrl };
 };

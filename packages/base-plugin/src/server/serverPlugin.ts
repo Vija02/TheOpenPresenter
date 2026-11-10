@@ -14,11 +14,13 @@ import stream from "stream";
 import { SceneCategories, SceneIcon } from "../types";
 import {
   AiCapability,
+  AiStatus,
   AnyAiCapability,
   ChatCompletionOptions,
   ChatMessage,
   ChatResponseMessage,
   ChatStreamEvent,
+  aiStatus,
   chatCompletion,
   chatCompletionEvents,
   chatCompletionMessage,
@@ -427,8 +429,11 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
   public ai = {
     isConfigured: (): boolean => isAIConfigured(),
-    isAvailable: async (): Promise<boolean> =>
-      isAIConfigured() || (await this.integrations.hasCloudConnection()),
+    /** Whether AI works for this organization, and what to do if not. */
+    status: (
+      req: Parameters<IntegrationsApi["getRequestUserId"]>[0],
+      organizationId: string | undefined,
+    ): Promise<AiStatus> => aiStatus(this.integrations, req, organizationId),
     run: (
       req: Parameters<IntegrationsApi["getRequestUserId"]>[0],
       options: {

@@ -6,6 +6,13 @@ export { Markdown } from "./ui/Markdown";
 export type { MarkdownProps } from "./ui/Markdown";
 export { AttachMenu } from "./ui/AttachMenu";
 
+export { AiUnavailable } from "./ui/AiUnavailable";
+export { AiUnavailableDialog } from "./ui/AiUnavailableDialog";
+export { AiUpgradeIcon } from "./ui/AiUpgradeIcon";
+
+export { describeAiStatus, openAiStatusAction, useAiStatus } from "./status";
+export type { AiStatus, AiStatusView } from "./status";
+
 export { createAiCapabilityRequest } from "./request";
 export type { AiCapabilityRequestOptions } from "./request";
 

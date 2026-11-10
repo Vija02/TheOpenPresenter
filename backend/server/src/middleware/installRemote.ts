@@ -53,11 +53,7 @@ export default async function installRemote(app: Express, server: Server) {
   }
 }
 
-async function transformer(html: string, req: Request) {
-  const aiAvailable = await serverPluginApi.ai
-    .isAvailable()
-    .catch(() => isAIConfigured());
-
+function transformer(html: string, req: Request) {
   const registeredLoadJsOnRemoteView =
     serverPluginApi.getRegisteredLoadJsOnRemoteView();
   const registeredLoadCssOnRemoteView =
@@ -99,7 +95,7 @@ async function transformer(html: string, req: Request) {
         process.env.ANALYTICS_RENDERER_REPLAY === "1" ? "1" : undefined,
       // Lets a view hide its AI features outright, rather than offering a box
       // that can only fail on submit. Never the key itself.
-      AI_ENABLED: aiAvailable ? "1" : undefined,
+      AI_ENABLED: isAIConfigured() ? "1" : undefined,
       DEPLOYMENT_ENV: process.env.DEPLOYMENT_ENV,
     } as Record<string, string>,
   ]

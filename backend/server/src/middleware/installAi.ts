@@ -44,6 +44,21 @@ export default (app: Express) => {
     );
   }
 
+  // Whether AI works for an organization, so the app can say why when not
+  app.get("/ai/status", (req, res, next) => {
+    if (!(req as { user?: unknown }).user) {
+      res.sendStatus(401);
+      return;
+    }
+    serverPluginApi.ai
+      .status(
+        req,
+        organizationIdOf({ organizationId: req.query.organizationId }),
+      )
+      .then((status) => res.json(status))
+      .catch(next);
+  });
+
   app.use("/ai/:capability", (req, res, next) => {
     const route = routes.get(req.params.capability!);
     if (!route) return next();

@@ -240,15 +240,14 @@ export class IntegrationsApi {
     return rows[0] ?? null;
   }
 
-  /** Whether any organization here is linked to a cloud. */
-  public async hasCloudConnection(): Promise<boolean> {
-    const { rows } = await this.getRootPool().query<{ linked: boolean }>(
-      `select exists(
-         select 1 from app_public.cloud_connections
-          where target_organization_slug is not null
-       ) as linked`,
+  public async getOrganizationSlug(
+    organizationId: string,
+  ): Promise<string | null> {
+    const { rows } = await this.getRootPool().query<{ slug: string }>(
+      `select slug from app_public.organizations where id = $1`,
+      [organizationId],
     );
-    return rows[0]?.linked ?? false;
+    return rows[0]?.slug ?? null;
   }
 
   /** Picks local, remote or unavailable for one organization. */
