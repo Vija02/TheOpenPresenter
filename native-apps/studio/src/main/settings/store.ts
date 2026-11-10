@@ -25,6 +25,8 @@ export type Settings = {
   runtimeSource?: string;
   /** Monitor label the presentation window opens on. */
   presentMonitor?: string;
+  /** Servers signed in to from this app */
+  accounts?: string[];
 };
 
 export const DEFAULT_CLOUD_URL = "https://theopenpresenter.com";

@@ -11,6 +11,8 @@ export type Settings = {
   remoteAccess?: boolean;
   runtimeSource?: string;
   presentMonitor?: string;
+  /** Servers signed in to from this app */
+  accounts?: string[];
 };
 
 export type RuntimeStatus =
@@ -106,6 +108,20 @@ export type Account = {
   name: string | null;
   username: string;
   email: string | null;
+};
+
+/** An account this computer is signed in to, with its organizations. */
+export type SignedInAccount = {
+  rootUrl: string;
+  /** "TheOpenPresenter Cloud" or the server's host. */
+  label: string;
+  isCloud: boolean;
+  /** The account the app goes online with. */
+  current: boolean;
+  status: "ok" | "signed-out" | "unreachable";
+  /** Null unless `status` is "ok". */
+  account: Account | null;
+  organizations: CloudOrganization[] | null;
 };
 
 /** How an app update is progressing. Mirrors `shell/updates.ts`. */
@@ -330,6 +346,16 @@ export const api = {
    */
   removeOrganization: (organizationId: string) =>
     invoke<void>("cloud:remove-organization", { organizationId }),
+
+  accounts: () => invoke<SignedInAccount[]>("accounts:list"),
+  /**
+   * Sign out of an account. Its copies on this computer stop syncing and
+   * stay as local only, or are deleted with `deleteCopies`.
+   */
+  disconnectAccount: (rootUrl: string, deleteCopies: boolean) =>
+    invoke<void>("accounts:disconnect", { rootUrl, deleteCopies }),
+  openAccount: (rootUrl: string, organizationSlug?: string) =>
+    invoke<ConnectionSummary>("accounts:open", { rootUrl, organizationSlug }),
 
   /** Organisations on this install. */
   localOrganizations: () =>

@@ -896,10 +896,18 @@ code {
   justify-content: space-between;
   gap: 12px;
   margin-top: 22px;
+  margin-bottom: 12px;
 }
 
+.section-head h2,
 .section-head h3 {
   margin: 0;
+}
+
+/* The page's own heading, first thing in the panel. */
+.section-head.page-head {
+  align-items: center;
+  margin-top: 0;
 }
 
 .org-row-end {
@@ -1065,4 +1073,58 @@ code {
   display: flex;
   justify-content: space-between;
   padding: 4px 0;
+}
+
+/* Organizations grouped by the account they belong to. */
+.org-group + .org-group {
+  margin-top: 16px;
+}
+
+.org-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.org-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.org-group-head .org-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.account-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.online-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  font-size: 13px;
+}
+
+.disconnect-delete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
 }

@@ -47,6 +47,13 @@ It disappears the moment the window navigates to the server.
 `cloud`, `selfhosted`, `local` — a stored setting, not separate builds.
 Switching to local is a download, not a reinstall.
 
+There can be several accounts: the cloud plus any custom servers.
+`settings.accounts` remembers which servers were signed in to; whether each is
+still signed in is read from its cookie (`cloud/accounts.ts`). `rootUrl` is the
+one the app goes online with. Disconnecting signs out, stops syncing that
+account's local copies (keeping them as local only unless asked to delete), and
+moves the app off that server if it was showing it.
+
 ## Build and verify
 
 ```sh
