@@ -112,6 +112,8 @@ export class E2ECommandAPI {
       string,
       { baseURL: string | null; model: string | null }
     >;
+    /** AI used outside the registry, such as "lyrics.format". */
+    profiles: Record<string, { baseURL: string | null; model: string | null }>;
   }>;
 
   /**
