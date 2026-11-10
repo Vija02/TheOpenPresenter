@@ -73,6 +73,7 @@ export function createMainWindow(): BrowserWindow {
     webPreferences: baseWebPreferences(),
   });
   guardNavigation(mainWin);
+  keepOffSiteRoot(mainWin);
 
   mainWin.on("closed", () => {
     mainWin = null;
@@ -112,6 +113,44 @@ export function appEntryUrl(url: string, organizationSlug?: string): string {
     // Not parseable. Return it as given and let the window report it.
   }
   return url;
+}
+
+/** Redirect to org page when we hit server root page */
+export function rootRedirect(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (!/^https?:$/.test(parsed.protocol) || parsed.pathname !== "/") {
+      return null;
+    }
+    if (!isAllowedAppUrl(url)) return null;
+    // The shell's own pages in development; never a server.
+    if (RENDERER_URL && new URL(RENDERER_URL).origin === parsed.origin) {
+      return null;
+    }
+    return `${parsed.origin}/o`;
+  } catch {
+    return null;
+  }
+}
+
+/** Send the main window to /o whenever it lands on a server's root. */
+function keepOffSiteRoot(win: BrowserWindow): void {
+  win.webContents.on("will-navigate", (event, url) => {
+    const target = rootRedirect(url);
+    if (!target) return;
+    event.preventDefault();
+    void win.loadURL(target);
+  });
+  // A server redirect to /, or the page itself moving there without a load
+  // (a "Home" link in the app).
+  const redirect = (url: string) => {
+    const target = rootRedirect(url);
+    if (target) void win.loadURL(target);
+  };
+  win.webContents.on("did-navigate", (_event, url) => redirect(url));
+  win.webContents.on("did-navigate-in-page", (_event, url, isMainFrame) => {
+    if (isMainFrame) redirect(url);
+  });
 }
 
 /** Point the main window at a server, replacing the shell's own UI. */
