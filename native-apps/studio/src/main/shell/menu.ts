@@ -1,13 +1,64 @@
-import { Menu, type MenuItemConstructorOptions, app, shell } from "electron";
+import {
+  Menu,
+  type MenuItemConstructorOptions,
+  app,
+  dialog,
+  shell,
+} from "electron";
 
+import { runtime } from "../runtime/client";
+import { describeConnection, hostLabel } from "../settings/connection";
+import { getSettings } from "../settings/store";
 import { WEBSITE_URL } from "./about";
 import { openDataFolder } from "./data-folder";
+import { logShell } from "./log";
 import { resetSetup } from "./reset";
 import {
   closeAllPresentWindows,
   getMainWindow,
   openPanelWindow,
 } from "./windows";
+
+/**
+ * Moving between Online (the account's server) and Local (this computer),
+ * offered only when the other side is there to move to.
+ */
+function switchItems(): MenuItemConstructorOptions[] {
+  const settings = getSettings();
+  if (!settings.mode) return [];
+
+  const run = (action: () => Promise<unknown>) => () =>
+    void action().catch((err) => {
+      logShell("error", "[menu] switch failed:", err);
+      dialog.showErrorBox(
+        "Couldn't switch",
+        err instanceof Error ? err.message : String(err),
+      );
+    });
+
+  if (settings.mode === "local") {
+    if (!settings.rootUrl) return [];
+    const label = describeConnection(settings, null).isCloud
+      ? "TheOpenPresenter Cloud"
+      : hostLabel(settings.rootUrl);
+    return [
+      {
+        label: `Switch to Online (${label})`,
+        click: run(async () => (await import("./switch")).switchToOnline()),
+      },
+      { type: "separator" },
+    ];
+  }
+
+  if (!runtime.url) return [];
+  return [
+    {
+      label: "Switch to Local (this computer)",
+      click: run(async () => (await import("./switch")).switchServer("local")),
+    },
+    { type: "separator" },
+  ];
+}
 
 export function setupMenu(): void {
   const isMac = process.platform === "darwin";
@@ -34,6 +85,7 @@ export function setupMenu(): void {
     {
       label: "File",
       submenu: [
+        ...switchItems(),
         {
           label: "Settings",
           accelerator: "CmdOrCtrl+,",

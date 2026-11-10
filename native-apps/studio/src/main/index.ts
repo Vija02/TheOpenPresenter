@@ -13,7 +13,7 @@ import {
 import { setupCrashReporting } from "./shell/crashes";
 import { reportDiagnosis } from "./shell/diagnostics";
 import { logShell } from "./shell/log";
-import { setupMenu } from "./shell/menu";
+import { refreshMenu, setupMenu } from "./shell/menu";
 import { setupTray } from "./shell/tray";
 import {
   checkAtLaunch,
@@ -313,6 +313,8 @@ function forwardRuntimeEvents(): void {
   runtime.on("listening", (payload: { url: string }) => {
     serverUrl = payload.url;
     send("runtime:listening", payload);
+    // "Switch to Local" depends on there being a local server.
+    refreshMenu();
     logShell("info", `[runtime] listening at ${payload.url}`);
     // Deliberately no navigation: `runtime:start` hands the window over once
     // it has the final URL, and doing it here too raced that onto a stale URL.
