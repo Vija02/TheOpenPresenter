@@ -110,6 +110,7 @@ export function PickOrganizations({
 
       <Button
         className="onboarding-primary"
+        isLoading={busy}
         disabled={busy || options === null || (hasOptions && chosen.size === 0)}
         onClick={() =>
           onContinue((options ?? []).filter((org) => chosen.has(org.slug)))

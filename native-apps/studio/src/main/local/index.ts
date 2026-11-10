@@ -135,19 +135,32 @@ function isDownloaded(): Promise<boolean> {
   ]);
 }
 
-/** Resolves once there is a local server to open; rejects if setup fails. */
-function untilSwitchable(): Promise<void> {
+/**
+ * Resolves once Local is worth opening: the projects are copied, or the
+ * switch has been possible for a while and the copy is slow. Media carries on
+ * after, followed by the card. Rejects if setup fails.
+ */
+function untilProjectsCopied(patienceMs = 15_000): Promise<void> {
   return new Promise((resolve, reject) => {
-    const check = () => {
-      const state = localSetup.state;
-      if (localSetup.canSwitch) {
-        localSetup.off("state", check);
-        resolve();
-      } else if (state.phase === "failed") {
-        localSetup.off("state", check);
-        reject(new Error(state.message));
-      }
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const finish = (err?: Error) => {
+      localSetup.off("state", check);
+      if (timer) clearTimeout(timer);
+      if (err) reject(err);
+      else resolve();
     };
+    function check() {
+      const state = localSetup.state;
+      if (state.phase === "failed") return finish(new Error(state.message));
+      if (!localSetup.canSwitch) return;
+      if (
+        state.phase === "ready" ||
+        (state.phase === "syncing" && state.stage === "media")
+      ) {
+        return finish();
+      }
+      timer ??= setTimeout(() => finish(), patienceMs);
+    }
     localSetup.on("state", check);
     check();
   });
@@ -214,7 +227,7 @@ export function registerLocalSetupIPC(): void {
 
       if (downloaded) {
         try {
-          await untilSwitchable();
+          await untilProjectsCopied();
           await switchToLocal();
           return { direct: true };
         } catch (err) {

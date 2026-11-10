@@ -73,6 +73,8 @@ export class LocalSetup extends EventEmitter {
   private plan: PendingLocal | null = null;
   private channel = "stable";
   private localUrl: string | null = null;
+  /** The organizations are connected, so the switch knows what to open. */
+  private connected = false;
   /** Where to open once switched: the first organization copied. */
   private openSlug: string | null = null;
   private copying: { id: string; name: string }[] = [];
@@ -85,10 +87,15 @@ export class LocalSetup extends EventEmitter {
     return this.current;
   }
 
-  /** There is a local server running to switch to. */
+  /**
+   * There is a local server to switch to, with the organizations connected:
+   * any sooner and the switch would not know which one to open, or which
+   * copies to keep following.
+   */
   get canSwitch(): boolean {
     return (
       this.localUrl !== null &&
+      this.connected &&
       (this.current.phase === "syncing" || this.current.phase === "ready")
     );
   }
@@ -189,6 +196,7 @@ export class LocalSetup extends EventEmitter {
   reset(): void {
     this.plan = null;
     this.copying = [];
+    this.connected = false;
     this.set({ phase: "idle" });
   }
 
@@ -204,6 +212,7 @@ export class LocalSetup extends EventEmitter {
 
   private async run(): Promise<void> {
     const plan = this.plan!;
+    this.connected = false;
     try {
       await this.download(this.channel);
       if (!this.isCurrent(plan)) return;
@@ -214,6 +223,8 @@ export class LocalSetup extends EventEmitter {
       this.localUrl = url;
 
       const connectionIds = await this.connectWithRetry(url, plan);
+      if (!this.isCurrent(plan)) return;
+      this.connected = true;
       const syncFailed = await this.waitForSync(url, plan, connectionIds);
       this.report(plan, { phase: "ready", syncFailed });
     } catch (err) {
