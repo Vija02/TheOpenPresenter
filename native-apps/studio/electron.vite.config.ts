@@ -20,6 +20,7 @@ export default defineConfig({
           loading: resolve(__dirname, "src/renderer/loading.html"),
           unreachable: resolve(__dirname, "src/renderer/unreachable.html"),
           update: resolve(__dirname, "src/renderer/update.html"),
+          setupbar: resolve(__dirname, "src/renderer/setupbar.html"),
         },
       },
     },

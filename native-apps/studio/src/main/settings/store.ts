@@ -25,8 +25,19 @@ export type Settings = {
   runtimeSource?: string;
   /** Monitor label the presentation window opens on. */
   presentMonitor?: string;
+  /**
+   * Getting this computer ready to work offline, while the app is used
+   * online. Kept so a restart picks up where it left off; cleared on switch.
+   */
+  pendingLocal?: PendingLocal;
   /** Servers signed in to from this app */
   accounts?: string[];
+};
+
+export type PendingLocal = {
+  /** The account's server, which the organizations are copied from. */
+  rootUrl: string;
+  organizations: { slug: string; name: string }[];
 };
 
 export const DEFAULT_CLOUD_URL = "https://theopenpresenter.com";

@@ -20,6 +20,18 @@ export function getMainWindow(): BrowserWindow | null {
   return mainWin;
 }
 
+const mainWindowListeners = new Set<(win: BrowserWindow) => void>();
+
+/** Hear about each new main window, for things that sit inside it. */
+export function onMainWindowCreated(
+  listener: (win: BrowserWindow) => void,
+): () => void {
+  mainWindowListeners.add(listener);
+  return () => mainWindowListeners.delete(listener);
+}
+
+export { baseWebPreferences };
+
 /**
  * Stop a window navigating itself somewhere we did not sanction
  */
@@ -79,6 +91,8 @@ export function createMainWindow(): BrowserWindow {
     mainWin = null;
   });
 
+  const created = mainWin;
+  for (const listener of mainWindowListeners) listener(created);
   return mainWin;
 }
 
@@ -86,8 +100,14 @@ export function createMainWindow(): BrowserWindow {
  * Load one of the shell's own React entry points
  */
 export function loadShellUI(
-  win: BrowserWindow,
-  entry: "onboarding" | "panel" | "loading" | "unreachable" | "update",
+  win: Pick<BrowserWindow, "loadURL" | "loadFile">,
+  entry:
+    | "onboarding"
+    | "panel"
+    | "loading"
+    | "unreachable"
+    | "update"
+    | "setupbar",
   panel?: string,
 ): void {
   const hash = panel ? `#${panel}` : "";

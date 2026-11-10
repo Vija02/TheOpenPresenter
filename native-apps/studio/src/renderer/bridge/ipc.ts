@@ -11,8 +11,19 @@ export type Settings = {
   remoteAccess?: boolean;
   runtimeSource?: string;
   presentMonitor?: string;
+  /**
+   * Getting this computer ready to work offline, while the app is used
+   * online. Kept so a restart picks up where it left off; cleared on switch.
+   */
+  pendingLocal?: PendingLocal;
   /** Servers signed in to from this app */
   accounts?: string[];
+};
+
+export type PendingLocal = {
+  /** The account's server, which the organizations are copied from. */
+  rootUrl: string;
+  organizations: { slug: string; name: string }[];
 };
 
 export type RuntimeStatus =
@@ -92,6 +103,12 @@ export type SyncProgress = {
   status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
   syncedProjects: number;
   projectsToSync: number;
+  /** Media copies after the projects, in a phase of its own. */
+  mediaStatus?: "PENDING" | "SYNCING" | "SYNCED" | "FAILED";
+  syncedMedia?: number;
+  totalMedia?: number;
+  downloadedBytes?: number;
+  totalBytes?: number;
 };
 
 /** What the app is currently pointed at. Mirrors the main process summary. */
@@ -140,6 +157,39 @@ export type ProgressPayload = {
   total: number;
   bytes?: number;
 };
+
+/** Getting this computer ready to work offline. Mirrors `main/local/setup.ts`. */
+export type LocalSetupState = (
+  | { phase: "idle" }
+  | { phase: "downloading"; progress: ProgressPayload | null }
+  | { phase: "starting" }
+  | ({ phase: "syncing" } & SyncView)
+  | { phase: "ready"; syncFailed: boolean }
+  | { phase: "failed"; message: string }
+) & { canSwitch: boolean };
+
+/** How far organization copies have got. Mirrors `main/local/syncWatch.ts`. */
+export type SyncView = {
+  stage: "projects" | "media";
+  synced: number;
+  total: number;
+  /** Bytes, during media, when known. */
+  bytes?: { done: number; total: number };
+  /** Nothing has moved for a long while. */
+  slow?: boolean;
+};
+
+/** Copies started from settings. Mirrors `main/local/firstSync.ts`. */
+export type FirstSyncState =
+  | { phase: "idle" }
+  | ({ phase: "syncing"; names: string[] } & SyncView)
+  | { phase: "done"; names: string[]; failed: boolean };
+
+/** What the setup card in the app window shows. */
+export type SetupBarContent =
+  | { kind: "setup"; state: LocalSetupState; announce: boolean }
+  | { kind: "sync"; state: FirstSyncState }
+  | null;
 
 /** How a runtime update is progressing. Mirrors `shell/updates.ts`. */
 export type RuntimeUpdateState =
@@ -371,4 +421,18 @@ export const api = {
     invoke<void>("cloud:sync", { cloudConnectionId }),
   syncProgress: (cloudConnectionId: string) =>
     invoke<SyncProgress | null>("cloud:sync-progress", { cloudConnectionId }),
+
+  /** Offline setup, which runs in the background while the app is used. */
+  localSetupState: () => invoke<LocalSetupState>("local-setup:state"),
+  localSetupDownload: (channel?: string) =>
+    invoke<void>("local-setup:download", channel),
+  localSetupWaitForDownload: () => invoke<void>("local-setup:wait-download"),
+  localSetupBegin: (plan: PendingLocal) =>
+    invoke<{ direct: boolean }>("local-setup:begin", plan),
+  localSetupRetry: () => invoke<void>("local-setup:retry"),
+  localSetupSwitch: () => invoke<void>("local-setup:switch"),
+  setupBarDismiss: () => invoke<void>("setup-bar:dismiss"),
+  setupBarLater: () => invoke<void>("setup-bar:later"),
+  setupBarContent: () => invoke<SetupBarContent>("setup-bar:content"),
+  setupBarHeight: (height: number) => invoke<void>("setup-bar:height", height),
 };

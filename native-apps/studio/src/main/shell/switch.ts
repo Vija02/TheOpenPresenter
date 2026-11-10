@@ -13,6 +13,7 @@ import {
   updateSettings,
 } from "../settings/store";
 import { refreshMenu } from "./menu";
+import { refreshSetupBar } from "./setupBar";
 import { showAppWindow } from "./windows";
 
 /**
@@ -50,6 +51,8 @@ export async function switchServer(
   }
 
   updateSettings(patch);
+  // The offline setup only shows online; organization copies show anywhere.
+  refreshSetupBar();
 
   const url = resolveRootUrl(runtime.url);
   if (!url) {
