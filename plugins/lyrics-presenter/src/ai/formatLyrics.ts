@@ -9,6 +9,7 @@ import { contentHasChordPro } from "../chords/song";
 
 export type FormatLyricsOptions = {
   linesPerSlide?: number;
+  instructions?: string;
   maxCharsPerLine?: number;
   signal?: AbortSignal;
 };
@@ -147,8 +148,21 @@ Forever I'll love you forever I'll stand
 Nothing compares to the promise I have in You
 `.trim();
 
-const buildUserPrompt = (content: string): string =>
-  `Reformat these lyrics:\n\n${content}`;
+const buildInstructions = (): string =>
+  `
+
+USER INSTRUCTIONS
+The user's message may start with instructions of their own. They come first:
+they override every rule above, including never adding or removing words or
+chords. If they ask you to delete, add, move, repeat or rewrite something, do
+it. Only these still hold: output lyrics only, headings in square brackets,
+slides separated by "-", and on the lines you keep, each chord stays on its
+syllable.`;
+
+const buildUserPrompt = (content: string, instructions?: string): string =>
+  instructions
+    ? `My instructions (these come first):\n"""\n${instructions}\n"""\n\nReformat these lyrics following my instructions:\n\n${content}`
+    : `Reformat these lyrics:\n\n${content}`;
 
 // Use Chordpro for formatting since it'll be more reliable
 const usesChordLines = (content: string): boolean =>
@@ -187,12 +201,15 @@ export async function* formatLyricsStream(
     [
       {
         role: "system",
-        content: buildSystemPrompt(linesPerSlide, maxCharsPerLine),
+        content:
+          buildSystemPrompt(linesPerSlide, maxCharsPerLine) +
+          (options.instructions ? buildInstructions() : ""),
       },
       {
         role: "user",
         content: buildUserPrompt(
           chordLines ? openSongToChordPro(trimmed) : trimmed,
+          options.instructions,
         ),
       },
     ],

@@ -67,6 +67,7 @@ let serverPluginApiRef:
 const formatInput = z.object({
   content: z.string().trim().min(1).max(100_000),
   linesPerSlide: z.number().int().min(1).max(20).optional(),
+  instructions: z.string().trim().max(1000).optional(),
   organizationId: z.string().uuid().optional(),
 });
 
@@ -89,12 +90,20 @@ export const init = (
           organizationId: body.organizationId,
           signal,
           cloudPath: `/plugin/${pluginName}/ai/format`,
-          body: { content: body.content, linesPerSlide: body.linesPerSlide },
+          body: {
+            content: body.content,
+            linesPerSlide: body.linesPerSlide,
+            instructions: body.instructions,
+          },
           local: async function* () {
             for await (const delta of formatLyricsStream(
               serverPluginApi,
               body.content,
-              { linesPerSlide: body.linesPerSlide, signal },
+              {
+                linesPerSlide: body.linesPerSlide,
+                instructions: body.instructions,
+                signal,
+              },
             )) {
               yield { delta };
             }

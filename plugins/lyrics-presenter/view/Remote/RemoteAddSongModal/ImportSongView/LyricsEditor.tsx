@@ -4,8 +4,8 @@ import { Dispatch, SetStateAction } from "react";
 import { Song } from "../../../../src";
 import { removeChords } from "../../../../src/processLyrics";
 import { usePluginAPI } from "../../../pluginApi";
-import { AiFormatButton } from "../../RemoteEditSongModal/AiFormatButton";
 import { ChordToolbar } from "../../RemoteEditSongModal/ChordToolbar";
+import { FormatMenu } from "../../RemoteEditSongModal/FormatMenu";
 import SongEditEditor from "../../RemoteEditSongModal/SongEditEditor";
 import { useChordEditing } from "../../RemoteEditSongModal/useChordEditing";
 import { SongViewSlides } from "../../SongViewSlides";
@@ -56,10 +56,7 @@ export const LyricsEditor = ({
                 {showChords ? "Hide chords" : "Show chords"}
               </Button>
             )}
-            <AiFormatButton
-              content={content}
-              onFormatted={setImportSongContent}
-            />
+            <FormatMenu content={content} onFormatted={setImportSongContent} />
             {content !== originalContent && (
               <Button
                 size="xs"
