@@ -15,8 +15,8 @@ export function DownloadStatus({ state }: { state: DownloadState }) {
   if (state.failed) {
     return (
       <p className="download-status warn">
-        The download did not finish. You can still sign in; it will retry when
-        you open the main computer.
+        The download didn&apos;t finish. You can keep going; it will try again
+        in the background.
       </p>
     );
   }

@@ -48,7 +48,10 @@ export function registerAppIPC(): void {
   /** Commit to a mode and open the app against it. */
   ipcMain.handle(
     "app:connect",
-    async (_event, args: { mode: Mode; rootUrl?: string }) => {
+    async (
+      _event,
+      args: { mode: Mode; rootUrl?: string; organizationSlug?: string },
+    ) => {
       const patch: Partial<Settings> = { mode: args.mode };
       if (args.rootUrl) patch.rootUrl = normalizeHost(args.rootUrl);
       updateSettings(patch);
@@ -59,7 +62,7 @@ export function registerAppIPC(): void {
           "No server to connect to. Start the local runtime first.",
         );
       }
-      showAppWindow(url);
+      showAppWindow(url, args.organizationSlug);
       refreshMenu();
       return { url };
     },
