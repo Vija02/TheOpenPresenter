@@ -49,9 +49,10 @@ Switching to local is a download, not a reinstall.
 
 Think of it as an **account** plus **Online / Local**. `rootUrl` (and its
 cookie) is the account, kept even in local mode. `cloud`/`selfhosted` are
-Online (the window shows `rootUrl`); `local` shows this computer. The File menu
-switches between them (`shell/switch.ts`), and on a complete install the local
-server keeps running while Online so the switch is instant.
+Online (the window shows `rootUrl`); `local` shows this computer. Settings >
+Accounts switches between them (`shell/switch.ts`), and File > Go offline goes
+to Local. On a complete install the local server keeps running while Online so
+the switch is instant.
 
 There can be several accounts: the cloud plus any custom servers.
 `settings.accounts` remembers which servers were signed in to; whether each is

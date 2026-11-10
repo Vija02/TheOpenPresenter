@@ -15,6 +15,7 @@ export function Account() {
   }, []);
 
   useEffect(refresh, [refresh]);
+  useEffect(() => listen<ConnectionSummary>("app:switched", setCurrent), []);
 
   return (
     <section className="panel-body">
