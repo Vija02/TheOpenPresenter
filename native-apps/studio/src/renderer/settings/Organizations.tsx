@@ -164,6 +164,15 @@ export function Organizations({
     }
   };
 
+  const goOnline = async (account: SignedInAccount) => {
+    setBusy("online");
+    try {
+      await openOnline(account);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const openOnline = async (account: SignedInAccount, slug?: string) => {
     onError(null);
     try {
@@ -237,7 +246,7 @@ export function Organizations({
                 hideCloseButton
                 className="w-48 p-1"
               >
-                {account.status === "ok" && !(online && account.current) && (
+                {account.status === "ok" && !account.current && (
                   <PopoverMenuItem
                     label="Use online"
                     icon={<GlobeIcon className="size-4" />}
@@ -278,17 +287,32 @@ export function Organizations({
             </div>
           )}
 
-          {online && account.current && (
-            <div className="online-banner">
-              <span>You&apos;re using this account online.</span>
-              {hasLocal && (
+          {account.current && (online || account.status === "ok") && (
+            <div className="account-mode">
+              <span
+                className={`account-mode-dot ${online ? "online" : ""}`}
+                aria-hidden
+              />
+              <span>{online ? "Connected" : "Offline"}</span>
+              {online ? (
+                hasLocal && (
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    disabled={busy !== null}
+                    onClick={() => void switchToLocal()}
+                  >
+                    {busy === "local" ? "Going offline…" : "Go offline"}
+                  </Button>
+                )
+              ) : (
                 <Button
                   variant="outline"
                   size="xs"
                   disabled={busy !== null}
-                  onClick={() => void switchToLocal()}
+                  onClick={() => void goOnline(account)}
                 >
-                  {busy === "local" ? "Starting…" : "Switch to Local"}
+                  {busy === "online" ? "Going online…" : "Go online"}
                 </Button>
               )}
             </div>
@@ -408,20 +432,25 @@ function AddAccount({
   onAdded: () => void;
   onError: (message: string | null) => void;
 }) {
-  const [custom, setCustom] = useState(false);
+  /** The dialog: typing an address, or waiting on the browser. */
+  const [open, setOpen] = useState<null | "address" | "waiting">(null);
   const [address, setAddress] = useState("");
-  const [waiting, setWaiting] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [typedError, setTypedError] = useState<string | null>(null);
+
+  const close = () => {
+    setOpen(null);
+    setAddress("");
+    setTypedError(null);
+  };
 
   useEffect(() => {
     const offDone = listen("auth:completed", () => {
-      setWaiting(false);
-      setCustom(false);
-      setAddress("");
+      close();
       onAdded();
     });
     const offFail = listen<{ message: string }>("auth:failed", (payload) => {
-      setWaiting(false);
+      close();
       onError(payload.message);
     });
     return () => {
@@ -430,108 +459,125 @@ function AddAccount({
     };
   }, [onAdded, onError]);
 
-  const start = async (url: string) => {
+  /** Typed addresses report in the dialog; the cloud on the page. */
+  const start = async (url: string, typed = false) => {
+    const setError = typed ? setTypedError : onError;
     onError(null);
+    setTypedError(null);
     setBusy(true);
     try {
       const target = await api.normalizeHost(url);
       if (!target) {
-        onError("Enter a server address.");
+        setError("Enter a server address.");
         return;
       }
       if (!(await api.checkHost(target))) {
-        onError(`Couldn't reach ${target}.`);
+        setError(`Couldn't reach ${target}.`);
         return;
       }
       const result = await api.beginAuth(target);
       if (!result.supported) {
-        onError("That server doesn't support signing in from the app.");
+        setError("That server doesn't support signing in from the app.");
         return;
       }
-      setWaiting(true);
+      setOpen("waiting");
     } catch (err) {
-      onError(message(err));
+      setError(message(err));
     } finally {
       setBusy(false);
     }
   };
 
-  if (waiting) {
-    return (
-      <span className="row">
-        <span className="muted small">Finish signing in in your browser.</span>
-        <Button
-          variant="link"
-          size="xs"
-          onClick={() => {
-            void api.cancelAuth();
-            setWaiting(false);
-          }}
-        >
-          Cancel
-        </Button>
-      </span>
-    );
-  }
-
-  if (custom) {
-    return (
-      <span className="row">
-        <Input
-          type="text"
-          value={address}
-          autoFocus
-          placeholder="presenter.mychurch.org"
-          disabled={busy}
-          onChange={(event) => setAddress(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && address.trim()) void start(address);
-            if (event.key === "Escape") setCustom(false);
-          }}
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy || !address.trim()}
-          onClick={() => void start(address)}
-        >
-          {busy ? "Connecting…" : "Sign in"}
-        </Button>
-        <Button variant="link" size="xs" onClick={() => setCustom(false)}>
-          Cancel
-        </Button>
-      </span>
-    );
-  }
+  const cancel = () => {
+    if (open === "waiting") void api.cancelAuth();
+    close();
+  };
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" disabled={busy}>
-          <PlusIcon />
-          Add account
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        hideArrow
-        hideCloseButton
-        className="w-64 p-1"
+    <>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" disabled={busy}>
+            <PlusIcon />
+            Add account
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          hideArrow
+          hideCloseButton
+          className="w-64 p-1"
+        >
+          <PopoverMenuItem
+            label="TheOpenPresenter Cloud"
+            description="Sign in to the hosted service"
+            icon={<CloudIcon className="size-4" />}
+            onClick={() => void start(CLOUD_URL)}
+          />
+          <PopoverMenuItem
+            label="Another server"
+            description="A server your church runs"
+            icon={<ServerIcon className="size-4" />}
+            onClick={() => setOpen("address")}
+          />
+        </PopoverContent>
+      </Popover>
+
+      <Dialog
+        open={open !== null}
+        onOpenChange={(next) => {
+          if (!next && !busy) cancel();
+        }}
       >
-        <PopoverMenuItem
-          label="TheOpenPresenter Cloud"
-          description="Sign in to the hosted service"
-          icon={<CloudIcon className="size-4" />}
-          onClick={() => void start(CLOUD_URL)}
-        />
-        <PopoverMenuItem
-          label="Another server"
-          description="A server your church runs"
-          icon={<ServerIcon className="size-4" />}
-          onClick={() => setCustom(true)}
-        />
-      </PopoverContent>
-    </Popover>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {open === "waiting" ? "Finish signing in" : "Add a server"}
+            </DialogTitle>
+            <DialogDescription>
+              {open === "waiting"
+                ? "Sign in in your browser, then come back here."
+                : "The address of the server your church runs."}
+            </DialogDescription>
+          </DialogHeader>
+          {open === "address" && (
+            <DialogBody>
+              <div className="add-account">
+                <Input
+                  type="text"
+                  value={address}
+                  autoFocus
+                  placeholder="presenter.mychurch.org"
+                  disabled={busy}
+                  onChange={(event) => setAddress(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && address.trim()) {
+                      void start(address, true);
+                    }
+                  }}
+                />
+                {typedError && (
+                  <p className="remove-org-danger">{typedError}</p>
+                )}
+              </div>
+            </DialogBody>
+          )}
+          <DialogFooter>
+            <Button variant="outline" disabled={busy} onClick={cancel}>
+              Cancel
+            </Button>
+            {open === "address" && (
+              <Button
+                disabled={busy || !address.trim()}
+                onClick={() => void start(address, true)}
+              >
+                {busy ? "Connecting…" : "Sign in"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

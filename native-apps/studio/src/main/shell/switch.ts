@@ -1,3 +1,5 @@
+import { webContents } from "electron";
+
 import { runtime } from "../runtime/client";
 import {
   type ConnectionSummary,
@@ -61,13 +63,11 @@ export async function switchServer(
 
   showAppWindow(url, organizationSlug);
   refreshMenu();
-  return describeConnection(getSettings(), runtime.url);
+  const summary = describeConnection(getSettings(), runtime.url);
+  // Settings may be open on another window, showing the old mode.
+  for (const contents of webContents.getAllWebContents()) {
+    if (!contents.isDestroyed()) contents.send("app:switched", summary);
+  }
+  return summary;
 }
 
-/** Back to the account's server, from Local mode. */
-export async function switchToOnline(): Promise<ConnectionSummary> {
-  const { rootUrl } = getSettings();
-  if (!rootUrl) throw new Error("No account to go online with.");
-  const mode: Mode = describeConnection({ mode: "cloud", rootUrl }, null).mode;
-  return switchServer(mode, rootUrl);
-}

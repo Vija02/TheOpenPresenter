@@ -7,7 +7,6 @@ import {
 } from "electron";
 
 import { runtime } from "../runtime/client";
-import { describeConnection, hostLabel } from "../settings/connection";
 import { getSettings } from "../settings/store";
 import { WEBSITE_URL } from "./about";
 import { openDataFolder } from "./data-folder";
@@ -20,42 +19,28 @@ import {
 } from "./windows";
 
 /**
- * Moving between Online (the account's server) and Local (this computer),
- * offered only when the other side is there to move to.
+ * Going offline, while online with a local server to go to. Going back online
+ * is in Settings > Accounts.
  */
-function switchItems(): MenuItemConstructorOptions[] {
+function goOfflineItems(): MenuItemConstructorOptions[] {
   const settings = getSettings();
-  if (!settings.mode) return [];
-
-  const run = (action: () => Promise<unknown>) => () =>
-    void action().catch((err) => {
-      logShell("error", "[menu] switch failed:", err);
-      dialog.showErrorBox(
-        "Couldn't switch",
-        err instanceof Error ? err.message : String(err),
-      );
-    });
-
-  if (settings.mode === "local") {
-    if (!settings.rootUrl) return [];
-    const label = describeConnection(settings, null).isCloud
-      ? "TheOpenPresenter Cloud"
-      : hostLabel(settings.rootUrl);
-    return [
-      {
-        label: `Switch to Online (${label})`,
-        click: run(async () => (await import("./switch")).switchToOnline()),
-      },
-      { type: "separator" },
-    ];
-  }
-
+  if (!settings.mode || settings.mode === "local") return [];
   // Mid-setup, the setup card owns this.
   if (!runtime.url || settings.pendingLocal) return [];
+
   return [
     {
-      label: "Switch to Local (this computer)",
-      click: run(async () => (await import("./switch")).switchServer("local")),
+      label: "Go offline",
+      click: () =>
+        void import("./switch")
+          .then(({ switchServer }) => switchServer("local"))
+          .catch((err) => {
+            logShell("error", "[menu] go offline failed:", err);
+            dialog.showErrorBox(
+              "Couldn't go offline",
+              err instanceof Error ? err.message : String(err),
+            );
+          }),
     },
     { type: "separator" },
   ];
@@ -86,7 +71,7 @@ export function setupMenu(): void {
     {
       label: "File",
       submenu: [
-        ...switchItems(),
+        ...goOfflineItems(),
         {
           label: "Settings",
           accelerator: "CmdOrCtrl+,",

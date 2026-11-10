@@ -1183,17 +1183,31 @@ body.setup-bar-page {
   font-size: 13px;
 }
 
-.online-banner {
+.add-account {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Under the account name: whether the window is using it right now. */
+.account-mode {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  background: var(--panel);
-  border: 1px solid var(--stroke);
+  gap: 8px;
+  margin: -2px 0 8px;
   font-size: 13px;
+  color: var(--muted);
+}
+
+.account-mode-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--fill-muted);
+}
+
+.account-mode-dot.online {
+  background: var(--fill-success);
 }
 
 .disconnect-delete {
