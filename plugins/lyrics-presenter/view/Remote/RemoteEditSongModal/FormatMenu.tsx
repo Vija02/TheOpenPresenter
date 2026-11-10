@@ -1,4 +1,5 @@
-import { appData, readSseEvents } from "@repo/lib";
+import { AiUnavailableDialog, AiUpgradeIcon, useAiStatus } from "@repo/ai-chat";
+import { readSseEvents } from "@repo/lib";
 import {
   Button,
   Dialog,
@@ -30,8 +31,6 @@ type FormatEvent = {
   message?: string;
 };
 
-const AI_ENABLED = appData.getAiEnabled();
-
 /**
  * Auto format song as slides.
  * Whether 2, 4, or AI
@@ -44,8 +43,11 @@ export const FormatMenu = ({
   onFormatted: (content: string) => void;
 }) => {
   const pluginApi = usePluginAPI();
+  // AI is always offered; when it can't run, the button says why instead.
+  const aiStatus = useAiStatus(pluginApi.pluginContext.organizationId);
+  const aiUnavailable =
+    aiStatus && aiStatus.state !== "available" ? aiStatus : null;
   const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [askingInstructions, setAskingInstructions] = useState(false);
   const [instructions, setInstructions] = useState("");
   const abortRef = useRef<AbortController | null>(null);
@@ -55,13 +57,11 @@ export const FormatMenu = ({
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const split = (linesPerSlide: number) => {
-    setError(null);
     onFormatted(splitIntoSlides(content, linesPerSlide));
   };
 
   const formatWithAi = async (userInstructions?: string) => {
     if (isStreaming) return;
-    setError(null);
     setIsStreaming(true);
     startedRef.current = false;
     const controller = new AbortController();
@@ -115,7 +115,10 @@ export const FormatMenu = ({
     } catch (e) {
       if (startedRef.current) onFormatted(content);
       if ((e as Error).name !== "AbortError") {
-        setError((e as Error).message || "AI formatting failed");
+        pluginApi.remote.toast.error(
+          (e as Error).message || "AI formatting didn't work. Try again.",
+          { toastId: "lyrics-ai-format" },
+        );
       }
     } finally {
       startedRef.current = false;
@@ -125,11 +128,66 @@ export const FormatMenu = ({
   };
 
   const isDisabled = isStreaming || content?.trim().length === 0;
+  /** An AI entry chosen while AI can't run: say why, in a dialog. */
+  const [explaining, setExplaining] = useState(false);
+
+  const splitItems = (
+    <>
+      <PopoverMenuItem
+        label="2 lines per slide"
+        icon={<VscListFlat />}
+        onClick={() => split(2)}
+      />
+      <PopoverMenuItem
+        label="4 lines per slide"
+        icon={<VscListFlat />}
+        onClick={() => split(4)}
+      />
+    </>
+  );
 
   return (
     <div className="stack-row gap-1">
-      <div className="stack-row gap-0">
-        {AI_ENABLED && (
+      {aiStatus === undefined ? null : aiUnavailable ? (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button type="button" size="xs" disabled={isDisabled}>
+              <VscListFlat />
+              Format
+              <VscChevronDown />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            hideArrow
+            hideCloseButton
+            className="w-64 p-1"
+          >
+            {splitItems}
+            <PopoverMenuItem
+              label={
+                <span className="stack-row gap-1.5">
+                  AI Format
+                  <AiUpgradeIcon />
+                </span>
+              }
+              icon={<FaWandMagicSparkles />}
+              onClick={() => setExplaining(true)}
+            />
+            <PopoverMenuItem
+              label={
+                <span className="stack-row gap-1.5">
+                  Custom AI…
+                  <AiUpgradeIcon />
+                </span>
+              }
+              icon={<VscSparkle />}
+              onClick={() => setExplaining(true)}
+            />
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <div className="stack-row gap-0">
           <Button
             type="button"
             size="xs"
@@ -146,59 +204,40 @@ export const FormatMenu = ({
               "AI Format"
             )}
           </Button>
-        )}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              size="xs"
-              className={
-                AI_ENABLED ? "rounded-l-none border-l border-l-black/20" : ""
-              }
-              disabled={isDisabled}
-              aria-label={AI_ENABLED ? "More ways to format" : undefined}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                size="xs"
+                className="rounded-l-none border-l border-l-black/20"
+                disabled={isDisabled}
+                aria-label="More ways to format"
+              >
+                <VscChevronDown />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              hideArrow
+              hideCloseButton
+              className="w-60 p-1"
             >
-              {!AI_ENABLED && (
-                <>
-                  <VscListFlat />
-                  Format
-                </>
-              )}
-              <VscChevronDown />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            align="end"
-            hideArrow
-            hideCloseButton
-            className="w-60 p-1"
-          >
-            <PopoverMenuItem
-              label="2 lines per slide"
-              icon={<VscListFlat />}
-              onClick={() => split(2)}
-            />
-            <PopoverMenuItem
-              label="4 lines per slide"
-              icon={<VscListFlat />}
-              onClick={() => split(4)}
-            />
-            {AI_ENABLED && (
+              {splitItems}
               <PopoverMenuItem
                 label="Custom AI…"
                 description="Tell the AI what you want"
                 icon={<VscSparkle />}
                 onClick={() => setAskingInstructions(true)}
               />
-            )}
-          </PopoverContent>
-        </Popover>
-      </div>
-      {error && (
-        <span className="text-xs text-red-600" title={error}>
-          Failed
-        </span>
+            </PopoverContent>
+          </Popover>
+        </div>
       )}
+      <AiUnavailableDialog
+        status={aiUnavailable}
+        open={explaining}
+        onOpenChange={setExplaining}
+      />
 
       <Dialog open={askingInstructions} onOpenChange={setAskingInstructions}>
         <DialogContent>
