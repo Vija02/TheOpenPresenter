@@ -5,12 +5,13 @@ import { formatLyricsStream, toChordLines } from "../ai/formatLyrics";
 
 /** A model that answers `reply` in awkward chunks, and remembers its input. */
 const fakeModel = (reply: string) => {
-  const seen: { user?: string } = {};
+  const seen: { system?: string; user?: string } = {};
   const api = {
     ai: {
       chatCompletionStream: async function* (
         messages: { role: string; content: string }[],
       ) {
+        seen.system = messages.find((m) => m.role === "system")?.content;
         seen.user = messages.find((m) => m.role === "user")?.content;
         for (let i = 0; i < reply.length; i += 7) yield reply.slice(i, i + 7);
       },
@@ -81,6 +82,30 @@ describe("formatLyricsStream", () => {
     expect(out).toBe(
       "[Intro]\n.| G /// | D /// |\n\n[Verse]\n.G\nAmazing grace",
     );
+  });
+});
+
+describe("custom instructions", () => {
+  it("puts the user's instructions before the song, and lets them win", async () => {
+    const { api, seen } = fakeModel("[Verse]\nOne");
+
+    await collect(
+      formatLyricsStream(api, "[Verse]\nOne", {
+        instructions: "Delete the intro",
+      }),
+    );
+
+    expect(seen.user).toMatch(/Delete the intro[\s\S]*\[Verse\]\nOne/);
+    expect(seen.system).toContain("USER INSTRUCTIONS");
+  });
+
+  it("leaves both prompts alone without them", async () => {
+    const { api, seen } = fakeModel("[Verse]\nOne");
+
+    await collect(formatLyricsStream(api, "[Verse]\nOne"));
+
+    expect(seen.user).toBe("Reformat these lyrics:\n\n[Verse]\nOne");
+    expect(seen.system).not.toContain("USER INSTRUCTIONS");
   });
 });
 

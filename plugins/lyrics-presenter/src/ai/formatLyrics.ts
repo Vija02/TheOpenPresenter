@@ -148,8 +148,7 @@ Forever I'll love you forever I'll stand
 Nothing compares to the promise I have in You
 `.trim();
 
-const buildInstructions = (): string =>
-  `
+const USER_INSTRUCTIONS_RULES = `
 
 USER INSTRUCTIONS
 The user's message may start with instructions of their own. They come first:
@@ -203,7 +202,7 @@ export async function* formatLyricsStream(
         role: "system",
         content:
           buildSystemPrompt(linesPerSlide, maxCharsPerLine) +
-          (options.instructions ? buildInstructions() : ""),
+          (options.instructions ? USER_INSTRUCTIONS_RULES : ""),
       },
       {
         role: "user",
