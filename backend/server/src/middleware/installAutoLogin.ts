@@ -7,6 +7,49 @@ const defaultUsername = "autologin";
 const defaultPassword = "autologin_password";
 const defaultEmail = "autologin@theopenpresenter.com";
 
+let creating: Promise<void> | null = null;
+
+/** The auto-login user and its organization, on a fresh database. */
+async function createAutoLoginUser(
+  rootPgPool: ReturnType<typeof getRootPgPool>,
+): Promise<void> {
+  const client = await rootPgPool.connect();
+  try {
+    await client.query("begin");
+    const {
+      rows: [user],
+    } = await client.query<{ id: string }>(
+      `select users.id from app_private.really_create_user(
+        username => $1,
+        email => $2,
+        email_is_verified => false,
+        name => $3,
+        avatar_url => $4,
+        password => $5
+      ) users where not (users is null)`,
+      [defaultUsername, defaultEmail, "Anonymous", null, defaultPassword],
+    );
+    const {
+      rows: [org],
+    } = await client.query<{ id: string }>(
+      `insert into app_public.organizations (slug, name, organization_type) values ($1, $2, $3) returning id`,
+      ["local", "Local", "church"],
+    );
+    await client.query(
+      `insert into app_public.organization_memberships (organization_id, user_id, is_owner, is_billing_contact)
+        values($1, $2, $3, $4)`,
+      [org!.id, user!.id, true, true],
+    );
+    await client.query("commit");
+  } catch (err) {
+    await client.query("rollback");
+    // Created meanwhile by another server process: nothing left to do.
+    if ((err as { code?: string }).code !== "23505") throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export default (app: Express) => {
   if (process.env.AUTO_LOGIN === "1") {
     const autoLoginMiddleware: RequestHandler = (req, res, next) => {
@@ -27,57 +70,27 @@ export default (app: Express) => {
       const rootPgPool = getRootPgPool(app);
 
       if (!req.user?.session_id) {
-        const {
-          rows: [session],
-        } = await rootPgPool.query(
-          `select sessions.* from app_private.login($1, $2) sessions where not (sessions is null)`,
-          [defaultUsername, defaultPassword],
-        );
-
-        // If doesn't exist, register and return
-        if (!session) {
+        const findSession = async () => {
           const {
-            rows: [details],
-          } = await rootPgPool.query<{ user_id: number; session_id: string }>(
-            `
-            with new_user as (
-              select users.* from app_private.really_create_user(
-                username => $1,
-                email => $2,
-                email_is_verified => false,
-                name => $3,
-                avatar_url => $4,
-                password => $5
-              ) users where not (users is null)
-            ), new_session as (
-              insert into app_private.sessions (user_id)
-              select id from new_user
-              returning *
-            )
-            select new_user.id as user_id, new_session.uuid as session_id
-            from new_user, new_session`,
-            [defaultUsername, defaultEmail, "Anonymous", null, defaultPassword],
-          );
-          // Create organization
-          const {
-            rows: [org],
+            rows: [session],
           } = await rootPgPool.query(
-            `insert into app_public.organizations (slug, name, organization_type) values ($1, $2, $3) returning *`,
-            ["local", "Local", "church"],
+            `select sessions.* from app_private.login($1, $2) sessions where not (sessions is null)`,
+            [defaultUsername, defaultPassword],
           );
-          await rootPgPool.query(
-            `insert into app_public.organization_memberships (organization_id, user_id, is_owner, is_billing_contact)
-              values($1, $2, $3, $4)`,
-            [org.id, details?.user_id, true, true],
-          );
+          return session;
+        };
 
-          await login({ session_id: details?.session_id });
-          next();
-          return;
+        let session = await findSession();
+        if (!session) {
+          // Requests arrive together on a fresh database; only one creates.
+          creating ??= createAutoLoginUser(rootPgPool).finally(() => {
+            creating = null;
+          });
+          await creating;
+          session = await findSession();
         }
 
-        // If logged in, then continue
-        if (session.uuid) {
+        if (session?.uuid) {
           await login({ session_id: session.uuid });
         }
       }
