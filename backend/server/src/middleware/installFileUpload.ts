@@ -108,6 +108,12 @@ export default (app: Express) => {
       res.status(400).send("Invalid image format");
       return;
     }
+    // Served as it is where images cannot be processed.
+    if (!media.canProcessImages()) {
+      res.redirect(`/media/data/${req.params.mediaName}`);
+      return;
+    }
+
     const outputExtension =
       typeof format === "string" ? format : mediaDetails.extension;
     // A conversion still has work to do when no resize is needed
