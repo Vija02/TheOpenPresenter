@@ -1,6 +1,5 @@
 import { LayoutDoc } from "@repo/layout";
 import { LayoutInsertDefaults, LayoutWorkbench } from "@repo/layout/editor";
-import { appData } from "@repo/lib";
 import {
   Button,
   Dialog,
@@ -25,8 +24,6 @@ import { LayoutPicker } from "./LayoutPicker";
 import { SlideFilmstrip } from "./SlideFilmstrip";
 import { useCustomSlides, useDeckSlides } from "./useCustomSlides";
 import { useDeckAi } from "./useDeckAi";
-
-const AI_ENABLED = appData.getAiEnabled();
 
 const EMPTY_DATA = {};
 
@@ -234,7 +231,7 @@ const CustomSlideEditorModal = ({
                   onChange={handleChange}
                   data={EMPTY_DATA}
                   frame={frame}
-                  aiChat={AI_ENABLED ? deckAi : undefined}
+                  aiChat={deckAi}
                   pluginApi={pluginApi}
                   insertDefaults={INSERT_DEFAULTS}
                 />

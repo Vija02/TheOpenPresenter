@@ -5,7 +5,6 @@ import {
 } from "@repo/ai-chat";
 import { cloneDoc } from "@repo/layout";
 import type { DeckDoc } from "@repo/layout/ai";
-import { appData } from "@repo/lib";
 import isEqual from "fast-deep-equal";
 import { useCallback, useMemo, useRef } from "react";
 
@@ -81,18 +80,16 @@ export const useDeckAi = (importId: string, options: DeckAiOptions = {}) => {
   const getContextRef = useRef(options.getContext);
   getContextRef.current = options.getContext;
 
-  const onRequest = useMemo<AiChatRequest<DeckDoc> | undefined>(
+  const onRequest = useMemo<AiChatRequest<DeckDoc>>(
     () =>
-      appData.getAiEnabled()
-        ? createAiCapabilityRequest<DeckDoc>({
-            capability: "layout-deck",
-            organizationId: pluginApi.pluginContext.organizationId,
-            getExtraBody: () => {
-              const context = getContextRef.current?.();
-              return context ? { context } : {};
-            },
-          })
-        : undefined,
+      createAiCapabilityRequest<DeckDoc>({
+        capability: "layout-deck",
+        organizationId: pluginApi.pluginContext.organizationId,
+        getExtraBody: () => {
+          const context = getContextRef.current?.();
+          return context ? { context } : {};
+        },
+      }),
     [pluginApi.pluginContext.organizationId],
   );
 
