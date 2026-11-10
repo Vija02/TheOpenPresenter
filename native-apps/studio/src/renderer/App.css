@@ -263,7 +263,7 @@ h2 {
 }
 
 .advanced-panel {
-  margin-top: 8px;
+  margin: 8px 0 16px;
   padding: 12px 14px;
   border: 1px solid var(--stroke);
   border-radius: 0.25rem;
