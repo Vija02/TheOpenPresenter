@@ -1,4 +1,9 @@
-import { createInvokeCapability, createSseRoute } from "@repo/base-plugin/server";
+import {
+  createInvokeCapability,
+  createSseRoute,
+  organizationIdOf,
+  withoutOrganizationId,
+} from "@repo/base-plugin/server";
 import { Express, RequestHandler } from "express";
 
 import { registerBuiltInAiCapabilities } from "../ai";
@@ -16,14 +21,21 @@ export default (app: Express) => {
       id,
       createSseRoute({
         name: `ai/${id}`,
-        parse: capability.parse,
-        // A request off the wire is the root of any spawn tree: depth 0
-        handler: ({ body, signal }) =>
-          capability.handler({
-            body,
+        parse: (raw) => ({ raw, input: capability.parse(raw) }),
+        handler: ({ body: { raw, input }, signal, req }) =>
+          serverPluginApi.ai.run(req, {
+            organizationId: organizationIdOf(raw),
             signal,
-            depth: 0,
-            invokeCapability: createInvokeCapability(registry, signal, 0),
+            cloudPath: `/ai/${id}`,
+            body: withoutOrganizationId(raw),
+            // A request off the wire is the root of any spawn tree: depth 0
+            local: () =>
+              capability.handler({
+                body: input,
+                signal,
+                depth: 0,
+                invokeCapability: createInvokeCapability(registry, signal, 0),
+              }),
           }),
         ...(capability.maxBodyBytes !== undefined
           ? { maxBodyBytes: capability.maxBodyBytes }

@@ -34,16 +34,18 @@ import { usePluginSourceAi } from "./usePluginSourceAi";
 
 export const PluginEditorModal = ({
   plugin,
+  organizationId,
   onClose,
   refetch,
 }: {
   plugin: Plugin;
+  organizationId: string;
   onClose: () => void;
   refetch: () => void;
 }) => {
   const { files, setFiles, savedAt } = usePluginDraft(plugin);
 
-  const ai = usePluginSourceAi({ plugin, files, setFiles });
+  const ai = usePluginSourceAi({ plugin, organizationId, files, setFiles });
   const aiEnabled = appData.getAiEnabled();
 
   const [, createVersion] = useCreateClientPluginVersionMutation();

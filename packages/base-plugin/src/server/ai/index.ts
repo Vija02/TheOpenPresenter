@@ -4,3 +4,4 @@ export * from "./client";
 export * from "./capability";
 export * from "./invoke";
 export * from "./docAgent";
+export * from "./cloud";

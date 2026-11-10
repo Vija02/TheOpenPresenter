@@ -49,7 +49,11 @@ export const AiFormatButton = ({
             "csrf-token": pluginApi.env.getCSRFToken(),
             ...pluginApi.env.getProxyConfig().headers,
           },
-          body: JSON.stringify({ content, linesPerSlide }),
+          body: JSON.stringify({
+            content,
+            linesPerSlide,
+            organizationId: pluginApi.pluginContext.organizationId,
+          }),
           signal: controller.signal,
         },
       );

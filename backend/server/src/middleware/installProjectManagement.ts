@@ -6,6 +6,7 @@ import type { UserConfig } from "vite";
 import { ViteExpress } from "vite-express";
 
 import { getUpgradeHandlers } from "../app";
+import { serverPluginApi } from "../pluginManager";
 import { injectEndOfHead } from "../utils/injectHtml";
 import { DEV_NONCE } from "./shared";
 
@@ -76,7 +77,11 @@ export default async function installProjectManagement(
   }
 }
 
-function transformer(html: string, req: Request) {
+async function transformer(html: string, req: Request) {
+  const aiAvailable = await serverPluginApi.ai
+    .isAvailable()
+    .catch(() => isAIConfigured());
+
   const scripts = [];
 
   // Extra data
@@ -92,7 +97,7 @@ function transformer(html: string, req: Request) {
       ANALYTICS_REPLAY: process.env.ANALYTICS_REPLAY === "1" ? "1" : undefined,
       ANALYTICS_RENDERER_REPLAY:
         process.env.ANALYTICS_RENDERER_REPLAY === "1" ? "1" : undefined,
-      AI_ENABLED: isAIConfigured() ? "1" : undefined,
+      AI_ENABLED: aiAvailable ? "1" : undefined,
       DEPLOYMENT_ENV: process.env.DEPLOYMENT_ENV,
       STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
       STRIPE_PRICE_ID_MONTHLY: process.env.STRIPE_PRICE_ID_MONTHLY,
