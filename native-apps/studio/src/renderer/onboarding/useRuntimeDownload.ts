@@ -1,6 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { type ProgressPayload, api, listen } from "../bridge/ipc";
+import {
+  type LocalSetupState,
+  type ProgressPayload,
+  api,
+  listen,
+} from "../bridge/ipc";
 
 export type DownloadState = {
   active: boolean;
@@ -9,10 +14,20 @@ export type DownloadState = {
   progress: ProgressPayload | null;
 };
 
+const fromSetup = (state: LocalSetupState): DownloadState => ({
+  active: state.phase === "downloading",
+  done:
+    state.phase === "starting" ||
+    state.phase === "syncing" ||
+    state.phase === "ready",
+  failed: state.phase === "failed" ? state.message : null,
+  progress: state.phase === "downloading" ? state.progress : null,
+});
+
 /**
- * Download the runtime in the background, so setup is not a progress bar. It
- * is ~140MB and takes minutes on a church connection, which is about as long
- * as sign-in takes a person, so the two run together.
+ * The runtime download, as seen from setup. The download itself runs in the
+ * main process, so it carries on after this window closes and the user is
+ * already working online.
  *
  * Deliberately not cancellable: a half-downloaded runtime is resumable rather
  * than failed, because the content-addressed store keeps every verified blob.
@@ -25,61 +40,23 @@ export function useRuntimeDownload() {
     progress: null,
   });
 
-  // A second start when React re-runs effects would fail with "a runtime is
-  // already installing".
-  const started = useRef(false);
-
-  // Held so `wait` can await the same operation rather than polling state,
-  // where a sample between "active false" and "done true" sees neither.
-  const inFlight = useRef<Promise<void> | null>(null);
-
   useEffect(() => {
-    const off = listen<ProgressPayload>("runtime:progress", (progress) =>
-      setState((prev) => ({ ...prev, progress })),
+    void api
+      .localSetupState()
+      .then((s) => setState(fromSetup(s)))
+      .catch(() => undefined);
+    return listen<LocalSetupState>("local-setup:state", (s) =>
+      setState(fromSetup(s)),
     );
-    return off;
   }, []);
 
-  const start = useCallback((channel?: string) => {
-    if (started.current) return inFlight.current ?? Promise.resolve();
-    started.current = true;
+  const start = useCallback(
+    (channel?: string) => api.localSetupDownload(channel),
+    [],
+  );
 
-    setState((prev) => ({ ...prev, active: true, failed: null }));
-
-    const run = (async () => {
-      try {
-        const status = await api.runtimeStatus();
-        if (status.available && status.current) {
-          // Already installed, so re-running install would be a long no-op.
-          setState((prev) => ({ ...prev, active: false, done: true }));
-          return;
-        }
-
-        await api.runtimeInstall(channel);
-        setState((prev) => ({ ...prev, active: false, done: true }));
-      } catch (err) {
-        started.current = false;
-        inFlight.current = null;
-        setState((prev) => ({
-          ...prev,
-          active: false,
-          failed: String(err),
-        }));
-        throw err;
-      }
-    })();
-
-    inFlight.current = run;
-    return run;
-  }, []);
-
-  /**
-   * Resolve once the runtime is installed. Returns immediately when nothing is
-   * running, either because the download finished or because this is a minimal
-   * setup. A failure rejects, so the caller can show why rather than
-   * continuing into a broken state.
-   */
-  const wait = useCallback(() => inFlight.current ?? Promise.resolve(), []);
+  /** Resolves once the runtime is installed; rejects if the download failed. */
+  const wait = useCallback(() => api.localSetupWaitForDownload(), []);
 
   return { ...state, start, wait };
 }

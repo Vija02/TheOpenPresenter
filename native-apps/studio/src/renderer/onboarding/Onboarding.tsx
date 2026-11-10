@@ -2,27 +2,28 @@ import { Alert, Button } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
 
 import {
-  type CloudConnection,
+  type CloudOrganization,
   type Mode,
   type Settings,
   api,
 } from "../bridge/ipc";
-import { ChooseOrganization } from "./ChooseOrganization";
 import { ChooseSetup, type SetupChoice } from "./ChooseSetup";
 import { DownloadStatus } from "./DownloadStatus";
 import { FinishAccount } from "./FinishAccount";
 import { LocalRuntime } from "./LocalRuntime";
-import { NameOrganization } from "./NameOrganization";
+import { PickOrganizations } from "./PickOrganizations";
 import { SignIn } from "./SignIn";
 import { canGoBack, current, pop, push } from "./history";
 import { type Step, firstStep } from "./steps";
 import { useRuntimeDownload } from "./useRuntimeDownload";
 
 /**
- * First-run setup. One question decides everything after it: is this the
- * machine that runs the server? If so the runtime download starts immediately
- * and sign-in links it to a cloud organization. If not, the user is only
- * choosing which server to point at.
+ * First-run setup. One question decides everything after it: should this
+ * machine be able to work offline? If so the runtime download starts
+ * immediately. Either way the user signs in and starts working online; a
+ * complete setup also picks which organizations to copy, and the rest
+ * (download, local server, copying) finishes in the background, with a bar in
+ * the app window offering the switch to Local once it is ready.
  */
 export function Onboarding() {
   const [history, setHistory] = useState<Step[]>(["role"]);
@@ -30,9 +31,9 @@ export function Onboarding() {
   const [settings, setSettings] = useState<Settings>({});
   const [error, setError] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
-  const [, setConnection] = useState<CloudConnection | null>(null);
   /** The server signed in to, kept for the steps that follow sign-in. */
   const [signedInUrl, setSignedInUrl] = useState<string>("");
+  const [signedInMode, setSignedInMode] = useState<Mode>("cloud");
   const download = useRuntimeDownload();
 
   /** Move forward, remembering where we came from. */
@@ -69,50 +70,49 @@ export function Onboarding() {
   }, [resetTo]);
 
   /**
-   * Start the local server and hand the window over to it. The end of every
-   * path that runs locally.
+   * No account: run on this computer only. The one path that has to wait for
+   * the download, because there is nothing to work in until it is done.
    */
-  const finishLocally = useCallback(
-    async (organizationSlug?: string) => {
+  const finishLocally = useCallback(async () => {
+    setError(null);
+    setFinishing(true);
+    try {
+      await download.wait();
+      await api.runtimeStart();
+    } catch (err) {
+      setError(String(err));
+      setFinishing(false);
+    }
+  }, [download]);
+
+  /**
+   * Open the app. Straight into Local when the runtime is already here;
+   * otherwise online at once, with offline setup finishing in the background.
+   * The app window takes over from here.
+   */
+  const goOnline = useCallback(
+    async (organizations: CloudOrganization[]) => {
       setError(null);
       setFinishing(true);
       try {
-        await download.wait();
-        await api.runtimeStart({ organizationSlug });
+        const { direct } = await api.localSetupBegin({
+          rootUrl: signedInUrl,
+          organizations: organizations.map(({ slug, name }) => ({
+            slug,
+            name,
+          })),
+        });
+        // Already downloaded: the main process has opened Local itself.
+        // Opens on the first organization being copied, if any.
+        if (!direct) {
+          await api.connect(signedInMode, signedInUrl, organizations[0]?.slug);
+        }
       } catch (err) {
         setError(String(err));
         setFinishing(false);
       }
     },
-    [download],
-  );
-
-  /**
-   * Bring up the local server and link it to the account, then pick the
-   * organization. Waits for the download, which may still be running.
-   */
-  const linkLocalServer = useCallback(
-    async (rootUrl: string) => {
-      setFinishing(true);
-      try {
-        // Connecting before the runtime exists would drop the user on a cloud
-        // page with no way back to the local server they chose.
-        await download.wait();
-        // No rootUrl: passing the cloud address would store it as the local
-        // server, when the runtime is what reports the real one.
-        await api.runtimeStart({ open: false });
-
-        // Done now, with the session just established, rather than left as
-        // something to discover later.
-        setConnection(await api.cloudConnect(rootUrl || undefined));
-        setFinishing(false);
-        goTo("organization");
-      } catch (err) {
-        setError(String(err));
-        setFinishing(false);
-      }
-    },
-    [download, goTo],
+    [signedInUrl, signedInMode],
   );
 
   const onConnect = useCallback(
@@ -129,6 +129,7 @@ export function Onboarding() {
       }
 
       setSignedInUrl(rootUrl);
+      setSignedInMode(chosen);
 
       // A new account has no organization until it finishes onboarding
       const status = await api.cloudOnboarding(rootUrl).catch(() => null);
@@ -137,22 +138,19 @@ export function Onboarding() {
         return;
       }
 
-      await linkLocalServer(rootUrl);
+      goTo("organization");
     },
-    [runsLocally, goTo, linkLocalServer],
+    [runsLocally, goTo],
   );
 
-  const onAccountReady = useCallback(
-    () => void linkLocalServer(signedInUrl),
-    [linkLocalServer, signedInUrl],
-  );
+  const onAccountReady = useCallback(() => goTo("organization"), [goTo]);
 
   const chooseSetup = (choice: SetupChoice) => {
     const complete = choice.kind === "complete";
     // First because it is the long pole and sign-in does not need it. Failure
     // is recorded in the hook and shown by DownloadStatus, so the rejection is
     // absorbed here; `wait` re-raises it for whoever needs it.
-    if (complete) download.start(choice.channel).catch(() => undefined);
+    if (complete) void download.start(choice.channel).catch(() => undefined);
     // Saved either way, so a later switch to running locally uses the same
     // choice rather than silently reverting.
     const patch = { autoStartRuntime: complete, channel: choice.channel };
@@ -203,7 +201,7 @@ export function Onboarding() {
           onConnect={onConnect}
           busy={finishing}
           busyLabel={
-            download.active ? "Finishing the download…" : "Starting the server…"
+            download.active ? "Finishing the download…" : "Starting up…"
           }
           initialUrl={
             settings.mode === "selfhosted" ? settings.rootUrl : undefined
@@ -236,33 +234,17 @@ export function Onboarding() {
         />
       )}
 
-      {step === "account" &&
-        (finishing ? (
-          <section className="onboarding">
-            <h2>Almost ready</h2>
-            <p className="muted">
-              {download.active
-                ? "Finishing the download…"
-                : "Starting the server…"}
-            </p>
-            <DownloadStatus state={download} />
-          </section>
-        ) : (
-          <FinishAccount rootUrl={signedInUrl} onDone={onAccountReady} />
-        ))}
-
-      {step === "organization" && (
-        <ChooseOrganization
-          onConnected={(slug) => void finishLocally(slug)}
-          onSkip={() => goTo("name")}
-          onError={setError}
-        />
+      {step === "account" && (
+        <FinishAccount rootUrl={signedInUrl} onDone={onAccountReady} />
       )}
 
-      {step === "name" && (
-        <NameOrganization
-          onCreated={(slug) => void finishLocally(slug)}
+      {step === "organization" && (
+        <PickOrganizations
+          rootUrl={signedInUrl}
+          busy={finishing}
+          onContinue={(organizations) => void goOnline(organizations)}
           onError={setError}
+          footer={<DownloadStatus state={download} />}
         />
       )}
 

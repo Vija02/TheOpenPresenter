@@ -286,8 +286,12 @@ export const api = {
     }),
   cancelAuth: () => invoke<void>("auth:cancel"),
 
-  connect: (mode: Mode, rootUrl?: string) =>
-    invoke<{ url: string }>("app:connect", { mode, rootUrl }),
+  connect: (mode: Mode, rootUrl?: string, organizationSlug?: string) =>
+    invoke<{ url: string }>("app:connect", {
+      mode,
+      rootUrl,
+      organizationSlug,
+    }),
 
   /** What the app is pointed at right now. */
   connection: () => invoke<ConnectionSummary>("app:connection"),
