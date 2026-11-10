@@ -213,7 +213,7 @@ export async function* formatLyricsStream(
       },
     ],
     {
-      model: "deepseek/deepseek-v4.1-flash:nitro",
+      provider: "lyrics.format",
       temperature: 0,
       reasoningEnabled: false,
       signal: options.signal,
