@@ -361,6 +361,41 @@ describe("as the cloud's visitor role", () => {
     });
   });
 
+  it("keeps a pushed screen's code, which members cannot otherwise choose", async () => {
+    await inCloud(async ({ client, orgId, userId }) => {
+      await becomeMember(client, orgId, userId);
+      const [created] = await applyPushedChanges(
+        client,
+        tableNamed("screens"),
+        orgId,
+        userId,
+        [
+          {
+            key: { slug: "foyer" },
+            expectedUpdatedAt: null,
+            row: { name: "Foyer", slug: "foyer", code: "Q7W8" },
+          },
+        ],
+      );
+      expect(created).toMatchObject({ status: "applied" });
+
+      await client.query("select set_config('app.cloud_sync', '', true)");
+      const {
+        rows: [own],
+      } = await client.query(
+        `insert into app_public.screens (organization_id, name, slug, code)
+         values ($1, 'Hall', 'hall', 'R7W8') returning code::text`,
+        [orgId],
+      );
+      const { rows } = await client.query(
+        "select slug::text, code::text from app_public.screens where organization_id = $1 order by slug",
+        [orgId],
+      );
+      expect(rows).toContainEqual({ slug: "foyer", code: "Q7W8" });
+      expect(own.code).not.toBe("R7W8");
+    });
+  });
+
   it("refuses an organization the user is not a member of", async () => {
     await inCloud(async ({ client, orgId, userId }) => {
       await client.query(

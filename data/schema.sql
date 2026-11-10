@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict DGFeujY6PVUe8NTugMrNv9PDnBVxFbCko2dlH7A8cW8QxtjGYEXIFaAcO0EaEhJ
+\restrict BchUQpek5cg1f58v7CQzEFYPiQk29o93ki3JTKGXUFgMmwfZaabOgAV0HA5yfKw
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -1787,6 +1787,7 @@ CREATE FUNCTION app_private.tg_screens__set_code() RETURNS trigger
     AS $_$
 begin
   if new.code is null
+    or current_setting('app.cloud_sync', true) is distinct from 'on'
     or upper(new.code::text) !~ '^[2-9A-HJKMNP-Z]{4}$'
     or exists (
       select 1 from app_public.screens
@@ -3343,7 +3344,8 @@ COMMENT ON COLUMN app_public.screens.show_bar_on_idle IS 'When true, the rendere
 -- Name: COLUMN screens.code; Type: COMMENT; Schema: app_public; Owner: -
 --
 
-COMMENT ON COLUMN app_public.screens.code IS 'Short, globally-unique code visitors can type at /connect to reach this screen''s control page';
+COMMENT ON COLUMN app_public.screens.code IS '@omit create
+Short, globally-unique code visitors can type at /connect to reach this screen''s control page';
 
 
 --
@@ -9530,5 +9532,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict DGFeujY6PVUe8NTugMrNv9PDnBVxFbCko2dlH7A8cW8QxtjGYEXIFaAcO0EaEhJ
+\unrestrict BchUQpek5cg1f58v7CQzEFYPiQk29o93ki3JTKGXUFgMmwfZaabOgAV0HA5yfKw
 
