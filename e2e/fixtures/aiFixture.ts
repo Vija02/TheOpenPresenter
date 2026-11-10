@@ -55,6 +55,7 @@ type AiFixture = {
   fakeAi: FakeAi;
   /**
    * Skips unless the capability under test is actually wired to the fake.
+   * Takes a registered capability id, or a profile such as "lyrics.format".
    */
   requireFakeAi: (capability: string) => Promise<void>;
 };
@@ -100,13 +101,17 @@ export const test = base.extend<AiFixture>({
 
       const fakeUp = !!health?.ok();
       const wiring = await e2eCommand.serverCommand("aiWiring");
-      const resolved = wiring.capabilities[capability];
+      const resolved =
+        wiring.capabilities[capability] ?? wiring.profiles?.[capability];
       const pointedAtFake = !!resolved?.baseURL?.includes(`:${FAKE_AI_PORT}`);
 
       if (!resolved) {
         throw new Error(
           `no AI capability "${capability}" is registered. Available: ${
-            Object.keys(wiring.capabilities).join(", ") || "(none)"
+            [
+              ...Object.keys(wiring.capabilities),
+              ...Object.keys(wiring.profiles ?? {}),
+            ].join(", ") || "(none)"
           }`,
         );
       }

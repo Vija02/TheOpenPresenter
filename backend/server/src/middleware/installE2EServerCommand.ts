@@ -253,11 +253,17 @@ async function runCommand(
       ]),
     );
 
+    // AI used outside the capability registry, by its profile name
+    const profiles = Object.fromEntries(
+      ["lyrics.format"].map((profile) => [profile, resolve(profile)]),
+    );
+
     return {
       success: true,
       configured: isAIConfigured(),
       default: resolve(),
       capabilities,
+      profiles,
     };
   } else if (command === "pcoWiring") {
     return {
