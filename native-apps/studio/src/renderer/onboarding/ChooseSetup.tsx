@@ -10,11 +10,12 @@ export type SetupChoice = { kind: SetupKind; channel: string };
 
 /**
  * The first screen: an installer-style choice, preselected. Framed as complete
- * vs minimal because that is the shape people recognise from installers, and
- * it makes the safe option a default rather than a decision.
+ * vs online only (`minimal` in code) because that is the shape people
+ * recognise from installers, and it makes the safe option a default rather
+ * than a decision.
  *
  * The difference that matters is the download: complete fetches the runtime so
- * this machine can serve on its own, minimal does not.
+ * this machine can serve on its own, online only does not.
  */
 export function ChooseSetup({
   onContinue,
@@ -62,8 +63,8 @@ export function ChooseSetup({
         />
 
         <Option
-          title="Minimal"
-          description="Connects to another computer or the cloud. Nothing to download."
+          title="Online only"
+          description="Uses the cloud or another computer running TheOpenPresenter. Only works while you're connected to the internet or to that computer. Nothing to download."
           selected={kind === "minimal"}
           disabled={busy}
           onClick={() => setKind("minimal")}
