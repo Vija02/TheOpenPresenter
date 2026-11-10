@@ -55,11 +55,7 @@ export default async function installRenderer(app: Express, server: Server) {
   }
 }
 
-async function transformer(html: string, req: Request) {
-  const aiAvailable = await serverPluginApi.ai
-    .isAvailable()
-    .catch(() => isAIConfigured());
-
+function transformer(html: string, req: Request) {
   const registeredLoadJsOnRendererView =
     serverPluginApi.getRegisteredLoadJsOnRendererView();
   const registeredLoadCssOnRendererView =
@@ -99,7 +95,7 @@ async function transformer(html: string, req: Request) {
       ANALYTICS_REPLAY: process.env.ANALYTICS_REPLAY === "1" ? "1" : undefined,
       ANALYTICS_RENDERER_REPLAY:
         process.env.ANALYTICS_RENDERER_REPLAY === "1" ? "1" : undefined,
-      AI_ENABLED: aiAvailable ? "1" : undefined,
+      AI_ENABLED: isAIConfigured() ? "1" : undefined,
       DEPLOYMENT_ENV: process.env.DEPLOYMENT_ENV,
     } as Record<string, string>,
   ]

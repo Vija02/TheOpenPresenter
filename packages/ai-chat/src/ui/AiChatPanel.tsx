@@ -4,6 +4,7 @@ import { VscChevronDown, VscChevronRight, VscClose } from "react-icons/vsc";
 
 import { AiMessage, AiMessagePart } from "../store/transcript";
 import { AiChat } from "../useAiChat";
+import { AiUnavailable } from "./AiUnavailable";
 import { AttachMenu } from "./AttachMenu";
 import { Markdown } from "./Markdown";
 
@@ -189,83 +190,87 @@ export const AiChatPanel = ({ ai }: AiChatProps) => {
         </>
       )}
 
-      <div className="flex flex-col rounded border border-stroke bg-surface-primary focus-within:border-link">
-        {(ai.image || ai.attaching) && (
-          <div className="stack-row gap-2 items-center p-2 pb-0">
-            {ai.image ? (
-              <div className="relative shrink-0">
-                <img
-                  src={ai.image}
-                  alt="Reference"
-                  className="h-12 w-12 object-cover rounded border border-stroke"
-                />
-                <button
-                  type="button"
-                  onClick={ai.clearImage}
-                  aria-label="Remove reference image"
-                  title="Remove reference image"
-                  className="absolute -top-1 -right-1 rounded-full bg-surface-primary border border-stroke p-0.5 text-secondary hover:text-primary"
-                >
-                  <VscClose className="size-3" />
-                </button>
-              </div>
-            ) : (
-              <div className="h-12 w-12 shrink-0 rounded border border-stroke stack-row items-center justify-center">
-                <LoadingDots count={3} label="" />
-              </div>
-            )}
-            <span className="text-2xs text-secondary">
-              {ai.attaching ? "Reading image…" : "Reference attached"}
-            </span>
-          </div>
-        )}
+      {ai.unavailable ? (
+        <AiUnavailable status={ai.unavailable} />
+      ) : (
+        <div className="flex flex-col rounded border border-stroke bg-surface-primary focus-within:border-link">
+          {(ai.image || ai.attaching) && (
+            <div className="stack-row gap-2 items-center p-2 pb-0">
+              {ai.image ? (
+                <div className="relative shrink-0">
+                  <img
+                    src={ai.image}
+                    alt="Reference"
+                    className="h-12 w-12 object-cover rounded border border-stroke"
+                  />
+                  <button
+                    type="button"
+                    onClick={ai.clearImage}
+                    aria-label="Remove reference image"
+                    title="Remove reference image"
+                    className="absolute -top-1 -right-1 rounded-full bg-surface-primary border border-stroke p-0.5 text-secondary hover:text-primary"
+                  >
+                    <VscClose className="size-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="h-12 w-12 shrink-0 rounded border border-stroke stack-row items-center justify-center">
+                  <LoadingDots count={3} label="" />
+                </div>
+              )}
+              <span className="text-2xs text-secondary">
+                {ai.attaching ? "Reading image…" : "Reference attached"}
+              </span>
+            </div>
+          )}
 
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              submit();
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submit();
+              }
+            }}
+            rows={2}
+            disabled={ai.pending}
+            placeholder={
+              ai.messages.length > 0
+                ? "Follow up, or ask for something else"
+                : "Move the reference to the top and make it smaller"
             }
-          }}
-          rows={2}
-          disabled={ai.pending}
-          placeholder={
-            ai.messages.length > 0
-              ? "Follow up, or ask for something else"
-              : "Move the reference to the top and make it smaller"
-          }
-          className="w-full text-xs bg-transparent p-2 resize-none border-0 outline-none disabled:opacity-60"
-        />
+            className="w-full text-xs bg-transparent p-2 resize-none border-0 outline-none disabled:opacity-60"
+          />
 
-        <div className="stack-row justify-between items-center gap-1 px-1.5 pb-1.5">
-          <div className="stack-row gap-0.5 items-center">
-            <AttachMenu ai={ai} />
+          <div className="stack-row justify-between items-center gap-1 px-1.5 pb-1.5">
+            <div className="stack-row gap-0.5 items-center">
+              <AttachMenu ai={ai} />
 
-            {ai.canUndo && (
-              <Button
-                variant="ghost"
-                size="xs"
-                onClick={ai.undo}
-                title="Undo the last AI change"
-              >
-                Undo
+              {ai.canUndo && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={ai.undo}
+                  title="Undo the last AI change"
+                >
+                  Undo
+                </Button>
+              )}
+            </div>
+
+            {ai.pending ? (
+              <Button variant="outline" size="xs" onClick={ai.stop}>
+                Stop
+              </Button>
+            ) : (
+              <Button size="xs" onClick={submit} disabled={!draft.trim()}>
+                Send
               </Button>
             )}
           </div>
-
-          {ai.pending ? (
-            <Button variant="outline" size="xs" onClick={ai.stop}>
-              Stop
-            </Button>
-          ) : (
-            <Button size="xs" onClick={submit} disabled={!draft.trim()}>
-              Send
-            </Button>
-          )}
         </div>
-      </div>
+      )}
 
       {ai.error && !ai.streamingId && (
         <p className="text-xs text-red-600">{ai.error}</p>

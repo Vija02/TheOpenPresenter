@@ -3,7 +3,6 @@ import {
   createAiCapabilityRequest,
   useAiChat,
 } from "@repo/ai-chat";
-import { appData } from "@repo/lib";
 import { useCallback, useMemo } from "react";
 
 import { Plugin } from "./types";
@@ -30,14 +29,12 @@ export const usePluginSourceAi = ({
     [setFiles],
   );
 
-  const onRequest = useMemo<AiChatRequest<SourceDoc> | undefined>(
+  const onRequest = useMemo<AiChatRequest<SourceDoc>>(
     () =>
-      appData.getAiEnabled()
-        ? createAiCapabilityRequest<SourceDoc>({
-            capability: "plugin-source",
-            organizationId,
-          })
-        : undefined,
+      createAiCapabilityRequest<SourceDoc>({
+        capability: "plugin-source",
+        organizationId,
+      }),
     [organizationId],
   );
 
@@ -46,5 +43,6 @@ export const usePluginSourceAi = ({
     onChange,
     onRequest,
     threadKey: `cplugin-source:${plugin.id}`,
+    organizationId,
   });
 };

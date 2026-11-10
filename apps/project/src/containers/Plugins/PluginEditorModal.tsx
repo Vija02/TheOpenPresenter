@@ -5,7 +5,6 @@ import {
   useCreateClientPluginVersionMutation,
   useTestBuildClientPluginMutation,
 } from "@repo/graphql";
-import { appData } from "@repo/lib";
 import {
   Alert,
   Button,
@@ -46,7 +45,6 @@ export const PluginEditorModal = ({
   const { files, setFiles, savedAt } = usePluginDraft(plugin);
 
   const ai = usePluginSourceAi({ plugin, organizationId, files, setFiles });
-  const aiEnabled = appData.getAiEnabled();
 
   const [, createVersion] = useCreateClientPluginVersionMutation();
   const [, buildVersion] = useBuildClientPluginVersionMutMutation();
@@ -241,27 +239,25 @@ export const PluginEditorModal = ({
               )}
             </main>
 
-            {aiEnabled && (
-              <aside className="w-80 shrink-0 flex flex-col border-l bg-surface-primary min-h-0">
-                <div className="px-3 py-2 border-b flex items-center justify-between">
-                  <span className="text-2xs font-semibold uppercase tracking-wide text-secondary">
-                    Ask AI
-                  </span>
-                  {ai.messages.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={ai.clear}
-                      className="text-2xs text-secondary hover:text-primary cursor-pointer"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-                <div className="flex-1 min-h-0 overflow-y-auto p-3">
-                  <AiChatPanel ai={ai} />
-                </div>
-              </aside>
-            )}
+            <aside className="w-80 shrink-0 flex flex-col border-l bg-surface-primary min-h-0">
+              <div className="px-3 py-2 border-b flex items-center justify-between">
+                <span className="text-2xs font-semibold uppercase tracking-wide text-secondary">
+                  Ask AI
+                </span>
+                {ai.messages.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={ai.clear}
+                    className="text-2xs text-secondary hover:text-primary cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto p-3">
+                <AiChatPanel ai={ai} />
+              </div>
+            </aside>
           </div>
         </DialogBody>
 

@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { IntegrationsApi } from "../../integrations";
 import {
+  AI_NEEDS_UPGRADE_REASON,
   AI_SIGN_IN_EXPIRED_REASON,
   CONNECT_FOR_AI_REASON,
+  aiStatus,
   forwardAiToCloud,
   organizationIdOf,
   placeAiRequest,
@@ -27,6 +29,7 @@ const integrations = ({
     getRequestUserId: async () => "user",
     isOrganizationMember: async () => member,
     getCloudConnection: async () => (link ? { ...connection, ...link } : null),
+    getOrganizationSlug: async () => "grace-local",
   }) as unknown as IntegrationsApi;
 
 const withKey = (key: string | undefined) => {
@@ -140,6 +143,21 @@ describe("forwardAiToCloud", () => {
     ).rejects.toThrow(AI_SIGN_IN_EXPIRED_REASON);
   });
 
+  it("asks to upgrade when the cloud's plan has no AI", async () => {
+    const fetchImpl = async () => new Response("", { status: 402 });
+    await expect(
+      collect(
+        forwardAiToCloud(
+          connection,
+          "/ai/layout",
+          {},
+          new AbortController().signal,
+          fetchImpl as unknown as typeof fetch,
+        ),
+      ),
+    ).rejects.toThrow(AI_NEEDS_UPGRADE_REASON);
+  });
+
   it("says so when the cloud can't be reached", async () => {
     const fetchImpl = async () => {
       throw new TypeError("fetch failed");
@@ -155,6 +173,62 @@ describe("forwardAiToCloud", () => {
         ),
       ),
     ).rejects.toThrow("Couldn't reach TheOpenPresenter Cloud");
+  });
+});
+
+describe("aiStatus", () => {
+  const online = async () => true;
+  const offline = async () => false;
+
+  it("is available with this server's key", async () => {
+    withKey("local-key");
+    expect(await aiStatus(integrations(), req, ORG, online)).toEqual({
+      state: "available",
+    });
+  });
+
+  it("is available through a linked cloud that answers", async () => {
+    withKey(undefined);
+    expect(
+      await aiStatus(
+        integrations({ link: { isExpired: false } }),
+        req,
+        ORG,
+        online,
+      ),
+    ).toEqual({ state: "available" });
+  });
+
+  it("needs to be online when the linked cloud does not answer", async () => {
+    withKey(undefined);
+    expect(
+      await aiStatus(
+        integrations({ link: { isExpired: false } }),
+        req,
+        ORG,
+        offline,
+      ),
+    ).toEqual({ state: "offline" });
+  });
+
+  it("points at the organization's cloud page to connect", async () => {
+    withKey(undefined);
+    expect(await aiStatus(integrations(), req, ORG, online)).toEqual({
+      state: "connect",
+      actionUrl: "/o/grace-local/cloud",
+    });
+  });
+
+  it("asks to reconnect when the link's sign-in has expired", async () => {
+    withKey(undefined);
+    expect(
+      await aiStatus(
+        integrations({ link: { isExpired: true } }),
+        req,
+        ORG,
+        online,
+      ),
+    ).toEqual({ state: "reconnect", actionUrl: "/o/grace-local/cloud" });
   });
 });
 

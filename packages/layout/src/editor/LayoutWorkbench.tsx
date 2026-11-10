@@ -6,7 +6,6 @@ import {
   useAiChat,
 } from "@repo/ai-chat";
 import type { DataBinding, MediaPickerResult } from "@repo/base-types";
-import { appData } from "@repo/lib";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui";
 import {
   ReactNode,
@@ -153,12 +152,10 @@ export const LayoutWorkbench = ({
   const aiRequest = useMemo(() => {
     if (!aiEnabled || aiChat) return undefined;
     if (onRequestAiEdit) return onRequestAiEdit;
-    return appData.getAiEnabled()
-      ? createAiCapabilityRequest<LayoutDoc>({
-          capability: aiCapability,
-          organizationId,
-        })
-      : undefined;
+    return createAiCapabilityRequest<LayoutDoc>({
+      capability: aiCapability,
+      organizationId,
+    });
   }, [onRequestAiEdit, aiEnabled, aiCapability, aiChat, organizationId]);
 
   const ownAi = useAiChat<LayoutDoc>({
