@@ -4,6 +4,7 @@ import type { AiChatRequest, AiChatStep } from "./useAiChat";
 
 export type AiCapabilityRequestOptions = {
   capability: string;
+  organizationId?: string;
   extraBody?: Record<string, unknown>;
   getExtraBody?: () => Record<string, unknown>;
 };
@@ -27,6 +28,7 @@ const messageForStatus = (status: number): string => {
  */
 export const createAiCapabilityRequest = <TDoc>({
   capability,
+  organizationId,
   extraBody,
   getExtraBody,
 }: AiCapabilityRequestOptions): AiChatRequest<TDoc> => {
@@ -41,6 +43,7 @@ export const createAiCapabilityRequest = <TDoc>({
       body: JSON.stringify({
         ...extraBody,
         ...getExtraBody?.(),
+        organizationId,
         doc,
         request,
         history,

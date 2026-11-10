@@ -12,10 +12,12 @@ type SourceDoc = { files: Record<string, string> };
 
 export const usePluginSourceAi = ({
   plugin,
+  organizationId,
   files,
   setFiles,
 }: {
   plugin: Plugin;
+  organizationId: string;
   files: Record<string, string>;
   setFiles: (
     update: (prev: Record<string, string>) => Record<string, string>,
@@ -33,9 +35,10 @@ export const usePluginSourceAi = ({
       appData.getAiEnabled()
         ? createAiCapabilityRequest<SourceDoc>({
             capability: "plugin-source",
+            organizationId,
           })
         : undefined,
-    [],
+    [organizationId],
   );
 
   return useAiChat<SourceDoc>({

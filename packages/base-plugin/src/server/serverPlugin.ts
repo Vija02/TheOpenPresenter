@@ -24,6 +24,7 @@ import {
   chatCompletionMessage,
   chatCompletionStream,
   isAIConfigured,
+  runAi,
 } from "./ai";
 import { IntegrationsApi } from "./integrations";
 import {
@@ -426,6 +427,21 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
 
   public ai = {
     isConfigured: (): boolean => isAIConfigured(),
+    isAvailable: async (): Promise<boolean> =>
+      isAIConfigured() || (await this.integrations.hasCloudConnection()),
+    run: (
+      req: Parameters<IntegrationsApi["getRequestUserId"]>[0],
+      options: {
+        organizationId: string | undefined;
+        signal: AbortSignal;
+        /** The same route, on the cloud. */
+        cloudPath: string;
+        /** What the cloud receives. */
+        body: unknown;
+        local: () => AsyncGenerator<unknown, void, unknown>;
+      },
+    ): AsyncGenerator<unknown, void, unknown> =>
+      runAi({ integrations: this.integrations, req, ...options }),
     chatCompletion: (
       messages: ChatMessage[],
       options?: ChatCompletionOptions,

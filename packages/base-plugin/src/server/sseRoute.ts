@@ -12,6 +12,7 @@ const KEEPALIVE_MS = 15_000;
 export type SseHandlerContext<T> = {
   body: T;
   signal: AbortSignal;
+  req: Parameters<RequestHandler>[0];
   readonly closed: boolean;
 };
 
@@ -108,6 +109,7 @@ export const createSseRoute = <T>({
     const context: SseHandlerContext<T> = {
       body,
       signal: controller.signal,
+      req,
       get closed() {
         return controller.signal.aborted;
       },

@@ -140,6 +140,7 @@ export const LayoutWorkbench = ({
   pluginApi,
   className,
 }: LayoutWorkbenchProps) => {
+  const organizationId = pluginApi?.pluginContext.organizationId;
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [muted, setMuted] = useState(true);
   const compact = useIsCompact();
@@ -153,9 +154,12 @@ export const LayoutWorkbench = ({
     if (!aiEnabled || aiChat) return undefined;
     if (onRequestAiEdit) return onRequestAiEdit;
     return appData.getAiEnabled()
-      ? createAiCapabilityRequest<LayoutDoc>({ capability: aiCapability })
+      ? createAiCapabilityRequest<LayoutDoc>({
+          capability: aiCapability,
+          organizationId,
+        })
       : undefined;
-  }, [onRequestAiEdit, aiEnabled, aiCapability, aiChat]);
+  }, [onRequestAiEdit, aiEnabled, aiCapability, aiChat, organizationId]);
 
   const ownAi = useAiChat<LayoutDoc>({
     doc,

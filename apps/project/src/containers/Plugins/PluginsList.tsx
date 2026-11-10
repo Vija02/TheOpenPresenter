@@ -120,6 +120,7 @@ export const PluginsList = ({
       {editingPlugin && (
         <PluginEditorModal
           plugin={editingPlugin}
+          organizationId={organization.id}
           onClose={() => setEditingPluginId(null)}
           refetch={refetch}
         />

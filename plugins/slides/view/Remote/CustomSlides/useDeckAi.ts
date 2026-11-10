@@ -1,4 +1,8 @@
-import { AiChatRequest, createAiCapabilityRequest, useAiChat } from "@repo/ai-chat";
+import {
+  AiChatRequest,
+  createAiCapabilityRequest,
+  useAiChat,
+} from "@repo/ai-chat";
 import { cloneDoc } from "@repo/layout";
 import type { DeckDoc } from "@repo/layout/ai";
 import { appData } from "@repo/lib";
@@ -82,13 +86,14 @@ export const useDeckAi = (importId: string, options: DeckAiOptions = {}) => {
       appData.getAiEnabled()
         ? createAiCapabilityRequest<DeckDoc>({
             capability: "layout-deck",
+            organizationId: pluginApi.pluginContext.organizationId,
             getExtraBody: () => {
               const context = getContextRef.current?.();
               return context ? { context } : {};
             },
           })
         : undefined,
-    [],
+    [pluginApi.pluginContext.organizationId],
   );
 
   return useAiChat<DeckDoc>({

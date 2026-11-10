@@ -156,7 +156,9 @@ export class IntegrationsApi {
   // Request auth. Plugin routes are namespaced, not authenticated.
   // ---------------------------------------------------------------------------
 
-  public async getRequestUserId(req: RequestWithSession): Promise<string | null> {
+  public async getRequestUserId(
+    req: RequestWithSession,
+  ): Promise<string | null> {
     const sessionId = req.user?.session_id;
     if (!sessionId) return null;
     const { rows } = await this.getRootPool().query<{ userId: string }>(
@@ -236,6 +238,17 @@ export class IntegrationsApi {
       [organizationId],
     );
     return rows[0] ?? null;
+  }
+
+  /** Whether any organization here is linked to a cloud. */
+  public async hasCloudConnection(): Promise<boolean> {
+    const { rows } = await this.getRootPool().query<{ linked: boolean }>(
+      `select exists(
+         select 1 from app_public.cloud_connections
+          where target_organization_slug is not null
+       ) as linked`,
+    );
+    return rows[0]?.linked ?? false;
   }
 
   /** Picks local, remote or unavailable for one organization. */
