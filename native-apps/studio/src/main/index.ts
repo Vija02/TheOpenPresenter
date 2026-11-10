@@ -6,6 +6,7 @@ import { registerTicket } from "./runtime/remote";
 import { chromiumDir, runtimeRoot } from "./settings/paths";
 import {
   DEFAULT_CHANNEL,
+  type Settings,
   getSettings,
   resolveRootUrl,
   resolveRuntimeSource,
@@ -169,8 +170,13 @@ if (!gotLock) {
   });
 }
 
+/**
+ * Update a runtime already on this computer. A first download waits for the
+ * user to choose a complete setup, which shows its progress.
+ */
 async function refreshBeforeOnboarding(): Promise<void> {
   try {
+    if (!(await runtime.status()).current) return;
     const channel = getSettings().channel ?? DEFAULT_CHANNEL;
     const result = await runtime.ensure(channel, true);
     logShell(
@@ -178,7 +184,7 @@ async function refreshBeforeOnboarding(): Promise<void> {
       `[main] runtime refreshed before onboarding: ${result.version}`,
     );
   } catch (err) {
-    // Offline is the ordinary case; onboarding downloads it later anyway.
+    // Offline is the ordinary case.
     logShell("error", "[main] could not refresh the runtime:", err);
   }
 }
@@ -254,6 +260,7 @@ async function startupRoute(): Promise<string> {
 
     if (await isLoggedIn(rootUrl)) {
       showAppWindow(rootUrl);
+      startLocalInBackground(settings);
       return "the app window";
     }
   }
@@ -261,6 +268,29 @@ async function startupRoute(): Promise<string> {
   openOnboardingWindow();
   closeLoadingWindow();
   return "onboarding";
+}
+
+/**
+ * In Online mode the local server still runs behind the scenes on a complete
+ * install, so switching to Local is instant and copied organizations stay in
+ * step. An unfinished offline setup carries on from where it stopped.
+ */
+function startLocalInBackground(settings: Settings): void {
+  if (settings.pendingLocal) {
+    void import("./local").then(({ resumeLocalSetup }) => resumeLocalSetup());
+    return;
+  }
+  if (settings.autoStartRuntime !== true) return;
+  void (async () => {
+    try {
+      const status = await runtime.status();
+      if (!status.current) return;
+      await runtime.startRuntime();
+      logShell("info", "[main] local server started in the background");
+    } catch (err) {
+      logShell("error", "[main] background local server did not start:", err);
+    }
+  })();
 }
 
 /**

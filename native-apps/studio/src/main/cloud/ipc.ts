@@ -1,5 +1,6 @@
 import { ipcMain, shell } from "electron";
 
+import { watchFirstSync } from "../local";
 import { runtime } from "../runtime/client";
 import {
   DEFAULT_CLOUD_URL,
@@ -209,6 +210,7 @@ export function registerCloudIPC(): void {
       );
       refetchServerWindows(runtime.url);
       void restartLiveRefresh();
+      watchFirstSync(runtime.url, result.id, args.cloudOrg.name);
       return result;
     },
   );

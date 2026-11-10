@@ -1,6 +1,7 @@
 /**
  * Which cloud organizations this install already mirrors.
  */
+import { sameHost } from "../settings/host";
 
 /** An organization as the cloud reports it. */
 type CloudOrganization = { slug: string; name: string };
@@ -19,21 +20,6 @@ export type CloudOrganizationChoice = CloudOrganization & {
   /** The local organization mirroring it, when there is one. */
   localName: string | null;
 };
-
-/**
- * Compare hosts the way a user means it: the same server reached as
- * `https://host`, `https://host/` or `host` is one server.
- */
-function sameHost(a: string | null, b: string | null): boolean {
-  if (!a || !b) return false;
-  const strip = (value: string) =>
-    value
-      .trim()
-      .replace(/\/+$/, "")
-      .replace(/^https?:\/\//i, "")
-      .toLowerCase();
-  return strip(a) === strip(b);
-}
 
 /**
  * Mark the cloud organizations already mirrored locally.

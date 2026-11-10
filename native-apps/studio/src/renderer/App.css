@@ -1075,6 +1075,80 @@ code {
   padding: 4px 0;
 }
 
+/* The offline-setup card floating over the bottom of the app window. Its view
+   is a little larger than the card, transparent, to leave room for the
+   shadow. */
+html:has(body.setup-bar-page),
+body.setup-bar-page {
+  background: transparent;
+}
+
+.setup-bar {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  padding: 8px 8px 8px 16px;
+  background: color-mix(in srgb, var(--panel) 85%, transparent);
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgb(0 0 0 / 0.25);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.setup-bar.warn .setup-bar-label {
+  color: var(--warn);
+}
+
+.setup-bar-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.setup-bar-label {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.setup-bar-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--stroke);
+  overflow: hidden;
+}
+
+.setup-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.setup-bar-track.indeterminate .setup-bar-fill {
+  width: 35%;
+  animation: loading-sweep 1.1s ease-in-out infinite;
+}
+
+.setup-ready-note {
+  color: var(--warn);
+}
+
+.setup-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 /* Organizations grouped by the account they belong to. */
 .org-group + .org-group {
   margin-top: 16px;

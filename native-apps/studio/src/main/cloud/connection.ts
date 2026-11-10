@@ -353,25 +353,65 @@ export type SyncProgress = {
   status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
   syncedProjects: number;
   projectsToSync: number;
+  /** Media copies after the projects, in a phase of its own. */
+  mediaStatus?: "PENDING" | "SYNCING" | "SYNCED" | "FAILED";
+  syncedMedia?: number;
+  totalMedia?: number;
+  downloadedBytes?: number;
+  totalBytes?: number;
 };
 
-/** The latest run's project phase, or null before the worker has begun one. */
-export async function syncProgress(
+/** The latest run, or null before the worker has begun one. */
+export function syncProgress(
   base: string,
   cloudConnectionId: string,
 ): Promise<SyncProgress | null> {
+  return syncRun(base, cloudConnectionId, "CREATED_AT_DESC").then((run) =>
+    run === "removed" ? null : run,
+  );
+}
+
+/**
+ * The connection's first run: the initial copy, as opposed to the routine
+ * syncs after it. Null until the worker has begun it, "removed" once the
+ * connection is gone.
+ */
+export function firstSyncProgress(
+  base: string,
+  cloudConnectionId: string,
+): Promise<SyncProgress | null | "removed"> {
+  return syncRun(base, cloudConnectionId, "CREATED_AT_ASC");
+}
+
+async function syncRun(
+  base: string,
+  cloudConnectionId: string,
+  order: "CREATED_AT_ASC" | "CREATED_AT_DESC",
+): Promise<SyncProgress | null | "removed"> {
   const data = await graphql<{
-    cloudConnection: { cloudSyncRuns: { nodes: SyncProgress[] } } | null;
+    cloudConnection: {
+      cloudSyncRuns: {
+        nodes: (Omit<SyncProgress, "downloadedBytes" | "totalBytes"> & {
+          downloadedBytes: string | number;
+          totalBytes: string | number;
+        })[];
+      };
+    } | null;
   }>(
     base,
     `
       query ($cloudConnectionId: UUID!) {
         cloudConnection(id: $cloudConnectionId) {
-          cloudSyncRuns(orderBy: CREATED_AT_DESC, first: 1) {
+          cloudSyncRuns(orderBy: ${order}, first: 1) {
             nodes {
               status
               syncedProjects
               projectsToSync
+              mediaStatus
+              syncedMedia
+              totalMedia
+              downloadedBytes
+              totalBytes
             }
           }
         }
@@ -380,7 +420,15 @@ export async function syncProgress(
     { cloudConnectionId },
   );
 
-  return data.cloudConnection?.cloudSyncRuns.nodes[0] ?? null;
+  if (!data.cloudConnection) return "removed";
+  const run = data.cloudConnection.cloudSyncRuns.nodes[0];
+  if (!run) return null;
+  // Byte counts are BigInt, which GraphQL sends as strings.
+  return {
+    ...run,
+    downloadedBytes: Number(run.downloadedBytes),
+    totalBytes: Number(run.totalBytes),
+  };
 }
 
 /** Connect a cloud organization, creating the local mirror for it. */

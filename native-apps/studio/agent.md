@@ -47,12 +47,27 @@ It disappears the moment the window navigates to the server.
 `cloud`, `selfhosted`, `local` — a stored setting, not separate builds.
 Switching to local is a download, not a reinstall.
 
+Think of it as an **account** plus **Online / Local**. `rootUrl` (and its
+cookie) is the account, kept even in local mode. `cloud`/`selfhosted` are
+Online (the window shows `rootUrl`); `local` shows this computer. The File menu
+switches between them (`shell/switch.ts`), and on a complete install the local
+server keeps running while Online so the switch is instant.
+
 There can be several accounts: the cloud plus any custom servers.
 `settings.accounts` remembers which servers were signed in to; whether each is
 still signed in is read from its cookie (`cloud/accounts.ts`). `rootUrl` is the
 one the app goes online with. Disconnecting signs out, stops syncing that
 account's local copies (keeping them as local only unless asked to delete), and
 moves the app off that server if it was showing it.
+
+A complete setup does not wait for the download. After sign-in the user picks
+which organizations to copy, goes Online straight away, and `local/` downloads,
+starts the server, copies those organizations and waits for the first sync in
+the background. `settings.pendingLocal` holds that plan so a restart resumes it.
+Progress shows in a card over the bottom-right of the app window
+(`shell/setupBar.ts`, `renderer/setupbar/`), which offers "Switch to Local"
+quietly once the server is up and prominently once the sync is done. The same
+card follows organizations copied later from settings (`local/firstSync.ts`).
 
 ## Build and verify
 

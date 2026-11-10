@@ -1,7 +1,9 @@
 import { ipcMain } from "electron";
 
+import { cancelLocalSetupFor } from "../local";
 import { runtime } from "../runtime/client";
 import { describeConnection } from "../settings/connection";
+import { sameHost } from "../settings/host";
 import {
   DEFAULT_CLOUD_URL,
   getSettings,
@@ -17,18 +19,6 @@ import { allOrganizations, removeConnection } from "./connection";
 import { checkHost, isLoggedIn, logout } from "./host";
 import { restartLiveRefresh } from "./liveRefresh";
 import { cloudOrganizations } from "./organizations";
-
-/** The same server, however it was written down. */
-export function sameHost(a: string | null, b: string | null): boolean {
-  if (!a || !b) return false;
-  const strip = (value: string) =>
-    value
-      .trim()
-      .replace(/\/+$/, "")
-      .replace(/^https?:\/\//i, "")
-      .toLowerCase();
-  return strip(a) === strip(b);
-}
 
 export function rememberAccount(rootUrl: string): void {
   const url = normalizeHost(rootUrl);
@@ -100,6 +90,7 @@ async function disconnect(rootUrl: string, deleteCopies: boolean) {
     }
   }
 
+  cancelLocalSetupFor(rootUrl);
   await logout(rootUrl);
   updateSettings({
     accounts: (settings.accounts ?? []).filter((k) => !sameHost(k, rootUrl)),

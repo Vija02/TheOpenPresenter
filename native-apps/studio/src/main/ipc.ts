@@ -1,4 +1,5 @@
 import { registerCloudIPC } from "./cloud/ipc";
+import { registerLocalSetupIPC } from "./local";
 import { registerRuntimeIPC } from "./runtime/ipc";
 import { registerSettingsIPC } from "./settings/ipc";
 import { registerAppIPC } from "./shell/app-ipc";
@@ -10,4 +11,5 @@ export function registerIPC(): void {
   registerRuntimeIPC();
   registerAppIPC();
   registerPresentIPC();
+  registerLocalSetupIPC();
 }

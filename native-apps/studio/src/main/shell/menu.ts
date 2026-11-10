@@ -50,7 +50,8 @@ function switchItems(): MenuItemConstructorOptions[] {
     ];
   }
 
-  if (!runtime.url) return [];
+  // Mid-setup, the setup card owns this.
+  if (!runtime.url || settings.pendingLocal) return [];
   return [
     {
       label: "Switch to Local (this computer)",

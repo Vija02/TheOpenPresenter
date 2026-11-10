@@ -96,12 +96,21 @@ export function Organizations({
   useEffect(refresh, [refresh]);
   useEffect(() => {
     const check = () =>
-      void api
-        .runtimeStatus()
-        .then((s) => setHasLocal(s.available && !!s.current))
+      void Promise.all([api.runtimeStatus(), api.getSettings()])
+        // Mid-setup, the setup card owns the switch.
+        .then(([status, settings]) =>
+          setHasLocal(
+            status.available && !!status.current && !settings.pendingLocal,
+          ),
+        )
         .catch(() => setHasLocal(false));
     check();
-    return listen("runtime:listening", check);
+    const offListening = listen("runtime:listening", check);
+    const offSetup = listen("local-setup:state", check);
+    return () => {
+      offListening();
+      offSetup();
+    };
   }, []);
   useEffect(() => listen("runtime:listening", refresh), [refresh]);
   useEffect(() => {
