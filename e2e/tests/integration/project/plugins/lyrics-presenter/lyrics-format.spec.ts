@@ -48,6 +48,9 @@ const linesOf = async (editor: { innerText: () => Promise<string> }) =>
 const stubAiStatus = (page: Page, status: object) =>
   page.route("**/ai/status?*", (route) => route.fulfill({ json: status }));
 
+// Each test logs in to a fresh copy of this worker's org.
+test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
+
 test.describe("Lyrics formatting", () => {
   test("splits a section into slides of two lines without AI", async ({
     page,

@@ -7,6 +7,9 @@ import { expect, test } from "../../../fixtures/aiFixture";
  * screen can be checked.
  */
 
+// Each test logs in to a fresh copy of this worker's org.
+test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
+
 test.describe("AI when it can't run", () => {
   test("the chat says why in place of the message box", async ({
     page,
