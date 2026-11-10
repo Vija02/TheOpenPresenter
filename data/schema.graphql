@@ -7198,6 +7198,7 @@ type SceneCreator {
 
 """
 A persistent display identity in an organization. Configured once on the device, then any project can be assigned to it remotely.
+@cloudSync
 """
 type Screen {
   """
@@ -8186,14 +8187,72 @@ enum ScreenIdlePolicy {
 
 """An input for mutations affecting `Screen`"""
 input ScreenInput {
+  """
+  Master switch for the anonymous-guest path on this screen. When false, anonymous guests cannot sign in or claim control regardless of the on_empty/on_takeover policies.
+  """
+  anonGuestEnabled: Boolean
+
+  """
+  Anonymous guests claiming a vacant seat (consulted only when anon_guest_enabled = true). allow | request.
+  """
+  anonGuestOnEmptyPolicy: ScreenOnEmptyPolicy
+
+  """
+  For anon_guest_on_takeover_policy = 'timer', how many seconds the active controller has to respond before the takeover is auto-granted.
+  """
+  anonGuestOnTakeoverAfterSeconds: Int
+
+  """
+  Anonymous guests requesting control while another session holds the seat (consulted only when anon_guest_enabled = true). allow | request | timer.
+  """
+  anonGuestOnTakeoverPolicy: ScreenOnTakeoverPolicy
+
   """Project currently shown on this screen, or NULL if idle."""
   currentProjectId: UUID
 
   """Which renderer slot inside the assigned project to render."""
   currentRendererId: String
+
+  """Seconds from last input after which the seat is considered idle."""
+  idleAfterSeconds: Int
+
+  """
+  What happens to the active controller seat when it stops sending input. do_nothing | unassign.
+  """
+  idlePolicy: ScreenIdlePolicy
   name: String!
   organizationId: UUID!
+
+  """
+  Master switch for the registered-guest path on this screen. When false, registered guests cannot sign in or claim control regardless of the on_empty/on_takeover policies.
+  """
+  registeredGuestEnabled: Boolean
+
+  """
+  Registered guests claiming a vacant seat (consulted only when registered_guest_enabled = true). allow | request.
+  """
+  registeredGuestOnEmptyPolicy: ScreenOnEmptyPolicy
+
+  """
+  For registered_guest_on_takeover_policy = 'timer', how many seconds the active controller has to respond before the takeover is auto-granted.
+  """
+  registeredGuestOnTakeoverAfterSeconds: Int
+
+  """
+  Registered guests requesting control while another session holds the seat (consulted only when registered_guest_enabled = true). allow | request | timer.
+  """
+  registeredGuestOnTakeoverPolicy: ScreenOnTakeoverPolicy
+
+  """
+  When true, the renderer overlays an idle indicator bar once the seat is past idle_after_seconds.
+  """
+  showBarOnIdle: Boolean
   slug: String!
+
+  """
+  Additional seconds after the seat becomes idle before it is auto-unassigned. Only consulted when idle_policy = 'unassign'.
+  """
+  unassignAfterIdleSeconds: Int
 }
 
 input ScreenKeyPressInput {

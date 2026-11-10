@@ -887,14 +887,14 @@ describe("screens", () => {
   });
 
   it("creates a screen made here on the cloud, with its code", async () => {
-    await query(
-      `insert into ${SCREENS} (organization_id, name, slug, code)
-       values ($1, 'Foyer', 'foyer', 'YYYY')`,
+    const [{ code }] = await query(
+      `insert into ${SCREENS} (organization_id, name, slug)
+       values ($1, 'Foyer', 'foyer') returning code::text`,
       [orgId],
     );
     expect(await sync()).toMatchObject({ pushed: 1, pushRejected: 0 });
     expect(fake.tables.get(SCREENS)).toMatchObject([
-      { slug: "foyer", name: "Foyer", current_project_id: null, code: "YYYY" },
+      { slug: "foyer", name: "Foyer", current_project_id: null, code },
     ]);
   });
 
@@ -904,16 +904,16 @@ describe("screens", () => {
        values ($1, 'Other') returning id`,
       [`${ORG_PREFIX}-other-${Date.now()}`],
     );
-    await query(
-      `insert into ${SCREENS} (organization_id, name, slug, code)
-       values ($1, 'Taken', 'taken', 'ZZZZ')`,
+    const [{ code: taken }] = await query(
+      `insert into ${SCREENS} (organization_id, name, slug)
+       values ($1, 'Taken', 'taken') returning code::text`,
       [otherOrg],
     );
-    fake.tables.set(SCREENS, [cloudScreen(null)]);
+    fake.tables.set(SCREENS, [{ ...cloudScreen(null), code: taken }]);
 
     expect(await sync()).toMatchObject({ pulled: 1, failedTables: 0 });
     const [screen] = await localScreens();
-    expect(screen.code).not.toBe("ZZZZ");
+    expect(screen.code).not.toBe(taken);
     expect(await sync()).toMatchObject({ pulled: 0, pushed: 0 });
   });
 });

@@ -4,7 +4,7 @@ import { Client } from "urql";
 import { WithPgClient } from "../../../types";
 import { getUrqlClientFromCloudConnection } from "../../urqlClientFromCloudConnection";
 import { UnsupportedByCloud, queryCloud } from "../cloudQuery";
-import type { PushChange, PushResult } from "./cloud";
+import { MARK_CLOUD_SYNC, type PushChange, type PushResult } from "./cloud";
 import {
   CloudSyncTable,
   introspectCloudSyncTables,
@@ -326,6 +326,7 @@ const applyCloudPluginRows = async (
   return withPgClient(async (pgClient) => {
     await pgClient.query("BEGIN");
     try {
+      await pgClient.query(MARK_CLOUD_SYNC);
       const params = [JSON.stringify(incoming), cloudConnection.id, entity];
 
       // Lock first, so a local edit cannot land between classifying and writing.

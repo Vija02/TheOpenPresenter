@@ -27,6 +27,10 @@ export type PushResult =
   | { status: "applied"; updatedAt: string | null }
   | { status: "rejected"; reason: string };
 
+/** Lets triggers trust values only sync may set, e.g. a screen's code. */
+export const MARK_CLOUD_SYNC =
+  "select set_config('app.cloud_sync', 'on', true)";
+
 const targetOf = (table: CloudSyncTable) =>
   `${quoteIdent(table.schema)}.${quoteIdent(table.table)}`;
 
@@ -104,6 +108,7 @@ export const applyPushedChanges = async (
   userId: string | null,
   changes: PushChange[],
 ): Promise<PushResult[]> => {
+  await client.query(MARK_CLOUD_SYNC);
   const writable = await writableColumns(client, targetOf(table));
   const results: PushResult[] = [];
   for (const change of changes) {

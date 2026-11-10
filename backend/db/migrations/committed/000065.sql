@@ -1,5 +1,5 @@
 --! Previous: sha1:3981b9f2e72e30ff5cb375bee0d9409bf5dc88b1
---! Hash: sha1:82bd576f6618f66c9e9410ce9252dd2b410c827c
+--! Hash: sha1:2c8ea318603431bab75d6745dd9e7cda623a613c
 
 --! split: 1-current.sql
 -- Enter migration here
@@ -16,6 +16,10 @@ comment on table app_public.screens is
   E'A persistent display identity in an organization. Configured once on the device, then any project can be assigned to it remotely.\n@cloudSync';
 
 -- A screen created offline keeps its code and access settings when pushed.
+-- Only sync may choose a code, so it is left out of GraphQL.
+comment on column app_public.screens.code is
+  E'@omit create\nShort, globally-unique code visitors can type at /connect to reach this screen''s control page';
+
 grant insert(
   code,
   registered_guest_enabled,
@@ -33,13 +37,14 @@ grant insert(
 ) on app_public.screens to :DATABASE_VISITOR;
 
 /*
- * Codes are unique per server, and sync brings them from the other side. One
- * that is malformed or already taken here is not used: a new screen gets a
- * fresh code, an existing one keeps its own.
+ * Codes are unique per server. Only sync (app.cloud_sync) may bring one from
+ * the other side; one that is malformed or already taken here is not used: a
+ * new screen gets a fresh code, an existing one keeps its own.
  */
 create or replace function app_private.tg_screens__set_code() returns trigger as $$
 begin
   if new.code is null
+    or current_setting('app.cloud_sync', true) is distinct from 'on'
     or upper(new.code::text) !~ '^[2-9A-HJKMNP-Z]{4}$'
     or exists (
       select 1 from app_public.screens
