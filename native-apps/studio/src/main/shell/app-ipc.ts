@@ -1,7 +1,7 @@
 import { ipcMain, shell } from "electron";
 
 import { runtime } from "../runtime/client";
-import { describeConnection, hostLabel } from "../settings/connection";
+import { describeConnection } from "../settings/connection";
 import {
   type Mode,
   type Settings,
@@ -13,6 +13,7 @@ import {
 import { WEBSITE_URL, aboutInfo } from "./about";
 import { openExternalSafely } from "./external";
 import { refreshMenu } from "./menu";
+import { switchServer } from "./switch";
 import {
   checkForUpdates,
   downloadUpdates,
@@ -40,39 +41,8 @@ export function registerAppIPC(): void {
    */
   ipcMain.handle(
     "app:switch-server",
-    async (_event, args: { mode: Mode; rootUrl?: string }) => {
-      const patch: Partial<Settings> = { mode: args.mode };
-      if (args.mode === "local") {
-        patch.autoStartRuntime = true;
-      } else if (args.rootUrl) {
-        const target = normalizeHost(args.rootUrl);
-
-        // Probe before writing anything. Committing first and failing after
-        // left the app pointed at an instance that was never reachable, with
-        // the only way back being the menu.
-        const { checkHost } = await import("../cloud/host");
-        if (!(await checkHost(target))) {
-          throw new Error(
-            `Could not reach ${hostLabel(target)}. Check the address and that the instance is running.`,
-          );
-        }
-        patch.rootUrl = target;
-      }
-      updateSettings(patch);
-
-      if (args.mode === "local" && !runtime.url) {
-        await runtime.startRuntime();
-      }
-
-      const url = resolveRootUrl(runtime.url);
-      if (!url) {
-        throw new Error("That server is not available.");
-      }
-
-      showAppWindow(url);
-      refreshMenu();
-      return describeConnection(getSettings(), runtime.url);
-    },
+    (_event, args: { mode: Mode; rootUrl?: string }) =>
+      switchServer(args.mode, args.rootUrl),
   );
 
   /** Commit to a mode and open the app against it. */
