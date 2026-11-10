@@ -34,6 +34,7 @@ rand = "0.8"
 base64 = "0.22"
 zstd = "0.13"
 tar = "0.4"
+flate2 = "1"
 ureq = { version = "2", features = ["json"] }
 directories = "5"
 tracing = "0.1"

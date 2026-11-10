@@ -19,6 +19,17 @@ plugins = [
   "slido",
 ]
 
+# A real Node, where Studio's Electron cannot run the server. On Linux,
+# Electron loads the system's GLib and sharp brings its own; the two clash
+# and the server crashes on its first image. Other platforms run on Electron.
+#
+# Keys are platform slugs; values are the official .tar.gz's sha256, from
+# https://nodejs.org/dist/v<version>/SHASUMS256.txt. Keep the major version
+# in step with the Node that installs node_modules, for native addons.
+[node]
+version = "24.22.2"
+sha256 = { "linux-x64" = "361718c444e49af2ca5a110c83ba6a8901143f23ab285ebbef0341f391f482a9" }
+
 # Directories copied relative to the repo root.
 [[copy]]
 from = "backend/server"
