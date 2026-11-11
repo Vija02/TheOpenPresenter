@@ -1,4 +1,5 @@
 import { job, media } from "@repo/backend-shared";
+import { uuidFromMediaIdOrUUIDOrMediaName } from "@repo/lib";
 import { logger } from "@repo/observability";
 import { Task } from "graphile-worker";
 import { createReadStream } from "node:fs";
@@ -32,6 +33,20 @@ const task: Task = async (inPayload, { withPgClient }) => {
   const mediaHandler = new media[
     process.env.STORAGE_TYPE as "file" | "s3"
   ].mediaHandler(withPgClient);
+
+  // The source PDF is removed when its plugin is deleted. In that case there's
+  // nothing left to convert, so we stop instead of failing (and retrying).
+  const sourceStillExists = () =>
+    withPgClient(async (client) => {
+      const { rowCount } = await client.query(
+        "select 1 from app_public.medias where id = $1",
+        [uuidFromMediaIdOrUUIDOrMediaName(parentMediaId)],
+      );
+      return (rowCount ?? 0) > 0;
+    });
+
+  // Pages uploaded during this run, so we can clean them up if we cancel
+  const uploadedFileNames: string[] = [];
 
   try {
     log.info("Starting PDF to images conversion");
@@ -94,9 +109,12 @@ const task: Task = async (inPayload, { withPgClient }) => {
 
     const limit = pLimit(15);
 
-    const results = await Promise.all(
+    let failed = false;
+    const settled = await Promise.allSettled(
       uploadData.map(({ mediaId, localPath, fileSize, pageIndex }) =>
         limit(async () => {
+          if (failed) throw new Error("Skipped after an earlier page failed");
+
           // Upload
           const { fileName } = await mediaHandler.uploadMedia({
             file: () => createReadStream(localPath),
@@ -108,6 +126,7 @@ const task: Task = async (inPayload, { withPgClient }) => {
             isGuest,
             mediaId,
           });
+          uploadedFileNames.push(fileName);
 
           // Create dependency to parent
           await mediaHandler.createDependency(parentMediaId, mediaId);
@@ -121,8 +140,22 @@ const task: Task = async (inPayload, { withPgClient }) => {
           );
 
           return { fileName, pageIndex };
+        }).catch((err) => {
+          failed = true;
+          throw err;
         }),
       ),
+    );
+
+    const firstFailure = settled.find(
+      (r): r is PromiseRejectedResult => r.status === "rejected",
+    );
+    if (firstFailure) throw firstFailure.reason;
+
+    const results = settled.map(
+      (r) =>
+        (r as PromiseFulfilledResult<{ fileName: string; pageIndex: number }>)
+          .value,
     );
 
     // Sort by pageIndex to maintain order
@@ -140,6 +173,28 @@ const task: Task = async (inPayload, { withPgClient }) => {
     // Notify completion
     await job.notifyJobSuccess(withPgClient, __completionKey, result);
   } catch (err: any) {
+    const cancelled = !(await sourceStillExists().catch(() => true));
+    if (cancelled) {
+      log.info(
+        { err },
+        "Source PDF was deleted during conversion, cleaning up and stopping",
+      );
+      await Promise.all(
+        uploadedFileNames.map((fileName) =>
+          mediaHandler.deleteMedia(fileName).catch((cleanupErr) => {
+            log.warn({ cleanupErr, fileName }, "Failed to clean up page");
+          }),
+        ),
+      );
+      await job.notifyJobFailure(
+        withPgClient,
+        __completionKey,
+        "Source PDF no longer exists",
+      );
+      // Don't rethrow: retrying can't succeed once the source is gone
+      return;
+    }
+
     log.error({ err }, "Failed to convert PDF to images");
     await job.notifyJobFailure(
       withPgClient,
