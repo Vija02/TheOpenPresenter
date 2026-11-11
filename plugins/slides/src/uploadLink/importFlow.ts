@@ -9,7 +9,7 @@ import {
   releaseUploadSlot,
 } from "./claimUploadSlot";
 import { findLinkByToken } from "./db";
-import type { ReadThumbnails, RemoveImport } from "./routes";
+import type { ReadThumbnails } from "./routes";
 import {
   UPLOAD_LINK_MESSAGE,
   UPLOAD_LINK_STATUS,
@@ -103,8 +103,18 @@ export const runImport = async (
   const log = logger.child({ pluginName, uploadLinkId: link.id });
 
   let importId: string;
+  let thumbnailMediaNames: string[];
   try {
-    ({ importId } = await doImport(claim.previousImportId ?? undefined));
+    ({ importId, thumbnailMediaNames } =
+      await serverPluginApi.withProjectDocument(link.project_id, async () => {
+        const { importId } = await doImport(
+          claim.previousImportId ?? undefined,
+        );
+        return {
+          importId,
+          thumbnailMediaNames: deps.readThumbnails(link.plugin_id, importId),
+        };
+      }));
   } catch (err) {
     // Don't burn the visitor's attempt on a failed import.
     await releaseUploadSlot(serverPluginApi, {
@@ -120,7 +130,7 @@ export const runImport = async (
     uploadId: claim.uploadId,
     importId,
     uploadLinkId: link.id,
-    thumbnailMediaNames: deps.readThumbnails(link.plugin_id, importId),
+    thumbnailMediaNames,
   });
 
   return true;

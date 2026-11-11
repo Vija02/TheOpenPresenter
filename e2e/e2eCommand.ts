@@ -345,6 +345,15 @@ export class E2ECommandAPI {
     },
   ): Promise<{ success: true; screenGuestId: string }>;
 
+  /**
+   * Whether a project's Y.Doc is loaded on the server, and how many
+   * connections keep it there. Server-side holds count as connections.
+   */
+  async serverCommand(
+    command: "projectDocumentState",
+    payload: { orgSlug: string; projectSlug: string },
+  ): Promise<{ success: true; loaded: boolean; connections: number }>;
+
   async serverCommand(command: string, payload?: any): Promise<any> {
     const res = await this.request.get(
       `/E2EServerCommand?command=${encodeURIComponent(command)}${

@@ -118,9 +118,11 @@ const assertPublicGoogleResponse = (
 
 export const createImporters = (
   serverPluginApi: ServerPluginApi,
-  { getBaseImport, finalizeImport }: ImportHelpers,
+  { getBaseImport, finalizeImport, withHeldProject }: ImportHelpers,
 ) => {
-  const { fetchDriveVideos } = createDriveVideoFetcher(serverPluginApi);
+  const fetchDriveVideos = withHeldProject(
+    createDriveVideoFetcher(serverPluginApi).fetchDriveVideos,
+  );
 
   /**
    * Import a PowerPoint file, converting via Office Online.
@@ -561,6 +563,7 @@ export const createImporters = (
       if (token && driveVideos.length > 0) {
         void fetchDriveVideos({
           pluginId,
+          projectId: loadedContextData.projectId,
           importId: newImport.importId,
           token,
           userId,
@@ -717,10 +720,10 @@ export const createImporters = (
   };
 
   return {
-    importPpt,
-    importGoogleSlidesDeck,
-    importPdf,
-    importImages,
+    importPpt: withHeldProject(importPpt),
+    importGoogleSlidesDeck: withHeldProject(importGoogleSlidesDeck),
+    importPdf: withHeldProject(importPdf),
+    importImages: withHeldProject(importImages),
     fetchDriveVideos,
   };
 };

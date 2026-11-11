@@ -1,11 +1,41 @@
 import type { Plugin, ServerPluginApi } from "@repo/base-plugin/server";
 import { typeidUnboxed } from "typeid-js";
 
+import { loadedContext, loadedPlugins } from "../loadedState";
 import { createSlideRef, parseSlideRef } from "../slides/order";
 import type { BaseImportData, ImportData, PluginBaseData } from "../types";
 import { deleteOldMedia } from "./pdfPipeline";
 
 export const createImportHelpers = (serverPluginApi: ServerPluginApi) => {
+  /**
+   * Keeps the project's document loaded while `fn` runs, so an import
+   * finishes even if everyone closes the project meanwhile.
+   */
+  const holdProject = async <T>(
+    pluginId: string,
+    projectId: string | undefined,
+    fn: () => Promise<T>,
+  ): Promise<T> => {
+    const id = projectId ?? loadedContext[pluginId]?.projectId;
+    if (!id) {
+      throw new Error("Open this presentation and try again.");
+    }
+
+    return serverPluginApi.withProjectDocument(id, async () => {
+      if (!loadedPlugins[pluginId]) {
+        throw new Error(
+          "Couldn't find these slides. They may have been deleted.",
+        );
+      }
+      return fn();
+    });
+  };
+
+  const withHeldProject =
+    <A extends { pluginId: string }, R>(fn: (args: A) => Promise<R>) =>
+    (args: A & { projectId?: string }): Promise<R> =>
+      holdProject(args.pluginId, args.projectId, () => fn(args));
+
   const cleanupImportMedia = (importData: ImportData) => {
     if (importData.pdfMediaName) {
       deleteOldMedia(serverPluginApi, [importData.pdfMediaName]);
@@ -123,7 +153,13 @@ export const createImportHelpers = (serverPluginApi: ServerPluginApi) => {
     cleanupImportMedia(oldImport);
   };
 
-  return { cleanupImportMedia, getBaseImport, finalizeImport };
+  return {
+    cleanupImportMedia,
+    getBaseImport,
+    finalizeImport,
+    holdProject,
+    withHeldProject,
+  };
 };
 
 export type ImportHelpers = ReturnType<typeof createImportHelpers>;

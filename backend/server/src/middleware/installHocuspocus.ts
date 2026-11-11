@@ -111,6 +111,10 @@ export default async function installHocuspocus(app: Express) {
         [data.documentName],
       );
 
+      if (!row) {
+        throw new Error(`Project ${data.documentName} not found`);
+      }
+
       const organizationId = row.organization_id;
       const projectId = row.id;
       let dbDocument = row.document;

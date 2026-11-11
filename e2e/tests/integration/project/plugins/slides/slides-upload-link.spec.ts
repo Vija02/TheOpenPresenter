@@ -1,7 +1,9 @@
 import type { Page } from "@playwright/test";
 import { join } from "node:path";
 
+import type { E2ECommandAPI } from "../../../../../e2eCommand";
 import { expect, test } from "../../../../../fixtures/projectFixture";
+import { ORG_SLUG, PROJECT_SLUG } from "../../../../../helpers/workerData";
 
 /**
  * Public upload links for the Slides plugin.
@@ -79,6 +81,14 @@ const sendFile = async (visitorPage: Page, file: string) => {
   await expect(toast).toBeVisible({ timeout: 60 * 1000 });
 };
 
+const isProjectLoaded = async (e2eCommand: E2ECommandAPI) =>
+  (
+    await e2eCommand.serverCommand("projectDocumentState", {
+      orgSlug: ORG_SLUG,
+      projectSlug: PROJECT_SLUG,
+    })
+  ).loaded;
+
 test.describe("Slides Plugin - public upload links", () => {
   test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
 
@@ -115,6 +125,47 @@ test.describe("Slides Plugin - public upload links", () => {
 
     // Back on the member's side, the slide has landed in this scene.
     await page.reload();
+    await expect(page.getByTestId("slide-container").first()).toBeVisible({
+      timeout: 30 * 1000,
+    });
+  });
+
+  test("a visitor can send slides while nobody has the project open", async ({
+    page,
+    browser,
+    projectPage,
+    loginAndGoToProject,
+    e2eCommand,
+  }) => {
+    test.setTimeout(90 * 1000);
+
+    await loginAndGoToProject();
+    await projectPage.createPlugin("Slides");
+    const { url } = await createLink(page);
+    const projectAddress = page.url();
+
+    // The member leaves, so the server unloads the project
+    await page.goto("about:blank");
+    await expect
+      .poll(() => isProjectLoaded(e2eCommand), { timeout: 30 * 1000 })
+      .toBe(false);
+
+    const visitor = await browser.newContext();
+    try {
+      const visitorPage = await visitor.newPage();
+      await visitorPage.goto(url);
+      await sendFile(visitorPage, PDF);
+    } finally {
+      await visitor.close();
+    }
+
+    // The import loaded the project itself, and lets go of it once done
+    await expect
+      .poll(() => isProjectLoaded(e2eCommand), { timeout: 30 * 1000 })
+      .toBe(false);
+
+    // The slide was saved into the scene
+    await page.goto(projectAddress);
     await expect(page.getByTestId("slide-container").first()).toBeVisible({
       timeout: 30 * 1000,
     });

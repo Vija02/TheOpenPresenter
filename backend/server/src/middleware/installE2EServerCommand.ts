@@ -15,6 +15,7 @@ import { proxy } from "valtio";
 import { bind } from "valtio-yjs";
 import * as Y from "yjs";
 
+import { hocuspocus } from "../hocuspocusInstance";
 import { serverPluginApi } from "../pluginManager";
 import {
   DEFAULT_MOCK_HOST_CONFIG,
@@ -343,6 +344,29 @@ async function runCommand(
     );
 
     return { success: true };
+  } else if (command === "projectDocumentState") {
+    // Whether the project's Y.Doc is loaded on this server, and how many
+    // connections (clients and server-side holds) keep it there
+    const { orgSlug, projectSlug } = payload || {};
+
+    const {
+      rows: [project],
+    } = await rootPgPool.query(
+      `select p.id from app_public.projects p
+         join app_public.organizations o on o.id = p.organization_id
+        where o.slug = $1 and p.slug = $2`,
+      [orgSlug, projectSlug],
+    );
+    if (!project) {
+      throw new Error(`Project not found: ${orgSlug}/${projectSlug}`);
+    }
+
+    const document = hocuspocus.documents.get(project.id);
+    return {
+      success: true,
+      loaded: !!document,
+      connections: document?.getConnectionsCount() ?? 0,
+    };
   } else if (command === "clearUserByUsername") {
     const { username } = payload || {};
     if (!username || !String(username).startsWith("testuser")) {

@@ -1,6 +1,8 @@
 import type { Page } from "@playwright/test";
 
+import type { E2ECommandAPI } from "../../../../../e2eCommand";
 import { expect, test } from "../../../../../fixtures/googleSlidesFixture";
+import { ORG_SLUG, PROJECT_SLUG } from "../../../../../helpers/workerData";
 
 /**
  * Importing a Google Slides deck from its public share link, with no Google
@@ -43,6 +45,12 @@ const expectImported = async (page: Page) => {
       .locator("img"),
   ).toBeVisible({ timeout: 30_000 });
 };
+
+const documentState = (e2eCommand: E2ECommandAPI) =>
+  e2eCommand.serverCommand("projectDocumentState", {
+    orgSlug: ORG_SLUG,
+    projectSlug: PROJECT_SLUG,
+  });
 
 test.describe("Slides Plugin - Google Slides public link", () => {
   test.beforeEach(
@@ -93,5 +101,42 @@ test.describe("Slides Plugin - Google Slides public link", () => {
       timeout: 30_000,
     });
     await expect(page.getByText(/^Slide 1$/)).toHaveCount(0);
+  });
+
+  test("finishes an import after everyone closes the project", async ({
+    page,
+    fakeGoogle,
+    e2eCommand,
+  }) => {
+    test.setTimeout(90_000);
+    const deckId = fakeGoogle.newHeldDeckId();
+    const projectAddress = page.url();
+
+    await openLinkField(page);
+    await submitLink(page, deckLink(deckId));
+
+    // The import is now waiting on Google for the PDF
+    await expect
+      .poll(() => fakeGoogle.heldExportRequested(deckId), { timeout: 30_000 })
+      .toBe(true);
+
+    // Leave the project. The import's hold is all that keeps it loaded.
+    await page.goto("about:blank");
+    await expect
+      .poll(async () => await documentState(e2eCommand), { timeout: 30_000 })
+      .toEqual({ success: true, loaded: true, connections: 1 });
+
+    await fakeGoogle.releaseExport(deckId);
+
+    // Once the import is done the hold goes, so the project unloads
+    await expect
+      .poll(async () => (await documentState(e2eCommand)).loaded, {
+        timeout: 30_000,
+      })
+      .toBe(false);
+
+    // And the import was saved, not lost with the unload
+    await page.goto(projectAddress);
+    await expectImported(page);
   });
 });

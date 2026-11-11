@@ -8,6 +8,7 @@ import { Express } from "express";
 import fs, { readdirSync, statSync } from "fs";
 import path from "path";
 
+import { hocuspocus } from "./hocuspocusInstance";
 import { getRootPgPool } from "./middleware/installDatabasePools";
 
 export const pluginsPath =
@@ -19,8 +20,49 @@ const enabledPlugins = process.env.ENABLED_PLUGINS
 
 export let serverPluginApi: ServerPluginApiPrivate;
 
+const UNAVAILABLE =
+  "This presentation isn't available right now. Please try again.";
+
+/**
+ * Opens a direct connection to a project's document. It counts as a client,
+ * so the document stays loaded until the connection is closed.
+ */
+const openHeldDocument = async (projectId: string) => {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // An unload under way would destroy the document under us, so let it
+    // finish and load the document again
+    await hocuspocus.unloadingDocuments.get(projectId);
+
+    const connection = await hocuspocus
+      .openDirectConnection(projectId)
+      .catch((err) => {
+        logger.error({ err, projectId }, "Could not load project document");
+        throw new Error(UNAVAILABLE);
+      });
+    if (hocuspocus.documents.get(projectId) === connection.document) {
+      return connection;
+    }
+
+    // It was unloaded as we joined. Let go without saving the dead copy.
+    connection.document?.removeDirectConnection();
+  }
+  logger.error({ projectId }, "Project document kept unloading under a hold");
+  throw new Error(UNAVAILABLE);
+};
+
 export const initPlugins = async (app: Express) => {
-  serverPluginApi = new ServerPluginApiPrivate(app);
+  serverPluginApi = new ServerPluginApiPrivate(app, {
+    openProjectDocument: async (projectId) => {
+      const connection = await openHeldDocument(projectId);
+      return {
+        release: () =>
+          connection.disconnect({
+            unloadImmediately:
+              (connection.document?.getConnectionsCount() ?? 0) <= 1,
+          }),
+      };
+    },
+  });
 
   const { default: chalk } = await import("chalk");
 
