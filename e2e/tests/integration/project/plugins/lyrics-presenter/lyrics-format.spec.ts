@@ -145,7 +145,10 @@ test.describe("Lyrics formatting", () => {
     );
     await dialog.getByRole("button", { name: "AI Format" }).click();
 
-    await expect(page.getByRole("alert")).toBeVisible();
+    // The open dialog hides the toast from the accessibility tree.
+    await expect(
+      page.getByRole("alert", { includeHidden: true }),
+    ).toBeVisible();
     await expect(editor).toContainText("Amazing grace");
   });
 });
