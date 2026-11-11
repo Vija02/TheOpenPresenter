@@ -204,6 +204,78 @@ export type RuntimeUpdateState =
   | { status: "ready"; version: string; needsRestart: boolean }
   | { status: "error"; version: string; message: string };
 
+/** Where a screen is served from: the local runtime, or a signed-in server. */
+export type ScreenSource = { kind: "local" } | { kind: "remote"; host: string };
+
+export type ScreenState =
+  | "closed"
+  | "open"
+  | "waiting-display"
+  | "waiting-server"
+  | "waiting-network"
+  | "failed";
+
+/** A screen this computer shows by itself. Mirrors `screens/config.ts`. */
+export type VirtualScreen = {
+  id: string;
+  source: ScreenSource;
+  orgSlug: string;
+  screenSlug: string;
+  orgName?: string;
+  screenName?: string;
+  monitorId?: string;
+  monitorName?: string;
+  monitorBounds?: { x: number; y: number; width: number; height: number };
+  openOnLaunch: boolean;
+};
+
+/** A configured screen, as listed: its state and the display it is on now. */
+export type ListedScreen = VirtualScreen & {
+  state: ScreenState;
+  /** Null when its display is not connected. */
+  displayId: string | null;
+  /** Where it is served from, named for the list. */
+  sourceLabel: string;
+};
+
+/** Screens to pick from. Mirrors `screens/sources.ts`. */
+export type CatalogScreen = {
+  slug: string;
+  name: string;
+  source: ScreenSource;
+  orgSlug: string;
+};
+export type CatalogOrganization = {
+  key: string;
+  name: string;
+  syncedTo: string | null;
+  syncedToLabel: string | null;
+  screens: CatalogScreen[];
+};
+export type CatalogGroup = {
+  key: string;
+  label: string;
+  isCloud: boolean;
+  account: string | null;
+  organizations: CatalogOrganization[];
+};
+/** Starting with the computer. Mirrors `screens/loginItem.ts`. */
+export type LoginItemState =
+  | { status: "on" | "off" | "needs-approval" }
+  | { status: "unavailable"; reason: string };
+
+export type ScreenCatalog = { groups: CatalogGroup[]; problems: string[] };
+
+export type MonitorInfo = {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  isPrimary: boolean;
+};
+
 type Bridge = {
   isDesktop: true;
   shell: "electron";
@@ -217,6 +289,10 @@ declare global {
     theOpenPresenterDesktop?: Bridge;
   }
 }
+
+/** The operating system the shell runs on, as Node names it. */
+export const platform = (): string =>
+  window.theOpenPresenterDesktop?.platform ?? "";
 
 function bridge(): Bridge {
   const api = window.theOpenPresenterDesktop;
@@ -439,4 +515,17 @@ export const api = {
   setupBarLater: () => invoke<void>("setup-bar:later"),
   setupBarContent: () => invoke<SetupBarContent>("setup-bar:content"),
   setupBarHeight: (height: number) => invoke<void>("setup-bar:height", height),
+  /** Screens this computer shows by itself. */
+  virtualScreens: () => invoke<ListedScreen[]>("screens:list"),
+  screenCatalog: () => invoke<ScreenCatalog>("screens:catalog"),
+  monitors: () => invoke<MonitorInfo[]>("present:monitors"),
+  saveScreen: (screen: Omit<VirtualScreen, "id"> & { id?: string }) =>
+    invoke<VirtualScreen>("screens:save", screen),
+  removeScreen: (id: string) => invoke<void>("screens:remove", id),
+  openScreen: (id: string) => invoke<void>("screens:open", id),
+  closeScreen: (id: string) => invoke<void>("screens:close", id),
+  launchAtLogin: () => invoke<LoginItemState>("screens:launch-at-login"),
+  openLoginItems: () => invoke<void>("screens:open-login-items"),
+  setLaunchAtLogin: (enabled: boolean) =>
+    invoke<LoginItemState>("screens:set-launch-at-login", enabled),
 };

@@ -16,6 +16,7 @@ import {
   closeAllPresentWindows,
   getMainWindow,
   openPanelWindow,
+  openScreensWindow,
 } from "./windows";
 
 /**
@@ -76,6 +77,10 @@ export function setupMenu(): void {
           label: "Settings",
           accelerator: "CmdOrCtrl+,",
           click: () => openPanelWindow(),
+        },
+        {
+          label: "Virtual screens…",
+          click: () => openScreensWindow(),
         },
         { type: "separator" },
         isMac ? { role: "close" } : { role: "quit" },

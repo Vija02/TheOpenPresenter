@@ -1,10 +1,12 @@
 import { Menu, Tray, app, nativeImage } from "electron";
 
+import { closeAllScreens, openAllScreens } from "../screens/windows";
 import {
   ICON_PATH,
   backToShellUI,
   closeAllPresentWindows,
   getMainWindow,
+  openScreensWindow,
 } from "./windows";
 
 let tray: Tray | null = null;
@@ -41,6 +43,10 @@ export function setupTray(): void {
           backToShellUI();
         },
       },
+      { type: "separator" },
+      { label: "Open virtual screens", click: () => void openAllScreens() },
+      { label: "Close virtual screens", click: () => closeAllScreens() },
+      { label: "Set up virtual screens…", click: () => openScreensWindow() },
       { type: "separator" },
       { label: "Quit", click: () => app.quit() },
     ]),

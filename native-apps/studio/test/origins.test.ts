@@ -2,22 +2,27 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const settings = { rootUrl: undefined as string | undefined };
 const runtimeRef = { url: null as string | null };
+const stored: Record<string, unknown> = {};
 
 vi.mock("electron", () => ({ shell: { openExternal: vi.fn() } }));
 vi.mock("../src/main/settings/store", () => ({
   getSettings: () => settings,
+  store: { get: (key: string) => stored[key] ?? null },
 }));
 vi.mock("../src/main/runtime/client", () => ({
   runtime: runtimeRef,
 }));
 
-const { isAllowedAppUrl } = await import("../src/main/shell/origins");
+const { isAllowedAppUrl, isShellPage } = await import(
+  "../src/main/shell/origins"
+);
 
 describe("isAllowedAppUrl", () => {
   beforeEach(() => {
     runtimeRef.url = "http://localhost:45295";
     settings.rootUrl = "https://theopenpresenter.com";
     delete process.env["ELECTRON_RENDERER_URL"];
+    delete stored.virtualScreens;
   });
 
   it("allows the local runtime and the configured host", () => {
@@ -49,5 +54,59 @@ describe("isAllowedAppUrl", () => {
     runtimeRef.url = null;
     settings.rootUrl = undefined;
     expect(isAllowedAppUrl("http://localhost:45295/o")).toBe(false);
+  });
+
+  /** A screen can come from another signed-in server than the app's own. */
+  it("allows hosts a configured screen loads from", () => {
+    expect(isAllowedAppUrl("https://church.example.org/render/s/a/b")).toBe(
+      false,
+    );
+    stored.virtualScreens = [
+      {
+        id: "1",
+        source: { kind: "remote", host: "https://church.example.org" },
+        orgSlug: "a",
+        screenSlug: "b",
+        openOnLaunch: true,
+      },
+    ];
+    expect(isAllowedAppUrl("https://church.example.org/render/s/a/b")).toBe(
+      true,
+    );
+  });
+});
+
+describe("isShellPage", () => {
+  const dir = "/app/out/renderer";
+  it("accepts the app's own pages", () => {
+    expect(
+      isShellPage(
+        "file:///app/out/renderer/screens.html#virtual",
+        undefined,
+        dir,
+      ),
+    ).toBe(true);
+    expect(
+      isShellPage(
+        "http://localhost:5173/screens.html",
+        "http://localhost:5173",
+        dir,
+      ),
+    ).toBe(true);
+  });
+  it("rejects server pages and other files", () => {
+    expect(
+      isShellPage("https://theopenpresenter.com/o/x", undefined, dir),
+    ).toBe(false);
+    expect(isShellPage("file:///app/out/other.html", undefined, dir)).toBe(
+      false,
+    );
+    expect(
+      isShellPage("file:///app/out/renderer-evil/x.html", undefined, dir),
+    ).toBe(false);
+    expect(
+      isShellPage("http://localhost:3000/o/x", "http://localhost:5173", dir),
+    ).toBe(false);
+    expect(isShellPage(undefined, undefined, dir)).toBe(false);
   });
 });
