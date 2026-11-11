@@ -33,11 +33,11 @@ jobs:
             tauri_args: ''
 
           - label: macos-aarch64
-            runner: macos-14
+            runner: macos-15
             tauri_args: --target aarch64-apple-darwin
             rust_targets: aarch64-apple-darwin
           - label: macos-x86_64
-            runner: macos-14
+            runner: macos-15
             tauri_args: --target x86_64-apple-darwin
             rust_targets: x86_64-apple-darwin
 
