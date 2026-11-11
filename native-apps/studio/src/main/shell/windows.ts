@@ -1,6 +1,7 @@
 import { BrowserWindow, app, globalShortcut, screen, shell } from "electron";
 import { join } from "path";
 
+import { displayName } from "../screens/config";
 import { openExternalSafely } from "./external";
 import { logShell } from "./log";
 import { isAllowedAppUrl } from "./origins";
@@ -35,9 +36,9 @@ export { baseWebPreferences };
 /**
  * Stop a window navigating itself somewhere we did not sanction
  */
-function guardNavigation(win: BrowserWindow): void {
+function guardNavigation(win: BrowserWindow, openExternally = true): void {
   win.webContents.setWindowOpenHandler(({ url }) => {
-    void openExternalSafely(url).catch(() => {});
+    if (openExternally) void openExternalSafely(url).catch(() => {});
     return { action: "deny" };
   });
 
@@ -45,7 +46,7 @@ function guardNavigation(win: BrowserWindow): void {
     if (isAllowedAppUrl(url)) return;
     event.preventDefault();
     logShell("warn", `[shell] blocked navigation to ${url}`);
-    void openExternalSafely(url).catch(() => {});
+    if (openExternally) void openExternalSafely(url).catch(() => {});
   });
 
   // A webview would get its own renderer with our preload attached.
@@ -104,6 +105,8 @@ export function loadShellUI(
   entry:
     | "onboarding"
     | "panel"
+    | "screens"
+    | "screenstatus"
     | "loading"
     | "unreachable"
     | "update"
@@ -248,59 +251,79 @@ export function reloadServerWindows(previousUrl: string, url: string): void {
  */
 export function backToShellUI(): void {
   closePanelWindow();
+  closeScreensWindow();
   openOnboardingWindow();
   if (mainWin && !mainWin.isDestroyed()) mainWin.hide();
 }
 
 /**
- * The settings window.
+ * A shell window of sections, one per entry. Opening it again focuses it and
+ * switches to the section asked for.
  */
-let panelWin: BrowserWindow | null = null;
+function sectionedWindow(
+  entry: "panel" | "screens",
+  title: string,
+): {
+  open: (section?: string) => BrowserWindow;
+  close: () => void;
+} {
+  let win: BrowserWindow | null = null;
 
-export function openPanelWindow(section?: string): BrowserWindow {
-  if (panelWin && !panelWin.isDestroyed()) {
-    panelWin.focus();
-    if (section) {
-      void panelWin.webContents
-        .executeJavaScript(`window.location.hash = ${JSON.stringify(section)}`)
-        .catch(() => {
-          // The page may not have finished loading yet, in which case it will
-          // read the hash it was opened with anyway.
-        });
+  const open = (section?: string) => {
+    if (win && !win.isDestroyed()) {
+      win.focus();
+      if (section) {
+        void win.webContents
+          .executeJavaScript(
+            `window.location.hash = ${JSON.stringify(section)}`,
+          )
+          .catch(() => {
+            // Not loaded yet: it reads the hash it was opened with anyway.
+          });
+      }
+      return win;
     }
-    return panelWin;
-  }
 
-  panelWin = new BrowserWindow({
-    width: 760,
-    height: 580,
-    minWidth: 620,
-    minHeight: 460,
-    show: false,
-    backgroundColor: "#111111",
-    title: "Settings",
-    icon: ICON_PATH,
-    // A utility window, not a second main window.
-    autoHideMenuBar: true,
-    parent: mainWin ?? undefined,
-    webPreferences: baseWebPreferences(),
-  });
-  guardNavigation(panelWin);
+    win = new BrowserWindow({
+      width: 760,
+      height: 580,
+      minWidth: 620,
+      minHeight: 460,
+      show: false,
+      backgroundColor: "#111111",
+      title,
+      icon: ICON_PATH,
+      // A utility window, not a second main window.
+      autoHideMenuBar: true,
+      parent: mainWin ?? undefined,
+      webPreferences: baseWebPreferences(),
+    });
+    guardNavigation(win);
 
-  loadShellUI(panelWin, "panel", section);
-  panelWin.once("ready-to-show", () => panelWin?.show());
+    const created = win;
+    loadShellUI(created, entry, section);
+    created.once("ready-to-show", () => created.show());
+    created.on("closed", () => {
+      if (win === created) win = null;
+    });
+    return created;
+  };
 
-  panelWin.on("closed", () => {
-    panelWin = null;
-  });
+  const close = () => {
+    if (win && !win.isDestroyed()) win.close();
+    win = null;
+  };
 
-  return panelWin;
+  return { open, close };
 }
 
-export function closePanelWindow(): void {
-  if (panelWin && !panelWin.isDestroyed()) panelWin.close();
-  panelWin = null;
-}
+const settingsWindow = sectionedWindow("panel", "Settings");
+export const openPanelWindow = settingsWindow.open;
+export const closePanelWindow = settingsWindow.close;
+
+const screensWindow = sectionedWindow("screens", "Virtual screens");
+export const openScreensWindow = screensWindow.open;
+export const closeScreensWindow = screensWindow.close;
 
 // -- Loading ----------------------------------------------------------------
 let loadingWin: BrowserWindow | null = null;
@@ -526,7 +549,7 @@ export function listMonitors(from?: BrowserWindow | null): MonitorInfo[] {
       : null;
   return screen.getAllDisplays().map((display) => ({
     id: String(display.id),
-    name: display.label || `Display ${display.id}`,
+    name: displayName(display),
     width: display.bounds.width,
     height: display.bounds.height,
     x: display.bounds.x,
@@ -614,6 +637,68 @@ function leavePresentFullScreen(win: BrowserWindow): Promise<void> {
   });
 }
 
+/** A frameless output window, created hidden on `display`. */
+export function createOutputWindow(
+  display: Electron.Display,
+  title: string,
+  onEscape: () => void,
+): BrowserWindow {
+  const win = new BrowserWindow({
+    frame: false,
+    show: false,
+    backgroundColor: "#000000",
+    title,
+    icon: ICON_PATH,
+    x: display.bounds.x,
+    y: display.bounds.y,
+    width: display.bounds.width,
+    height: display.bounds.height,
+    ...(needsFloatingHint() && { type: "splash" }),
+    webPreferences: baseWebPreferences(),
+  });
+  // Nobody is at an output to see a browser tab it opened.
+  guardNavigation(win, false);
+
+  let ownsEscape = false;
+  win.on("closed", () => {
+    if (ownsEscape) globalShortcut.unregister("Escape");
+  });
+  // Only while focused: a global Escape would fire while the operator is
+  // typing in the main window.
+  win.on("focus", () => {
+    ownsEscape = true;
+    globalShortcut.register("Escape", onEscape);
+  });
+  win.on("blur", () => {
+    ownsEscape = false;
+    globalShortcut.unregister("Escape");
+  });
+
+  return win;
+}
+
+/** Show an output window fullscreen on `display`, moving it there first. */
+export async function showFullScreenOn(
+  win: BrowserWindow,
+  display: Electron.Display,
+  focus = true,
+): Promise<void> {
+  const onTarget =
+    win.isVisible() &&
+    screen.getDisplayMatching(win.getBounds()).id === display.id;
+  if (!onTarget) {
+    await leavePresentFullScreen(win);
+    if (win.isDestroyed()) return;
+    if (focus) win.show();
+    else win.showInactive();
+    await moveToDisplay(win, display);
+    if (win.isDestroyed()) return;
+  }
+
+  enterPresentFullScreen(win);
+  if (focus) win.focus();
+}
+
 export async function openPresentWindow(
   url: string,
   monitorIndex: number,
@@ -626,42 +711,17 @@ export async function openPresentWindow(
   let win = presentWins.get(rendererId);
 
   if (!win || win.isDestroyed()) {
-    win = new BrowserWindow({
-      frame: false,
-      show: false,
-      backgroundColor: "#000000",
-      title: "TheOpenPresenter Renderer",
-      icon: ICON_PATH,
-      x: display.bounds.x,
-      y: display.bounds.y,
-      width: display.bounds.width,
-      height: display.bounds.height,
-      ...(needsFloatingHint() && { type: "splash" }),
-      webPreferences: baseWebPreferences(),
-    });
-    guardNavigation(win);
+    win = createOutputWindow(display, "TheOpenPresenter Renderer", () =>
+      closePresentWindow(rendererId),
+    );
     presentWins.set(rendererId, win);
 
-    let ownsEscape = false;
-
     win.on("closed", () => {
-      if (ownsEscape) globalShortcut.unregister("Escape");
       presentWins.delete(rendererId);
       mainWin?.webContents.send(
         "present-windows-changed",
         listPresentWindows(),
       );
-    });
-
-    // Only while focused: a global Escape would fire while the operator is
-    // typing in the main window.
-    win.on("focus", () => {
-      ownsEscape = true;
-      globalShortcut.register("Escape", () => closePresentWindow(rendererId));
-    });
-    win.on("blur", () => {
-      ownsEscape = false;
-      globalShortcut.unregister("Escape");
     });
   }
 
@@ -670,19 +730,8 @@ export async function openPresentWindow(
     target.loadURL(url).catch(() => {});
   }
 
-  const onTarget =
-    target.isVisible() &&
-    screen.getDisplayMatching(target.getBounds()).id === display.id;
-  if (!onTarget) {
-    await leavePresentFullScreen(target);
-    if (target.isDestroyed()) return;
-    target.show();
-    await moveToDisplay(target, display);
-    if (target.isDestroyed()) return;
-  }
-
-  enterPresentFullScreen(target);
-  target.focus();
+  await showFullScreenOn(target, display);
+  if (target.isDestroyed()) return;
   mainWin?.webContents.send("present-windows-changed", listPresentWindows());
 }
 

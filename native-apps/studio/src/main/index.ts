@@ -3,6 +3,7 @@ import { BrowserWindow, app, screen } from "electron";
 import { registerIPC } from "./ipc";
 import { runtime } from "./runtime/client";
 import { registerTicket } from "./runtime/remote";
+import { openScreensOnLaunch, syncAll as syncScreens } from "./screens/windows";
 import { chromiumDir, runtimeRoot } from "./settings/paths";
 import {
   DEFAULT_CHANNEL,
@@ -121,6 +122,7 @@ if (!gotLock) {
     const onDisplaysChanged = () => {
       repositionPresentWindows();
       notifyMonitorsChanged();
+      void syncScreens();
     };
     screen.on("display-added", onDisplaysChanged);
     screen.on("display-removed", onDisplaysChanged);
@@ -136,6 +138,7 @@ if (!gotLock) {
     } finally {
       routing = false;
     }
+    void openScreensOnLaunch();
     void checkAtLaunch();
 
     app.on("activate", () => {

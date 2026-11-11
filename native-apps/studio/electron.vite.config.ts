@@ -21,6 +21,8 @@ export default defineConfig({
           unreachable: resolve(__dirname, "src/renderer/unreachable.html"),
           update: resolve(__dirname, "src/renderer/update.html"),
           setupbar: resolve(__dirname, "src/renderer/setupbar.html"),
+          screens: resolve(__dirname, "src/renderer/screens.html"),
+          screenstatus: resolve(__dirname, "src/renderer/screenstatus.html"),
         },
       },
     },
