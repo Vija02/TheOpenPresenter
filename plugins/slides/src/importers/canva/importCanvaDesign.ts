@@ -10,7 +10,7 @@ import { getValidAccessToken as getCanvaAccessToken } from "./tokenStore";
 
 export const createCanvaImporter = (
   serverPluginApi: ServerPluginApi,
-  { getBaseImport, finalizeImport }: ImportHelpers,
+  { getBaseImport, finalizeImport, withHeldProject }: ImportHelpers,
 ) => {
   const importCanvaDesign = async ({
     pluginId,
@@ -97,5 +97,5 @@ export const createCanvaImporter = (
     }
   };
 
-  return importCanvaDesign;
+  return withHeldProject(importCanvaDesign);
 };

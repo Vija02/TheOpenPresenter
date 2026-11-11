@@ -57,6 +57,14 @@ export type FakeGoogle = {
   /** As if the user removed the app's access in their Google account. */
   revokeAccess: (accountId: string) => Promise<void>;
   activity: (accountId: string) => Promise<GoogleAccountActivity>;
+  /**
+   * A `public-held-` deck's export waits until released, so a spec can act
+   * mid-import. Each id is fresh, so parallel workers never share one.
+   */
+  newHeldDeckId: () => string;
+  /** Whether the app has asked for a held deck's export yet. */
+  heldExportRequested: (deckId: string) => Promise<boolean>;
+  releaseExport: (deckId: string) => Promise<void>;
 };
 
 export type DrivePicker = {
@@ -226,6 +234,8 @@ export const test = base.extend<GoogleSlidesFixture>({
   fakeGoogle: async ({ request, context }, use, testInfo) => {
     const prefix = `g-${testInfo.project.name}-${testInfo.parallelIndex}-${testInfo.repeatEachIndex}-${Date.now().toString(36)}`;
     const created: string[] = [];
+    const heldDecks: string[] = [];
+    const randomSuffix = () => Math.random().toString(36).slice(2, 10);
 
     const control = async (path: string, data: unknown) => {
       const res = await request.post(`${FAKE_GOOGLE_URL}/__control/${path}`, {
@@ -256,6 +266,23 @@ export const test = base.extend<GoogleSlidesFixture>({
         return (await res.json()).accessToken;
       },
       revokeAccess: (accountId) => control("revoke", { accountId }),
+      newHeldDeckId: () => {
+        const id = `public-held-${prefix}-${randomSuffix()}`;
+        heldDecks.push(id);
+        return id;
+      },
+      heldExportRequested: async (deckId) => {
+        const res = await request.get(
+          `${FAKE_GOOGLE_URL}/__control/held-export?deckId=${encodeURIComponent(deckId)}`,
+        );
+        if (!res.ok()) {
+          throw new Error(
+            `fake-google held-export failed: ${await res.text()}`,
+          );
+        }
+        return (await res.json()).requested;
+      },
+      releaseExport: (deckId) => control("release-export", { deckId }),
       activity: async (accountId) => {
         const res = await request.get(
           `${FAKE_GOOGLE_URL}/__control/account?id=${encodeURIComponent(accountId)}`,
@@ -263,6 +290,13 @@ export const test = base.extend<GoogleSlidesFixture>({
         return res.json();
       },
     });
+
+    // Never leave an import hanging on the fake
+    await Promise.all(
+      heldDecks.map((deckId) =>
+        control("release-export", { deckId }).catch(() => {}),
+      ),
+    );
 
     // Scoped to this test's own accounts, so parallel workers are unaffected
     await Promise.all(

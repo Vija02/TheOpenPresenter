@@ -7,6 +7,7 @@ import type {
 } from "@repo/base-types";
 import { OrganizationType } from "@repo/graphql";
 import { mediaIdFromUUID } from "@repo/lib";
+import { logger } from "@repo/observability";
 import { Express, RequestHandler } from "express";
 import { Pool } from "pg";
 import stream from "stream";
@@ -55,6 +56,21 @@ const withPgClientFromPool = (pool: Pool): WithPgClient => {
       client.release();
     }
   };
+};
+
+/** Keeps a project's Yjs document loaded until released. */
+export type ProjectDocumentHold = { release: () => Promise<void> };
+
+/**
+ * Loads a project's document if needed and keeps it loaded, even when no
+ * client is connected. Supplied by the server, which owns the documents.
+ */
+export type OpenProjectDocument = (
+  projectId: string,
+) => Promise<ProjectDocumentHold>;
+
+export type ServerPluginApiOptions = {
+  openProjectDocument?: OpenProjectDocument;
 };
 
 export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
@@ -153,9 +169,31 @@ export class ServerPluginApi<PluginDataType = any, RendererDataType = any> {
   protected registeredAiCapabilities = new Map<string, AnyAiCapability>();
 
   private app: Express;
+  private openProjectDocument?: OpenProjectDocument;
 
-  public constructor(app: Express) {
+  public constructor(app: Express, options: ServerPluginApiOptions = {}) {
     this.app = app;
+    this.openProjectDocument = options.openProjectDocument;
+  }
+
+  /**
+   * Runs `fn` with the project's document loaded, and keeps it loaded until
+   * `fn` settles.
+   */
+  public async withProjectDocument<T>(
+    projectId: string,
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    if (!this.openProjectDocument) return fn();
+
+    const hold = await this.openProjectDocument(projectId);
+    try {
+      return await fn();
+    } finally {
+      await hold.release().catch((err) => {
+        logger.warn({ err, projectId }, "Failed to release project document");
+      });
+    }
   }
 
   public registerTrpcAppRouter(getAppRouter: (t: TRPCObject) => any) {

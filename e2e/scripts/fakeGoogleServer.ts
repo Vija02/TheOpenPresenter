@@ -21,13 +21,16 @@
  *
  * A deck whose id starts with `public-` is shared with "Anyone with the
  * link": its embed and logged-out export need no token. Any other deck
- * refuses a logged-out read.
+ * refuses a logged-out read. A `public-held-` deck's export waits until a
+ * test releases it, so a spec can act while an import is under way.
  *   POST /__control/scenario                     a test describes an account
  *   POST /__control/revoke                       as if the user removed access
  *   POST /__control/browser-token                a token as Google's in-browser
  *                                                sign-in would hand out
  *   GET  /__control/account?id=                  what happened to an account
  *   POST /__control/reset                        forget an account
+ *   GET  /__control/held-export?deckId=          whether its export was asked for
+ *   POST /__control/release-export               let a held export through
  *   GET  /__control/health                       liveness
  *
  * Which account a sign-in authorizes comes from the `e2e_google_account`
@@ -280,6 +283,27 @@ const handleRevoke = (res: ServerResponse, url: URL) => {
 
 /* Slides -------------------------------------------------------------------- */
 
+/** `public-held-` decks: exports waiting for the test to let them through. */
+type HeldExport = {
+  requested: boolean;
+  release: Promise<void>;
+  open: () => void;
+};
+const heldExports = new Map<string, HeldExport>();
+
+const heldExportFor = (deckId: string) => {
+  let held = heldExports.get(deckId);
+  if (!held) {
+    let open = () => {};
+    const release = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    held = { requested: false, release, open };
+    heldExports.set(deckId, held);
+  }
+  return held;
+};
+
 /**
  * A bare embed page. With no slide data in it, the importer falls back to one
  * slide per PDF page, which keeps what a spec sees down to the PDF.
@@ -288,7 +312,11 @@ const embedHtml = (presentationId: string) => `<!doctype html>
 <html><head><title>${presentationId}</title></head>
 <body><div class="punch-viewer-content"></div></body></html>`;
 
-const handleSlides = (req: IncomingMessage, res: ServerResponse, url: URL) => {
+const handleSlides = async (
+  req: IncomingMessage,
+  res: ServerResponse,
+  url: URL,
+) => {
   const deckId = url.pathname.match(/^\/presentation\/d\/([^/]+)\//)?.[1];
   if (deckId?.startsWith("public-")) {
     if (url.pathname.endsWith("/embed")) {
@@ -297,6 +325,12 @@ const handleSlides = (req: IncomingMessage, res: ServerResponse, url: URL) => {
       return;
     }
     if (url.pathname.endsWith("/export/pdf")) {
+      if (deckId.startsWith("public-held-")) {
+        const held = heldExportFor(deckId);
+        held.requested = true;
+        // Stays released, so a retry or a second import isn't held again
+        await held.release;
+      }
       res.writeHead(200, {
         "Content-Type": "application/pdf",
         "Content-Length": SAMPLE_PDF.length,
@@ -347,6 +381,12 @@ const handleControl = async (
     return;
   }
 
+  if (path === "/__control/held-export" && req.method === "GET") {
+    const deckId = url.searchParams.get("deckId") ?? "";
+    json(res, 200, { requested: !!heldExports.get(deckId)?.requested });
+    return;
+  }
+
   if (path === "/__control/account" && req.method === "GET") {
     const accountId = url.searchParams.get("id") ?? "";
     const state = accounts.get(accountId);
@@ -362,7 +402,19 @@ const handleControl = async (
   const body = JSON.parse((await readBody(req)) || "{}") as {
     accountId?: string;
     account?: Partial<Account>;
+    deckId?: string;
   };
+
+  if (path === "/__control/release-export" && req.method === "POST") {
+    if (!body.deckId) {
+      json(res, 400, { error: "release-export needs a deckId" });
+      return;
+    }
+    heldExportFor(body.deckId).open();
+    json(res, 200, { ok: true });
+    return;
+  }
+
   if (!body.accountId) {
     json(res, 400, { error: "control requests need an accountId" });
     return;
