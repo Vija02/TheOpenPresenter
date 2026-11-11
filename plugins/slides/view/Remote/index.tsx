@@ -35,6 +35,7 @@ import SettingsModal from "./SettingsModal";
 import { StepBadge, StepControls } from "./SlideSteps";
 import { UploadLinksDialog } from "./UploadLinks/UploadLinksDialog";
 import "./index.css";
+import { SlideImageLoading } from "./SlideImageLoading";
 import { useSlideMediaPicker } from "./integrations";
 
 export type EditorTarget = { importId: string; slideIndex: number };
@@ -330,11 +331,13 @@ const RemoteHandler = ({
                       : undefined
                   }
                 >
-                  <LayoutRenderer
-                    doc={resolvedSlideDoc(slide)}
-                    data={{}}
-                    frame={{ index: index + 1, total: totalSlides }}
-                  />
+                  <SlideImageLoading>
+                    <LayoutRenderer
+                      doc={resolvedSlideDoc(slide)}
+                      data={{}}
+                      frame={{ index: index + 1, total: totalSlides }}
+                    />
+                  </SlideImageLoading>
                 </div>
                 {totalSteps > 0 &&
                   (isActive ? (
@@ -382,7 +385,8 @@ const RemoteHandler = ({
             {() => (
               <div className="relative h-full w-full">
                 <Skeleton className="h-full w-full" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-secondary">
+                <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 ${isUnknownCount ? "text-secondary" : "text-tertiary"}`}
+                >
                   {isUnknownCount && <LoadingInline className="size-6" />}
                   <span className="text-sm font-medium">
                     {isUnknownCount ? "Importing..." : "Processing..."}
