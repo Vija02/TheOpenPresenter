@@ -34,6 +34,7 @@ import type * as Y from "yjs";
 import { useError } from "./ErrorProvider";
 import { usePluginMetaData } from "./PluginMetaDataProvider";
 import { useAwarenessState } from "./awarenessState";
+import { syncDocAcrossTabs } from "./tabSync";
 
 type PluginDataProviderType = {
   provider: HocuspocusProvider | null;
@@ -213,6 +214,10 @@ const initializeHocuspocusProvider = (
         resolve(provider!);
       },
     });
+
+    // Lets tabs in this browser keep controlling each other while offline
+    const stopTabSync = syncDocAcrossTabs(provider.document, projectId);
+    provider.on("destroy", stopTabSync);
   });
 };
 
