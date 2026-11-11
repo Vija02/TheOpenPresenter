@@ -30,14 +30,14 @@ function goOfflineItems(): MenuItemConstructorOptions[] {
 
   return [
     {
-      label: "Go offline",
+      label: "Use local-mode",
       click: () =>
         void import("./switch")
           .then(({ switchServer }) => switchServer("local"))
           .catch((err) => {
             logShell("error", "[menu] go offline failed:", err);
             dialog.showErrorBox(
-              "Couldn't go offline",
+              "Couldn't switch to local-mode",
               err instanceof Error ? err.message : String(err),
             );
           }),

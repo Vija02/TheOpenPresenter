@@ -15,6 +15,7 @@ import {
   PopoverTrigger,
 } from "@repo/ui";
 import {
+  CircleCheckIcon,
   CloudIcon,
   EllipsisIcon,
   GlobeIcon,
@@ -289,11 +290,12 @@ export function Organizations({
 
           {account.current && (online || account.status === "ok") && (
             <div className="account-mode">
-              <span
-                className={`account-mode-dot ${online ? "online" : ""}`}
-                aria-hidden
-              />
-              <span>{online ? "Connected" : "Offline"}</span>
+              {online ? (
+                <GlobeIcon className="account-mode-icon" aria-hidden />
+              ) : (
+                <CircleCheckIcon className="account-mode-icon" aria-hidden />
+              )}
+              <span>{online ? "Online-only mode" : "Local-mode"}</span>
               {online ? (
                 hasLocal && (
                   <Button
@@ -302,7 +304,7 @@ export function Organizations({
                     disabled={busy !== null}
                     onClick={() => void switchToLocal()}
                   >
-                    {busy === "local" ? "Going offline…" : "Go offline"}
+                    {busy === "local" ? "Switching…" : "Use local-mode"}
                   </Button>
                 )
               ) : (
@@ -312,7 +314,7 @@ export function Organizations({
                   disabled={busy !== null}
                   onClick={() => void goOnline(account)}
                 >
-                  {busy === "online" ? "Going online…" : "Go online"}
+                  {busy === "online" ? "Switching…" : "Go online-only"}
                 </Button>
               )}
             </div>

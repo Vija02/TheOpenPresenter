@@ -1199,15 +1199,10 @@ body.setup-bar-page {
   color: var(--muted);
 }
 
-.account-mode-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--fill-muted);
-}
-
-.account-mode-dot.online {
-  background: var(--fill-success);
+.account-mode-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .disconnect-delete {
