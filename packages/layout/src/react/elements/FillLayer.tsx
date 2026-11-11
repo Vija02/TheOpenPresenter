@@ -1,9 +1,9 @@
 import { resolveMediaUrl } from "@repo/lib";
 import { UniversalImage } from "@repo/ui";
 import { ReactNode } from "react";
-import { LuImageOff } from "react-icons/lu";
 
 import { FillPaint } from "../../schema/paint";
+import { ImageFallback } from "./ImageFallback";
 import { VideoFill } from "./VideoFill";
 
 export type FillLayerProps = {
@@ -33,22 +33,6 @@ const MediaLayer = ({
     }}
   >
     {children}
-  </div>
-);
-
-const ImageFallback = () => (
-  <div
-    style={{
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "rgba(0, 0, 0, 0.35)",
-      color: "rgba(255, 255, 255, 0.4)",
-    }}
-  >
-    <LuImageOff size="20%" />
   </div>
 );
 

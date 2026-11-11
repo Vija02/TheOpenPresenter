@@ -27,6 +27,7 @@ import {
   useVideoFillPlaybackState,
   useVideoFillScope,
 } from "../context/VideoFillContext";
+import { ImageFallback } from "./ImageFallback";
 
 const Poster = ({ fill }: { fill: VideoPaint }) => {
   const src = videoPosterUrl(fill.video);
@@ -34,15 +35,18 @@ const Poster = ({ fill }: { fill: VideoPaint }) => {
   if (!src) return null;
 
   return (
-    <img
+    <UniversalImage
       src={src}
-      alt=""
-      draggable={false}
-      style={{
-        width: "100%",
-        height: "100%",
-        objectFit: fill.fit,
-        display: "block",
+      fallback={<ImageFallback />}
+      imgProp={{
+        alt: "",
+        draggable: false,
+        style: {
+          width: "100%",
+          height: "100%",
+          objectFit: fill.fit,
+          display: "block",
+        },
       }}
     />
   );
