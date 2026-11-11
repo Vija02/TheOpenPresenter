@@ -382,12 +382,12 @@ const RemoteHandler = ({
             {() => (
               <div className="relative h-full w-full">
                 <Skeleton className="h-full w-full" />
-                {isUnknownCount && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-secondary">
-                    <LoadingInline className="size-6" />
-                    <span className="text-sm font-medium">Importing...</span>
-                  </div>
-                )}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-secondary">
+                  {isUnknownCount && <LoadingInline className="size-6" />}
+                  <span className="text-sm font-medium">
+                    {isUnknownCount ? "Importing..." : "Processing..."}
+                  </span>
+                </div>
               </div>
             )}
           </Slide>
