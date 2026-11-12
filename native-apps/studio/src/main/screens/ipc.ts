@@ -2,6 +2,14 @@ import { type IpcMainInvokeEvent, ipcMain, screen } from "electron";
 
 import { isShellPage } from "../shell/origins";
 import {
+  type ClickerConfig,
+  clickerStatus,
+  saveClickerConfig,
+  startClicker,
+  startClickerTest,
+  stopClickerTest,
+} from "./clicker";
+import {
   type VirtualScreen,
   assignDisplays,
   displayTakenBy,
@@ -117,4 +125,15 @@ export function registerScreensIPC(): void {
     return setLaunchAtLogin(enabled);
   });
   handle("screens:open-login-items", () => openLoginItemsSettings());
+
+  handle("clicker:status", () => clickerStatus());
+  handle("clicker:save", (_event, patch: Partial<ClickerConfig>) => {
+    if (!clickerStatus().supported) {
+      throw new Error("Clickers aren't supported on this computer yet.");
+    }
+    return saveClickerConfig(patch);
+  });
+  handle("clicker:test-start", (event) => startClickerTest(event.sender));
+  handle("clicker:test-stop", () => stopClickerTest());
+  startClicker();
 }

@@ -49,8 +49,8 @@ async function post<T>(base: string, path: string, body: unknown): Promise<T> {
   return parsed as T;
 }
 
-/** GraphQL against the local server. */
-async function graphql<T>(
+/** GraphQL with this app's session for `base`. */
+export async function graphql<T>(
   base: string,
   query: string,
   variables: Record<string, unknown> = {},

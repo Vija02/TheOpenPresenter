@@ -1449,3 +1449,59 @@ body.setup-bar-page {
 .monitor-panel-number[data-ghost] {
   border-style: dashed;
 }
+
+/* Clicker: the chosen device, and finding it by pressing it. */
+.clicker-head .screen-row-text {
+  flex: 1;
+}
+.clicker-last {
+  margin: 0;
+  color: var(--muted);
+}
+.clicker-last[data-ok="true"] {
+  color: var(--fill-success);
+}
+.clicker-last[data-ok="false"] {
+  color: var(--warn);
+}
+.clicker-permission {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--warn);
+}
+.clicker-command {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.clicker-command code {
+  padding: 2px 6px;
+  border: 1px solid var(--stroke);
+  border-radius: 0.25rem;
+  background: var(--panel);
+  color: var(--text);
+  user-select: all;
+}
+.clicker-heard {
+  margin: 0;
+}
+.clicker-heard .org-row[data-latest="true"] {
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.clicker-flash {
+  animation: clicker-flash 0.6s ease-out;
+}
+@keyframes clicker-flash {
+  from {
+    color: var(--accent);
+    font-weight: 600;
+  }
+}
+.clicker-target-note {
+  margin: -8px 0 0;
+}
+.clicker-notice {
+  margin: 12px 0 0;
+  color: var(--warn);
+}

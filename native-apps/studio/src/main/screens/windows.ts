@@ -410,6 +410,12 @@ export function screenState(id: string): ScreenState {
   return states.get(id) ?? "closed";
 }
 
+/** The server and organization an open screen is loaded from: maybe a local copy. */
+export function servedFrom(id: string): { base: string; orgSlug: string } | null {
+  const m = targets.get(id)?.match(/^(.*)\/render\/s\/([^/]+)\/[^/]+$/);
+  return m ? { base: m[1]!, orgSlug: decodeURIComponent(m[2]!) } : null;
+}
+
 /** Local screens waiting on the server go up as soon as it listens. */
 export function watchLocalServer(): void {
   runtime.on("listening", () => {

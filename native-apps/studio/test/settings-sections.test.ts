@@ -11,6 +11,7 @@ describe("sectionFromHash", () => {
     expect(sectionFromHash(SECTIONS, "#remote")).toBe("remote");
     expect(sectionFromHash(SECTIONS, "#about")).toBe("about");
     expect(sectionFromHash(SCREENS_SECTIONS, "#virtual")).toBe("virtual");
+    expect(sectionFromHash(SCREENS_SECTIONS, "#clicker")).toBe("clicker");
   });
 
   /** A typo in a hash should still open something useful. */

@@ -266,6 +266,39 @@ export type LoginItemState =
 
 export type ScreenCatalog = { groups: CatalogGroup[]; problems: string[] };
 
+/** A presentation clicker. Mirrors `screens/clicker.ts`. */
+export type ClickerKey = "PREV" | "NEXT";
+export type ClickerConfig = {
+  enabled: boolean;
+  device?: { id: string; name: string };
+  target?: "screen" | "project";
+  screenId?: string;
+};
+export type ClickerStatus =
+  | { supported: false; reason: string }
+  | {
+      supported: true;
+      config: ClickerConfig;
+      /** "project", a virtual screen's id, or null when it needs choosing. */
+      target: string | null;
+      openProject: { name: string | null } | null;
+      state: "off" | "no-device" | "waiting" | "listening" | "denied";
+      grabbed: boolean;
+      testing: boolean;
+      /** Why it was turned off by itself, until it is set up again. */
+      notice: string | null;
+    };
+export type ClickerPress = { key: ClickerKey; ok: boolean; message: string };
+export type ClickerTestPress = {
+  device: { id: string; name: string };
+  key: ClickerKey;
+};
+export type ClickerTestResult = {
+  devices: number;
+  opened: number;
+  denied: boolean;
+};
+
 export type MonitorInfo = {
   id: string;
   name: string;
@@ -528,4 +561,11 @@ export const api = {
   openLoginItems: () => invoke<void>("screens:open-login-items"),
   setLaunchAtLogin: (enabled: boolean) =>
     invoke<LoginItemState>("screens:set-launch-at-login", enabled),
+
+  clickerStatus: () => invoke<ClickerStatus>("clicker:status"),
+  saveClicker: (patch: Partial<ClickerConfig>) =>
+    invoke<ClickerConfig>("clicker:save", patch),
+  /** Report which device sends presses, until stopped. */
+  startClickerTest: () => invoke<ClickerTestResult>("clicker:test-start"),
+  stopClickerTest: () => invoke<void>("clicker:test-stop"),
 };

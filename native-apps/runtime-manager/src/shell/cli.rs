@@ -54,6 +54,9 @@ pub enum Cli {
     RemoteStop,
     /// Report whether remote access is on, and the ticket if it is.
     RemoteStatus,
+    /// Grab the input device open on fd 3 for the app, then exit. The grab
+    /// stays with the open device, which the app keeps open.
+    GrabInput,
     /// Print usage.
     Help,
     /// Print the version.
@@ -176,6 +179,7 @@ where
             force: options.force,
         },
         Some("prune") => Cli::Prune,
+        Some("grab-input") => Cli::GrabInput,
         Some("paths") => Cli::Paths,
         Some("log") | Some("logs") => Cli::Log {
             follow: options.follow,
@@ -286,6 +290,12 @@ mod tests {
         // The desktop shell spawns us with piped stdio and sends commands
         // without a subcommand. That must keep working.
         assert_eq!(parse_args(&[], false).cli, Cli::Serve);
+    }
+
+    #[test]
+    fn grab_input_is_its_own_subcommand() {
+        // Spawned from a pipe by the app; must not fall through to serve.
+        assert_eq!(parse_args(&["grab-input"], false).cli, Cli::GrabInput);
     }
 
     #[test]
