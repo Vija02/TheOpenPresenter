@@ -321,7 +321,7 @@ const settingsWindow = sectionedWindow("panel", "Settings");
 export const openPanelWindow = settingsWindow.open;
 export const closePanelWindow = settingsWindow.close;
 
-const screensWindow = sectionedWindow("screens", "Virtual screens");
+const screensWindow = sectionedWindow("screens", "Kiosk settings");
 export const openScreensWindow = screensWindow.open;
 export const closeScreensWindow = screensWindow.close;
 

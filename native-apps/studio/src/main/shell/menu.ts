@@ -79,7 +79,7 @@ export function setupMenu(): void {
           click: () => openPanelWindow(),
         },
         {
-          label: "Virtual screens…",
+          label: "Kiosk settings…",
           click: () => openScreensWindow(),
         },
         { type: "separator" },

@@ -57,7 +57,9 @@ export const screen = {
   on: () => {},
 };
 
-export class BrowserWindow {}
+export class BrowserWindow {
+  static getAllWindows = (): BrowserWindow[] => [];
+}
 export class Tray {}
 export const Menu = { buildFromTemplate: () => ({}) };
 export const nativeImage = {

@@ -46,7 +46,7 @@ export function setupTray(): void {
       { type: "separator" },
       { label: "Open virtual screens", click: () => void openAllScreens() },
       { label: "Close virtual screens", click: () => closeAllScreens() },
-      { label: "Set up virtual screens…", click: () => openScreensWindow() },
+      { label: "Kiosk settings…", click: () => openScreensWindow() },
       { type: "separator" },
       { label: "Quit", click: () => app.quit() },
     ]),
