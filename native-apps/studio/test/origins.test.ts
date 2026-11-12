@@ -1,3 +1,5 @@
+import { resolve } from "path";
+import { pathToFileURL } from "url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const settings = { rootUrl: undefined as string | undefined };
@@ -77,11 +79,13 @@ describe("isAllowedAppUrl", () => {
 });
 
 describe("isShellPage", () => {
-  const dir = "/app/out/renderer";
+  // Absolute on this OS: Windows paths need a drive letter.
+  const dir = resolve("/app/out/renderer");
+  const file = (path: string) => pathToFileURL(resolve(path)).href;
   it("accepts the app's own pages", () => {
     expect(
       isShellPage(
-        "file:///app/out/renderer/screens.html#virtual",
+        `${file("/app/out/renderer/screens.html")}#virtual`,
         undefined,
         dir,
       ),
@@ -98,11 +102,11 @@ describe("isShellPage", () => {
     expect(
       isShellPage("https://theopenpresenter.com/o/x", undefined, dir),
     ).toBe(false);
-    expect(isShellPage("file:///app/out/other.html", undefined, dir)).toBe(
+    expect(isShellPage(file("/app/out/other.html"), undefined, dir)).toBe(
       false,
     );
     expect(
-      isShellPage("file:///app/out/renderer-evil/x.html", undefined, dir),
+      isShellPage(file("/app/out/renderer-evil/x.html"), undefined, dir),
     ).toBe(false);
     expect(
       isShellPage("http://localhost:3000/o/x", "http://localhost:5173", dir),
