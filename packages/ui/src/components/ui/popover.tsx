@@ -1,3 +1,4 @@
+import { newTabProps } from "@/lib/newTab";
 import { cn } from "@/lib/utils";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { ChevronRightIcon, XIcon } from "lucide-react";
@@ -115,8 +116,10 @@ function PopoverMenuItem({
           href={href}
           data-slot="popover-menu-item"
           className={sharedClassName}
-          {...(isExternal ? { target: "_blank", rel: "noopener" } : {})}
           {...(props as React.ComponentProps<"a">)}
+          {...(isExternal
+            ? newTabProps(href, (props as React.ComponentProps<"a">).onClick)
+            : {})}
         >
           {content}
         </a>
