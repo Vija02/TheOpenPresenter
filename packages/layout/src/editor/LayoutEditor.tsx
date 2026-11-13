@@ -179,10 +179,15 @@ const EditorSurface = <T extends EditorItem>({
   const [guidelines, setGuidelines] = useState<HTMLElement[]>([]);
 
   useEffect(() => {
-    const resolve = (ids: string[]) =>
-      ids
-        .map((id) => nodesRef.current.get(id))
-        .filter((node): node is HTMLElement => !!node);
+    // Moveable's group diffs its targets on every update and reads a repeated
+    // node as moved, so a duplicate id would make it setState forever.
+    const resolve = (ids: string[]) => [
+      ...new Set(
+        ids
+          .map((id) => nodesRef.current.get(id))
+          .filter((node): node is HTMLElement => !!node),
+      ),
+    ];
 
     const same = (a: HTMLElement[], b: HTMLElement[]) =>
       a.length === b.length && a.every((node, i) => node === b[i]);
