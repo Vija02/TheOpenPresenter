@@ -16,6 +16,7 @@ import { Route, Switch, useParams } from "wouter";
 import "./App.css";
 import CentralContainer from "./containers/CentralContainer";
 import { GuestControlGuard } from "./containers/GuestControlGuard";
+import { PresentHereHost } from "./containers/Sidebar/PresentButton";
 import { TopBar } from "./containers/TopBar";
 import { useRendererSelection } from "./contexts/rendererSelection";
 import { useNoOutputHint } from "./hooks/useNoOutputHint";
@@ -82,6 +83,7 @@ const Inner = () => {
     <div className="rt--app" tabIndex={0} onKeyDown={handleKeyPress}>
       <TopBar />
       <CentralContainer />
+      <PresentHereHost />
     </div>
   );
 };

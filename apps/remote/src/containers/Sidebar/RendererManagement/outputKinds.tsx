@@ -5,7 +5,7 @@ import {
   OVERLAY_LOOK_KEY,
   ProjectLooks,
 } from "@repo/base-plugin";
-import { rootLookKey } from "@repo/layout";
+import { Output, rootLookKey, simpleOutputInfo } from "@repo/layout";
 import { IconType } from "react-icons";
 import {
   MdDashboardCustomize,
@@ -82,4 +82,12 @@ export const uniqueName = (taken: string[], base: string): string => {
   let n = 2;
   while (names.has(`${base} ${n}`.toLowerCase())) n += 1;
   return `${base} ${n}`;
+};
+
+export const outputKind = (
+  looks: ProjectLooks | null | undefined,
+  output: Output,
+): OutputKind => {
+  const simple = simpleOutputInfo(output.layout);
+  return simple ? kindOfLook(looks, simple.look) : "custom";
 };
