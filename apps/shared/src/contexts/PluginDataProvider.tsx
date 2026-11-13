@@ -34,6 +34,7 @@ import type * as Y from "yjs";
 import { useError } from "./ErrorProvider";
 import { usePluginMetaData } from "./PluginMetaDataProvider";
 import { useAwarenessState } from "./awarenessState";
+import { useOutputPresence } from "./outputPresence";
 import { syncDocAcrossTabs } from "./tabSync";
 
 type PluginDataProviderType = {
@@ -280,6 +281,7 @@ export const PluginDataProvider = ({
 
   const uaData = useMemo(() => uaParser(), []);
   const awarenessState = useAwarenessState((x) => x.awarenessState);
+  const presence = useOutputPresence((x) => x.presence);
 
   const setAwarenessData = useCallback(() => {
     provider?.setAwarenessField("user", {
@@ -289,9 +291,11 @@ export const PluginDataProvider = ({
       userAgentInfo: uaData,
       errors,
       state: awarenessState,
+      ...(presence ? { presence } : {}),
     } satisfies AwarenessUserData);
   }, [
     awarenessState,
+    presence,
     currentUserId,
     errors,
     isPreview,

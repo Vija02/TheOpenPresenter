@@ -1,33 +1,45 @@
+import { isOwnWindow } from "@repo/desktop-bridge";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /** How long the button stays visible after the pointer stops moving. */
 const HIDE_AFTER_MS = 1500;
+const FIRST_HIDE_AFTER_MS = 10000;
 
 /**
  * Manual fullscreen toggle, parked in the bottom-right corner.
  */
-export const FullscreenButton = () => {
+export const FullscreenButton = ({
+  revealOnOpen = true,
+}: {
+  /** Show it for a while on opening */
+  revealOnOpen?: boolean;
+}) => {
   const [visible, setVisible] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const reveal = () => {
+    const reveal = (after = HIDE_AFTER_MS) => {
       setVisible(true);
       if (hideTimeout.current) clearTimeout(hideTimeout.current);
-      hideTimeout.current = setTimeout(() => setVisible(false), HIDE_AFTER_MS);
+      hideTimeout.current = setTimeout(() => setVisible(false), after);
     };
 
-    window.addEventListener("pointermove", reveal);
+    if (revealOnOpen && isOwnWindow() && !document.fullscreenElement) {
+      reveal(FIRST_HIDE_AFTER_MS);
+    }
+    const onPointerMove = () => reveal();
+    window.addEventListener("pointermove", onPointerMove);
     return () => {
-      window.removeEventListener("pointermove", reveal);
+      window.removeEventListener("pointermove", onPointerMove);
       if (hideTimeout.current) clearTimeout(hideTimeout.current);
     };
-  }, []);
+  }, [revealOnOpen]);
 
   useEffect(() => {
     const syncFullscreen = () =>
       setIsFullscreen(Boolean(document.fullscreenElement));
+    syncFullscreen();
 
     document.addEventListener("fullscreenchange", syncFullscreen);
     return () =>
@@ -53,9 +65,9 @@ export const FullscreenButton = () => {
       aria-label={isFullscreen ? "Exit fullscreen" : "Go fullscreen"}
       aria-hidden={!visible}
       tabIndex={visible ? 0 : -1}
-      className={`fixed bottom-4 right-4 z-50 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white transition-opacity duration-200 hover:bg-black/70 focus-visible:opacity-100 ${
-        visible ? "opacity-100" : "pointer-events-none opacity-0"
-      }`}
+      className={`fixed bottom-4 right-4 z-50 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-black/50 text-white transition-opacity duration-200 hover:bg-black/70 focus-visible:opacity-100 ${
+        isFullscreen ? "w-11" : "pl-4 pr-5 text-sm font-medium"
+      } ${visible ? "opacity-100" : "pointer-events-none opacity-0"}`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -70,6 +82,7 @@ export const FullscreenButton = () => {
           <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
         )}
       </svg>
+      {!isFullscreen && <span aria-hidden="true">Go fullscreen</span>}
     </button>
   );
 };

@@ -15,6 +15,7 @@ import { Route, Switch, useParams, useSearch } from "wouter";
 
 import { Body } from "./Body";
 import { FullscreenButton } from "./FullscreenButton";
+import { OutputPresenceReporter } from "./OutputPresence";
 import { Screen } from "./Screen";
 import { LookSample } from "./preview/LookSample";
 
@@ -144,10 +145,12 @@ export const AppInner = ({
   hideFullscreenButton,
   hostElementId = null,
   hostSpec = null,
+  virtualScreen = null,
 }: {
   hideFullscreenButton?: boolean;
   hostElementId?: string | null;
   hostSpec?: string | null;
+  virtualScreen?: { id: string; name: string } | null;
 }) => {
   const data = useData();
   const outputId = usePluginData().rendererId;
@@ -166,11 +169,26 @@ export const AppInner = ({
       {desktop.isDesktop ? (
         <DesktopHandler>
           <Body hostElementId={hostElementId} hostSpec={hostSpec} />
+          {!hideFullscreenButton && (
+            <OutputPresenceReporter
+              outputId={outputId}
+              virtualScreen={virtualScreen}
+            />
+          )}
         </DesktopHandler>
       ) : (
         <>
           <Body hostElementId={hostElementId} hostSpec={hostSpec} />
-          {!hideFullscreenButton && <FullscreenButton />}
+          {!hideFullscreenButton && (
+            // Unattended: its audience shouldn't see the button
+            <FullscreenButton revealOnOpen={!virtualScreen} />
+          )}
+          {!hideFullscreenButton && (
+            <OutputPresenceReporter
+              outputId={outputId}
+              virtualScreen={virtualScreen}
+            />
+          )}
         </>
       )}
     </div>

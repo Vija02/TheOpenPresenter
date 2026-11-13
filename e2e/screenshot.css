@@ -1,0 +1,4 @@
+/* Shown for a while on open, so timing-dependent */
+button[aria-label$="fullscreen"] {
+  visibility: hidden !important;
+}

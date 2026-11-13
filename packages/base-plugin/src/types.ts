@@ -12,11 +12,7 @@ import type { IResult } from "ua-parser-js";
 import type { Awareness } from "y-protocols/awareness.js";
 import type { StoreApi } from "zustand";
 
-import {
-  Derivation,
-  OutputData,
-  RendererLayout,
-} from "./rendererLayoutTypes";
+import { Derivation, OutputData, RendererLayout } from "./rendererLayoutTypes";
 
 export type { ObjectToTypedMap };
 
@@ -117,6 +113,27 @@ export type AwarenessUserData = {
   userAgentInfo: IResult;
   errors: string[];
   state: AwarenessState;
+  presence?: OutputPresence;
+};
+
+export type OutputPresence = {
+  windowId: string;
+  deviceId: string;
+  outputId: string;
+  where: "studio" | "window" | "tab" | "here" | "virtual";
+  fullscreen: boolean;
+  screenName: string | null;
+  /** From displayKey() */
+  screenKey: string | null;
+  virtualScreenId: string | null;
+  virtualScreenName: string | null;
+  browser: string;
+  canClose: boolean;
+};
+
+export type PresentCommand = {
+  close: string[];
+  at: number;
 };
 
 // ========================================================================== //
