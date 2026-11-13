@@ -1,3 +1,4 @@
+import { newTabProps } from "@/lib/newTab";
 import { cn } from "@/lib/utils";
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
@@ -22,6 +23,7 @@ function Link({
   variant,
   asChild = false,
   isExternal,
+  onClick,
   ...props
 }: React.ComponentProps<"a"> &
   VariantProps<typeof linkVariants> & {
@@ -33,8 +35,8 @@ function Link({
     <Comp
       data-slot="a"
       className={cn(linkVariants({ variant, className }))}
-      {...(isExternal ? { target: "_blank", rel: "noopener" } : {})}
       {...props}
+      {...(isExternal ? newTabProps(props.href, onClick) : { onClick })}
     />
   );
 }
