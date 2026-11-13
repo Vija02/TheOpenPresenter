@@ -1,11 +1,10 @@
-import { desktop } from "@repo/desktop-bridge";
 import {
   MAIN_OUTPUT_ID,
   Output,
   setHostFollowOverlay,
   simpleOutputInfo,
 } from "@repo/layout";
-import { useData, usePluginMetaData } from "@repo/shared";
+import { useData } from "@repo/shared";
 import { Button, Input, OverlayToggle, PopConfirm, Switch } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { useId, useState } from "react";
@@ -13,14 +12,13 @@ import {
   MdCoPresent,
   MdDashboardCustomize,
   MdExpandMore,
-  MdOpenInNew,
   MdOutlineCancelPresentation,
 } from "react-icons/md";
 import { VscTrash } from "react-icons/vsc";
-import { useSearch } from "wouter";
 
-import { PresentMonitorModal } from "../PresentButton/PresentMonitorModal";
-import { usePresentingRenderers } from "../PresentButton/usePresentingRenderers";
+import { LazyPresentModal } from "../PresentButton/LazyPresentModal";
+import { useRenderUrl } from "../PresentButton/renderUrl";
+import { usePresentStatus } from "../PresentButton/usePresentStatus";
 import LookPicker from "./Looks/LookPicker";
 import { OUTPUT_KINDS, kindOfLook, lookName } from "./outputKinds";
 import { useOutputActions } from "./useOutputs";
@@ -33,15 +31,6 @@ type OutputRowProps = {
   autoFocusName?: boolean;
   onEditLayout: (outputId: string) => void;
   onManageLooks: (lookKey?: string) => void;
-};
-
-const useOutputUrl = (outputId: string, preview = false) => {
-  const { orgSlug, projectSlug } = usePluginMetaData();
-  const search = useSearch();
-  const params = new URLSearchParams(search);
-  params.set("renderer", outputId);
-  if (preview) params.set("preview", "1");
-  return `/render/${orgSlug}/${projectSlug}?${params.toString()}`;
 };
 
 const OutputRow = ({
@@ -126,17 +115,11 @@ const OutputRow = ({
           // Its buttons and dialogs don't open or close the card
           onClick={(e) => e.stopPropagation()}
         >
-          {desktop.isDesktop ? (
-            <DesktopPresent
-              outputId={outputId}
-              outputName={output.name}
-              showActions={isExpanded}
-            />
-          ) : (
-            isExpanded && (
-              <OpenInTab outputId={outputId} outputName={output.name} />
-            )
-          )}
+          <OutputPresent
+            outputId={outputId}
+            outputName={output.name || kindTitle}
+            showActions={isExpanded}
+          />
           <Button
             variant="ghost"
             size="icon"
@@ -328,7 +311,7 @@ export default OutputRow;
 
 /** What the output shows right now */
 const OutputPreview = ({ outputId }: { outputId: string }) => {
-  const url = useOutputUrl(outputId, true);
+  const url = useRenderUrl()(outputId, { preview: true });
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs font-medium">Live preview</span>
@@ -341,86 +324,59 @@ const OutputPreview = ({ outputId }: { outputId: string }) => {
   );
 };
 
-const OpenInTab = ({
-  outputId,
-  outputName,
-}: {
-  outputId: string;
-  outputName: string;
-}) => {
-  const url = useOutputUrl(outputId);
-  return (
-    <Button asChild variant="ghost" size="sm">
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
-        title={`Open ${outputName} in a new tab, then make it fullscreen on the display`}
-        aria-label={`Open ${outputName} in a new tab`}
-      >
-        <MdOpenInNew />
-        <span className="hidden sm:inline">Open</span>
-      </a>
-    </Button>
-  );
-};
-
-const DesktopPresent = ({
+const OutputPresent = ({
   outputId,
   outputName,
   showActions,
 }: {
   outputId: string;
   outputName: string;
-  /** Otherwise only whether it's on screen */
+  /** Otherwise only whether it's live */
   showActions: boolean;
 }) => {
-  const { data: presenting, refetch } = usePresentingRenderers();
-  const isPresenting = (presenting ?? []).includes(outputId);
+  const { statusOf, stop } = usePresentStatus();
+  const { isLive, canStop } = statusOf(outputId);
+  const showStop = isLive && canStop;
 
   return (
     <>
-      {isPresenting && (
-        <>
-          <span className="rounded bg-fill-success px-1.5 py-0.5 text-[10px] font-medium text-fill-success-fg">
-            On screen
-          </span>
-          {showActions && (
+      {isLive && (
+        <span className="rounded bg-fill-destructive px-1.5 py-0.5 text-[10px] font-medium text-fill-destructive-fg">
+          Live
+        </span>
+      )}
+      {showActions && (
+        <div className="flex">
+          <OverlayToggle
+            isLazy
+            toggler={({ onToggle }) => (
+              <Button
+                variant="outline"
+                size="sm"
+                className={showStop ? "rounded-r-none" : undefined}
+                onClick={onToggle}
+                title={`Show ${outputName} on a screen`}
+              >
+                <MdCoPresent />
+                <span className="hidden sm:inline">Present</span>
+              </Button>
+            )}
+          >
+            <LazyPresentModal initialOutputId={outputId} />
+          </OverlayToggle>
+          {showStop && (
             <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
+              variant="outline"
+              size="sm"
+              className="-ml-px aspect-square rounded-l-none px-0"
               title={`Stop showing ${outputName}`}
               aria-label={`Stop showing ${outputName}`}
-              onClick={async () => {
-                await desktop.stopPresenting(outputId);
-                await refetch();
-              }}
+              onClick={() => stop(outputId)}
             >
               <MdOutlineCancelPresentation />
             </Button>
           )}
-        </>
-      )}
-      {showActions && (
-        <OverlayToggle
-          isLazy
-          toggler={({ onToggle }) => (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggle}
-              title={`Show ${outputName} on a display`}
-            >
-              <MdCoPresent />
-              <span className="hidden sm:inline">
-                {isPresenting ? "Move" : "Present"}
-              </span>
-            </Button>
-          )}
-        >
-          <PresentMonitorModal outputId={outputId} outputName={outputName} />
-        </OverlayToggle>
+        </div>
       )}
     </>
   );
