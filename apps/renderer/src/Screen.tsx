@@ -124,6 +124,8 @@ export function Screen() {
         orgSlug={orgSlug}
         projectSlug={screen.currentProject.slug}
         rendererId={screen.currentRendererId}
+        screenId={screen.id}
+        screenName={screen.name}
       />
       {showBar && idleAfterSec !== null && (
         <IdleBar
@@ -142,10 +144,14 @@ function RendererRoot({
   orgSlug,
   projectSlug,
   rendererId,
+  screenId,
+  screenName,
 }: {
   orgSlug: string;
   projectSlug: string;
   rendererId: string;
+  screenId: string;
+  screenName: string;
 }) {
   return (
     <PluginMetaDataProvider
@@ -157,7 +163,7 @@ function RendererRoot({
         <AudioCheckProvider>
           <PluginDataProvider type="renderer" rendererId={rendererId}>
             <AwarenessProvider>
-              <AppInner />
+              <AppInner virtualScreen={{ id: screenId, name: screenName }} />
             </AwarenessProvider>
           </PluginDataProvider>
         </AudioCheckProvider>
