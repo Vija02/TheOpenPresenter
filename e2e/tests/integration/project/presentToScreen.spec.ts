@@ -123,11 +123,17 @@ test.describe("Present to a screen from the remote", () => {
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
     await projectPage.openPresentMenu();
 
-    await expect(page.getByText("No virtual screens set up yet.")).toBeVisible();
+    await expect(
+      page.getByText("No virtual screens set up yet."),
+    ).toBeVisible();
     await expect(projectPage.noScreensSetUpLink).toBeVisible();
+    await expect(projectPage.noScreensSetUpLink).toHaveAttribute(
+      "target",
+      "_blank",
+    );
   });
 
-  test("'Open in new tab' links to the renderer URL", async ({
+  test("'Open in a new window' links to the renderer URL", async ({
     page,
     context,
     e2eCommand,
