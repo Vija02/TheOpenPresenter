@@ -1,0 +1,262 @@
+/* Positions are percentages, so it scales. Without motion it holds on the click. */
+.rt--handoff-anim {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 6.5;
+  overflow: hidden;
+  container-type: inline-size;
+  --rt-handoff-duration: 8s;
+}
+
+.rt--handoff-anim__laptop {
+  position: absolute;
+  left: 6%;
+  top: 26%;
+  width: 32%;
+  height: 46%;
+  padding: 4%;
+  display: flex;
+  flex-direction: column;
+  gap: 8%;
+}
+.rt--handoff-anim__ui {
+  display: block;
+  height: 14%;
+  width: 70%;
+}
+.rt--handoff-anim__ui--2 {
+  width: 45%;
+}
+.rt--handoff-anim__base {
+  position: absolute;
+  left: 3%;
+  top: 72%;
+  width: 38%;
+  height: 2.5%;
+  border-radius: 0 0 4px 4px;
+}
+
+.rt--handoff-anim__projector {
+  position: absolute;
+  left: 48%;
+  top: 8%;
+  width: 46%;
+  height: 76%;
+}
+
+.rt--handoff-anim__label {
+  position: absolute;
+  text-align: center;
+  font-size: clamp(9px, 2.2cqw, 12px);
+  line-height: 1;
+}
+.rt--handoff-anim__label--laptop {
+  left: 6%;
+  width: 32%;
+  top: 82%;
+}
+.rt--handoff-anim__label--projector {
+  left: 48%;
+  width: 46%;
+  top: 89%;
+}
+
+.rt--handoff-anim__window {
+  position: absolute;
+  left: 60%;
+  top: 28%;
+  width: 18%;
+  height: 28%;
+  background: #111;
+  border: 1px solid #555;
+  border-radius: 2px;
+  overflow: hidden;
+  animation: rt-handoff-window var(--rt-handoff-duration) ease-in-out infinite;
+}
+.rt--handoff-anim__titlebar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 16%;
+  background: #444;
+  animation: rt-handoff-titlebar var(--rt-handoff-duration) linear infinite;
+}
+.rt--handoff-anim__pill {
+  position: absolute;
+  right: 5%;
+  bottom: 7%;
+  padding: 0.35em 0.7em;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.28);
+  color: white;
+  font-size: clamp(6px, 1.4cqw, 9px);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  animation: rt-handoff-pill var(--rt-handoff-duration) linear infinite;
+}
+
+.rt--handoff-anim__slide {
+  position: absolute;
+  left: 25%;
+  top: 46%;
+  width: 50%;
+  height: 7%;
+  border-radius: 1px;
+  background: rgb(255 255 255 / 0.75);
+}
+.rt--handoff-anim__slide::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  top: 260%;
+  width: 76%;
+  height: 100%;
+  border-radius: inherit;
+  background: rgb(255 255 255 / 0.55);
+}
+
+.rt--handoff-anim__cursor {
+  position: absolute;
+  left: 72%;
+  top: 51%;
+  width: 3.2%;
+  transform-origin: top left;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.3));
+  animation: rt-handoff-cursor var(--rt-handoff-duration) ease-in-out infinite;
+}
+
+@keyframes rt-handoff-window {
+  0%,
+  14% {
+    left: 13%;
+    top: 34%;
+    width: 18%;
+    height: 28%;
+    opacity: 1;
+  }
+  38%,
+  56% {
+    left: 60%;
+    top: 28%;
+    width: 18%;
+    height: 28%;
+  }
+  64%,
+  90% {
+    left: 48.6%;
+    top: 9.2%;
+    width: 44.8%;
+    height: 73.6%;
+    opacity: 1;
+  }
+  96% {
+    left: 48.6%;
+    top: 9.2%;
+    width: 44.8%;
+    height: 73.6%;
+    opacity: 0;
+  }
+  97% {
+    left: 13%;
+    top: 34%;
+    width: 18%;
+    height: 28%;
+    opacity: 0;
+  }
+  100% {
+    left: 13%;
+    top: 34%;
+    width: 18%;
+    height: 28%;
+    opacity: 1;
+  }
+}
+
+@keyframes rt-handoff-titlebar {
+  0%,
+  58% {
+    opacity: 1;
+  }
+  62%,
+  96% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes rt-handoff-pill {
+  0%,
+  42% {
+    opacity: 0;
+  }
+  46%,
+  57% {
+    opacity: 1;
+  }
+  61%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes rt-handoff-cursor {
+  0% {
+    left: 34%;
+    top: 86%;
+    opacity: 0;
+    transform: scale(1);
+  }
+  4% {
+    opacity: 1;
+  }
+  /* Drag */
+  10%,
+  14% {
+    left: 21%;
+    top: 35%;
+  }
+  38%,
+  44% {
+    left: 68%;
+    top: 29%;
+  }
+  /* Click Go fullscreen */
+  52%,
+  55% {
+    left: 72%;
+    top: 51%;
+    transform: scale(1);
+  }
+  56.5% {
+    transform: scale(0.8);
+  }
+  58% {
+    left: 72%;
+    top: 51%;
+    transform: scale(1);
+  }
+  /* Out of the way */
+  68%,
+  90% {
+    left: 97%;
+    top: 88%;
+    opacity: 1;
+  }
+  96%,
+  100% {
+    left: 97%;
+    top: 88%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rt--handoff-anim__window,
+  .rt--handoff-anim__titlebar,
+  .rt--handoff-anim__pill,
+  .rt--handoff-anim__cursor {
+    animation: none;
+  }
+}

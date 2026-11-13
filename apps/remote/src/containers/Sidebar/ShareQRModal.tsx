@@ -21,11 +21,13 @@ import QRCode from "react-qr-code";
 import { toast } from "react-toastify";
 import { useSearch } from "wouter";
 
+import { useShareOrigin } from "./PresentButton/renderUrl";
+
 const ShareQRModal = () => {
   const { isOpen, onToggle } = useOverlayToggle();
   const { project, orgSlug, projectSlug, refetch } = usePluginMetaData();
   const search = useSearch();
-  const [localIp, setLocalIp] = useState<string | null>(null);
+  const shareOrigin = useShareOrigin();
   const [cloudReachable, setCloudReachable] = useState<boolean | null>(null);
   const [chosen, setChosen] = useState<"cloud" | "local" | null>(null);
 
@@ -62,11 +64,6 @@ const ShareQRModal = () => {
   );
 
   useEffect(() => {
-    if (!isOpen) return;
-    desktop.localIp().then(setLocalIp);
-  }, [isOpen]);
-
-  useEffect(() => {
     if (!isOpen || !cloudHost) return;
     setCloudReachable(null);
     desktop.canReach(cloudHost).then(setCloudReachable);
@@ -84,23 +81,13 @@ const ShareQRModal = () => {
       return search ? `${baseUrl}?${search}` : baseUrl;
     }
 
-    let origin = window.location.origin;
-
-    if (localIp) {
-      const url = new URL(origin);
-      if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
-        url.hostname = localIp;
-        origin = url.origin;
-      }
-    }
-
-    const baseUrl = `${origin}/app/${orgSlug}/${projectSlug}`;
+    const baseUrl = `${shareOrigin}/app/${orgSlug}/${projectSlug}`;
     return search ? `${baseUrl}?${search}` : baseUrl;
   }, [
     orgSlug,
     projectSlug,
     search,
-    localIp,
+    shareOrigin,
     cloudLink,
     cloudHost,
     cloudConnection?.targetOrganizationSlug,

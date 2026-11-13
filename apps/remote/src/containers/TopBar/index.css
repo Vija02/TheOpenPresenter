@@ -63,7 +63,11 @@
 /* Beats the square corners and full width the bar's buttons get */
 /* Phones keep the bar simple; theirs is in the sidebar */
 .rt--top-bar--right .rt--top-bar--present {
-  @apply hidden desktop:inline-flex w-auto mr-2 rounded-sm;
+  @apply hidden desktop:inline-flex w-auto mr-2;
+
+  button {
+    @apply rounded-sm;
+  }
 }
 
 .rt--top-bar--overlay-btn {

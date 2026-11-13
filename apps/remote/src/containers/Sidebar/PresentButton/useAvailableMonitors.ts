@@ -8,6 +8,7 @@ export const useAvailableMonitors = () => {
     queryFn: () => desktop.listMonitors(),
     staleTime: 0,
     refetchOnMount: "always",
+    retry: desktop.isDesktop ? 3 : false,
   });
 
   const { refetch } = query;

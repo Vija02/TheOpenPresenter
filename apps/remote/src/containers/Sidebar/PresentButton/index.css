@@ -1,5 +1,21 @@
+@reference "@repo/tailwind-config/index.css";
+@reference "@repo/tailwind-config/theme.css";
+
+.rt--present-group {
+  @apply flex w-full;
+}
+/* Joined to Stop. Specific enough to beat the top bar's corners */
+.rt--present-group.rt--present-group__live button.rt--present-button {
+  @apply rounded-r-none;
+}
+.rt--present-group.rt--present-group__live button.rt--present-stop {
+  @apply -ml-px rounded-l-none;
+}
 .rt--present-button {
-  @apply w-full;
+  @apply min-w-0 flex-1;
+}
+.rt--present-group .rt--present-stop {
+  @apply w-auto shrink-0 aspect-square px-0;
 }
 .rt--present-button-link {
   @apply w-full contents;

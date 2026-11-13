@@ -119,7 +119,11 @@ export const TopBar = () => {
         )}
       </div>
       <div className="rt--top-bar--right">
-        <PresentButton size="sm" className="rt--top-bar--present" />
+        <PresentButton
+          size="sm"
+          className="rt--top-bar--present"
+          showStop={false}
+        />
         {organizationType !== OrganizationType.Venue && (
           <Button
             size="sm"
