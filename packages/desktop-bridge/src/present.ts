@@ -1,5 +1,16 @@
+import { displayName } from "./displayName";
 import { electronBridge, isTauri, tauriCore, tauriWindow } from "./host";
 import type { Monitor } from "./types";
+import {
+  listWebMonitors,
+  listWebPresenting,
+  onWebMonitorsChanged,
+  onWebPresentingChanged,
+  openWebWindow,
+  presentOnWebMonitor,
+  stopWebPresenting,
+  supportsWindowManagement,
+} from "./web/screens";
 
 const TAURI_POLL_MS = 2000;
 
@@ -18,6 +29,7 @@ export async function listMonitors(): Promise<Monitor[]> {
     }>;
     return monitors.map((monitor, index) => ({
       ...monitor,
+      name: displayName(monitor.name, index),
       index,
       x: monitor.x ?? sumWidths(monitors.slice(0, index)),
       y: monitor.y ?? 0,
@@ -43,7 +55,7 @@ export async function listMonitors(): Promise<Monitor[]> {
 
     return monitors.map((monitor, index) => ({
       index,
-      name: monitor.name ?? `Display ${index + 1}`,
+      name: displayName(monitor.name, index),
       width: monitor.size.width,
       height: monitor.size.height,
       x: monitor.position.x,
@@ -54,6 +66,7 @@ export async function listMonitors(): Promise<Monitor[]> {
   }
 
   if (typeof window === "undefined") return [];
+  if (supportsWindowManagement()) return listWebMonitors();
   return [
     {
       index: 0,
@@ -90,6 +103,7 @@ export function onMonitorsChanged(handler: () => void): () => void {
     return () => clearInterval(timer);
   }
 
+  if (supportsWindowManagement()) return onWebMonitorsChanged(handler);
   return () => {};
 }
 
@@ -117,7 +131,12 @@ export async function present(
     return;
   }
 
-  window.open(url, `top-renderer-${rendererId}`, "popup=true");
+  if (supportsWindowManagement()) {
+    await presentOnWebMonitor(url, rendererId, monitorId, monitorIndex);
+    return;
+  }
+
+  openWebWindow(url, rendererId);
 }
 
 export async function stopPresenting(rendererId = "1"): Promise<void> {
@@ -135,12 +154,11 @@ export async function stopPresenting(rendererId = "1"): Promise<void> {
     return;
   }
 
-  if (document.fullscreenElement) {
-    await document.exitFullscreen().catch(() => {});
-  }
+  // Windows this tab didn't open are closed over the present channel
+  stopWebPresenting(rendererId);
 }
 
-/** Renderer ids currently presenting. Empty in a browser. */
+/** Renderer ids currently presenting */
 export async function listPresenting(): Promise<string[]> {
   const electron = electronBridge();
   if (electron) {
@@ -153,7 +171,7 @@ export async function listPresenting(): Promise<string[]> {
     return windows.filter((w) => w.label === "renderer").map(() => "1");
   }
 
-  return [];
+  return listWebPresenting();
 }
 
 export function onPresentingChanged(
@@ -179,7 +197,7 @@ export function onPresentingChanged(
     return () => clearInterval(timer);
   }
 
-  return () => {};
+  return onWebPresentingChanged(handler);
 }
 
 /** Close the current presentation window from inside it (Escape). */
