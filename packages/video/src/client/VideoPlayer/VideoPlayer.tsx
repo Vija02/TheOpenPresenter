@@ -64,11 +64,17 @@ export const VideoPlayer = ({
     skipCheck: !isPlaying || muted,
   });
 
-  const [ready, setReady] = useState(false);
   const ref = useRef<HTMLVideoElement>(null);
   const hasInitialSeekRef = useRef(false);
 
   const { videoUrl, isYouTube } = useVideoUrl(video);
+
+  // Ready belongs to one source, so a new source waits for its own ready
+  const [readyUrl, setReadyUrl] = useState<string | null>(null);
+  const ready = readyUrl !== null && readyUrl === videoUrl;
+
+  const onAwarenessLoadingChangeRef = useRef(onAwarenessLoadingChange);
+  onAwarenessLoadingChangeRef.current = onAwarenessLoadingChange;
 
   const [loaded, setLoaded] = useState(false);
 
@@ -80,7 +86,14 @@ export const VideoPlayer = ({
   // A new source has its own load to wait out, so this starts over.
   useEffect(() => {
     setLoaded(false);
+    // The old load is dropped without an event that clears the loading state
+    return () => onAwarenessLoadingChangeRef.current?.(false);
   }, [videoUrl]);
+
+  // A load that aborts a pending play() pauses without a pause event
+  useEffect(() => {
+    if (!isPlaying) onAwarenessLoadingChangeRef.current?.(false);
+  }, [isPlaying]);
 
   useEffect(() => {
     onLoadedChange?.(loaded);
@@ -111,7 +124,15 @@ export const VideoPlayer = ({
         const tolerance = 2;
         if (manual || Math.abs(currentTime - targetTimeSeconds) > tolerance) {
           if (ref.current) ref.current.currentTime = targetTimeSeconds;
-          if (computedPlaying) ref.current?.play();
+          if (computedPlaying) {
+            ref.current?.play().catch((err: unknown) => {
+              // A new load aborts this play. Its own ready plays it again
+              if (err instanceof DOMException && err.name === "AbortError") {
+                return;
+              }
+              throw err;
+            });
+          }
           hasInitialSeekRef.current = true;
         }
       }
@@ -162,7 +183,7 @@ export const VideoPlayer = ({
           if (isPlaying) {
             onAwarenessLoadingChange?.(false);
           }
-          setReady(true);
+          setReadyUrl(videoUrl);
         }}
         onLoadedData={() => {
           setLoaded(true);
