@@ -53,8 +53,6 @@ export class ProjectPage {
   }
 
   async present() {
-    // The Present button opens a popover; "Open in new tab" is a link whose
-    // href is the renderer URL.
     await this.openPresentMenu();
     const url = await this.openInNewTabLink.getAttribute("href");
     await this.closePresentMenu();
@@ -62,8 +60,6 @@ export class ProjectPage {
     await newPage.goto(url!);
     return newPage;
   }
-
-  // --- Present popover ---
 
   async openPresentMenu() {
     await this.presentButton.click();
@@ -75,7 +71,18 @@ export class ProjectPage {
   }
 
   get openInNewTabLink(): Locator {
-    return this.page.getByRole("link", { name: "Open in new tab" });
+    return this.page.getByRole("link", { name: /^Open in a new window/ });
+  }
+
+  get makeFullscreenButton(): Locator {
+    return this.page.getByRole("button", { name: "Make fullscreen" });
+  }
+
+  get stopAllPresentingButton(): Locator {
+    return this.page.getByRole("button", {
+      name: "Stop Presenting",
+      exact: true,
+    });
   }
 
   /** A screen row's "present to this screen" button, matched by screen name. */
@@ -100,7 +107,7 @@ export class ProjectPage {
   // --- Present from phone ---
 
   get presentFromPhoneOption(): Locator {
-    return this.page.getByRole("button", { name: "Present from phone" });
+    return this.page.getByRole("button", { name: /^This screen/ });
   }
 
   /** Mirrors the QR target so we don't have to decode the image. */
