@@ -19,6 +19,7 @@ extraResources:
     to: .
     filter:
       - top-runtime-manager*
+      - top-studio-helper*
 mac:
   target:
     - dmg

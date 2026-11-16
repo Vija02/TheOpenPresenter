@@ -7,15 +7,6 @@ import { join } from "path";
 import { runtimeRoot } from "../settings/paths";
 import { logShell } from "../shell/log";
 
-/** Peer-to-peer remote access state. */
-export type RemoteStatus = {
-  enabled: boolean;
-  ticket: string | null;
-  node_id: string | null;
-  /** Absent on a build without remote support. */
-  supported?: boolean;
-};
-
 export type RuntimeStatus = {
   root: string;
   installed: string[];
@@ -419,19 +410,6 @@ export class RuntimeClient extends EventEmitter {
     }
     this.child?.kill();
     this.child = null;
-  }
-
-  /** Peer-to-peer iroh access to the running server. */
-  remoteStatus(): Promise<RemoteStatus> {
-    return this.request<RemoteStatus>({ cmd: "remote_status" });
-  }
-
-  startRemote(): Promise<RemoteStatus> {
-    return this.request<RemoteStatus>({ cmd: "remote_start" });
-  }
-
-  stopRemote(): Promise<RemoteStatus> {
-    return this.request<RemoteStatus>({ cmd: "remote_stop" });
   }
 }
 

@@ -84,29 +84,8 @@ fn main() -> Result<()> {
             println!("top-runtime-manager {}", env!("CARGO_PKG_VERSION"));
             Ok(())
         }
-        cli::Cli::GrabInput => grab_input(),
         other => run(other, parsed.options),
     }
-}
-
-/// EVIOCGRAB on the evdev device the app passed as fd 3, so its key presses
-/// go only to the app. Exiting closes our copy of the fd, not the grab.
-#[cfg(target_os = "linux")]
-fn grab_input() -> Result<()> {
-    const EVIOCGRAB: u64 = 0x4004_4590;
-    let result = unsafe { libc::ioctl(3, EVIOCGRAB as _, 1 as libc::c_int) };
-    if result != 0 {
-        bail!(
-            "Could not grab the input device: {}",
-            std::io::Error::last_os_error()
-        );
-    }
-    Ok(())
-}
-
-#[cfg(not(target_os = "linux"))]
-fn grab_input() -> Result<()> {
-    bail!("Grabbing input devices is only supported on Linux.")
 }
 
 /// Build a manager for the subcommands that need one.
@@ -432,73 +411,7 @@ fn run(command: cli::Cli, options: cli::Options) -> Result<()> {
             Ok(())
         }
 
-        cli::Cli::RemoteStatus => {
-            let result = manager.handle(Request {
-                id: None,
-                command: Command::RemoteStatus,
-            })?;
-            if options.json {
-                println!("{}", serde_json::to_string_pretty(&result)?);
-            } else if result["enabled"] == true {
-                println!("Remote access is on.");
-                println!("\nTicket:\n{}", result["ticket"].as_str().unwrap_or(""));
-            } else {
-                println!("Remote access is off.");
-            }
-            Ok(())
-        }
-
-        cli::Cli::RemoteStop => {
-            manager.handle(Request {
-                id: None,
-                command: Command::RemoteStop,
-            })?;
-            println!("Remote access stopped.");
-            Ok(())
-        }
-
-        cli::Cli::RemoteStart => {
-            let started = manager.handle(Request {
-                id: None,
-                command: Command::Start {
-                    holder: Some("remote-cli".to_string()),
-                },
-            })?;
-            finish_human_progress();
-
-            let result = manager.handle(Request {
-                id: None,
-                command: Command::RemoteStart,
-            })?;
-
-            let url = started["url"].as_str().unwrap_or("");
-            println!("\nServing {url}");
-            println!("Remote access is on. Share this ticket:\n");
-            println!("{}", result["ticket"].as_str().unwrap_or(""));
-            println!("\nPress Ctrl-C to stop.\n");
-
-            install_interrupt_handler();
-            while !INTERRUPTED.load(std::sync::atomic::Ordering::SeqCst) {
-                manager.pump();
-                std::thread::sleep(Duration::from_millis(200));
-            }
-
-            println!("Stopping…");
-            manager.handle(Request {
-                id: None,
-                command: Command::RemoteStop,
-            })?;
-            manager.handle(Request {
-                id: None,
-                command: Command::Stop {
-                    holder: Some("remote-cli".to_string()),
-                    force: false,
-                },
-            })?;
-            Ok(())
-        }
-
-        cli::Cli::Help | cli::Cli::Version | cli::Cli::GrabInput => {
+        cli::Cli::Help | cli::Cli::Version => {
             unreachable!("handled in main")
         }
     }

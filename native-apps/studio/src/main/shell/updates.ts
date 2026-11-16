@@ -3,6 +3,7 @@ import type { UpdateInfo } from "electron-updater";
 import pkg from "electron-updater";
 
 import { type ProgressEvent, runtime } from "../runtime/client";
+import { helper } from "../runtime/helper";
 import { DEFAULT_CHANNEL, getSettings } from "../settings/store";
 import { logShell, shellLogger } from "./log";
 import { closeUpdateWindow, openUpdateWindow } from "./windows";
@@ -190,6 +191,13 @@ export function isInstallingUpdate(): boolean {
 
 async function shutdownForInstall(): Promise<void> {
   installing = true;
+  // A running helper holds its binary open, which blocks the installer
+  // replacing it on Windows.
+  await helper
+    .shutdown()
+    .catch((err) =>
+      logShell("error", "[updates] helper shutdown failed:", err),
+    );
   if (runtime.isRunning) {
     await runtime
       .shutdown()

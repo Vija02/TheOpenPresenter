@@ -127,8 +127,18 @@ pub fn write(root: &Path, lock: &RuntimeLock) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    fs::write(&path, serde_json::to_string_pretty(lock)?)
-        .with_context(|| format!("Failed to write {}", path.display()))
+    let text = serde_json::to_string_pretty(lock)?;
+
+    // Several processes read this file (Studio, the manager, the helper).
+    // Write a temporary file and rename it over the lock, so a reader never
+    // sees a half-written one and decides the runtime is gone.
+    let temp = path.with_extension(format!("lock.{}.tmp", std::process::id()));
+    let renamed = fs::write(&temp, &text).and_then(|()| fs::rename(&temp, &path));
+    if renamed.is_ok() {
+        return Ok(());
+    }
+    let _ = fs::remove_file(&temp);
+    fs::write(&path, text).with_context(|| format!("Failed to write {}", path.display()))
 }
 
 /// Remove the lock outright, for one found to describe nothing.

@@ -8,6 +8,7 @@ on:
     paths:
       - "native-apps/studio/**"
       - "native-apps/runtime-manager/**"
+      - "native-apps/studio-helper/**"
       - "packages/desktop-bridge/**"
       - ".github/workflows/studio.yml"
   workflow_dispatch:
@@ -15,7 +16,7 @@ on:
 
 jobs:
   runtime-manager-tests:
-    name: Runtime manager tests
+    name: Sidecar tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +25,9 @@ jobs:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: native-apps/runtime-manager
+          workspaces: |
+            native-apps/runtime-manager
+            native-apps/studio-helper
       - name: Format
         working-directory: native-apps/runtime-manager
         run: cargo fmt --check
@@ -37,6 +40,15 @@ jobs:
       - name: Type-check platform-specific code paths
         working-directory: native-apps/runtime-manager
         run: cargo run --example platform_shapes
+      - name: Helper format
+        working-directory: native-apps/studio-helper
+        run: cargo fmt --check
+      - name: Helper clippy
+        working-directory: native-apps/studio-helper
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Helper test
+        working-directory: native-apps/studio-helper
+        run: cargo test --all-targets
 
   build:
     name: Build (${{ matrix.platform }})
@@ -67,7 +79,9 @@ jobs:
           targets: ${{ matrix.rust_target }}
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: native-apps/runtime-manager
+          workspaces: |
+            native-apps/runtime-manager
+            native-apps/studio-helper
           key: pubkey-${{ secrets.RUNTIME_PUBLIC_KEY != '' }}
 
       # The sidecar must exist before electron-builder packages the app
@@ -79,18 +93,27 @@ jobs:
           TOP_ANALYTICS_KEY: ${{ vars.ANALYTICS_KEY }}
         run: cargo build --release --target ${{ matrix.rust_target }}
 
-      - name: Stage the sidecar
+      - name: Build the helper sidecar
+        working-directory: native-apps/studio-helper
+        shell: bash
+        run: cargo build --release --target ${{ matrix.rust_target }}
+
+      - name: Stage the sidecars
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p native-apps/studio/resources
-          SRC="native-apps/runtime-manager/target/${{ matrix.rust_target }}/release"
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            cp "$SRC/top-runtime-manager.exe" native-apps/studio/resources/
-          else
-            cp "$SRC/top-runtime-manager" native-apps/studio/resources/
-            chmod +x native-apps/studio/resources/top-runtime-manager
-          fi
+          for CRATE_BIN in runtime-manager:top-runtime-manager studio-helper:top-studio-helper; do
+            CRATE="${CRATE_BIN%%:*}"
+            BIN="${CRATE_BIN##*:}"
+            SRC="native-apps/$CRATE/target/${{ matrix.rust_target }}/release"
+            if [ "${{ runner.os }}" = "Windows" ]; then
+              cp "$SRC/$BIN.exe" native-apps/studio/resources/
+            else
+              cp "$SRC/$BIN" native-apps/studio/resources/
+              chmod +x "native-apps/studio/resources/$BIN"
+            fi
+          done
           ls -la native-apps/studio/resources
 
       - name: Build the shared UI package
@@ -207,6 +230,43 @@ jobs:
             npm run dist
           fi
 
+      # electron-builder signs every binary inside the bundle, sidecars
+      # included, with the app's identity and hardened runtime. Check that it
+      # really did: an unsigned sidecar passes the build and only fails on a
+      # user's Mac, where Gatekeeper refuses to run it.
+      - name: Verify the sidecars are signed (macOS)
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${APPLE_CERTIFICATE:-}" ]; then
+            echo "No signing certificate available; nothing to verify."
+            exit 0
+          fi
+
+          APP=$(find native-apps/studio/dist -maxdepth 2 -name '*.app' -type d | head -1)
+          [ -n "$APP" ] || { echo "::error::No .app bundle in dist/"; exit 1; }
+
+          for BIN in top-runtime-manager top-studio-helper; do
+            FILE="$APP/Contents/Resources/$BIN"
+            [ -f "$FILE" ] || { echo "::error::$BIN is missing from the bundle"; exit 1; }
+            codesign --verify --strict --verbose=2 "$FILE"
+            INFO=$(codesign -dv --verbose=2 "$FILE" 2>&1)
+            echo "$INFO" | grep -q "Authority=Developer ID Application" || {
+              echo "::error::$BIN is not signed with the Developer ID"
+              echo "$INFO"
+              exit 1
+            }
+            echo "$INFO" | grep -q "(runtime)" || {
+              echo "::error::$BIN is signed without the hardened runtime"
+              echo "$INFO"
+              exit 1
+            }
+            echo "$BIN: signed, hardened runtime"
+          done
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -234,7 +294,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: native-apps/runtime-manager
+          workspaces: |
+            native-apps/runtime-manager
+            native-apps/studio-helper
           key: pubkey-${{ secrets.RUNTIME_PUBLIC_KEY != '' }}
 
       - name: Build the runtime manager
@@ -243,13 +305,18 @@ jobs:
           TOP_ANALYTICS_KEY: ${{ vars.ANALYTICS_KEY }}
         run: cargo build --release --manifest-path native-apps/runtime-manager/Cargo.toml
 
-      - name: Stage the sidecar
+      - name: Build the helper
+        run: cargo build --release --manifest-path native-apps/studio-helper/Cargo.toml
+
+      - name: Stage the sidecars
         run: |
           set -euo pipefail
           mkdir -p native-apps/studio/resources
           cp native-apps/runtime-manager/target/release/top-runtime-manager \
+            native-apps/studio-helper/target/release/top-studio-helper \
             native-apps/studio/resources/
-          chmod +x native-apps/studio/resources/top-runtime-manager
+          chmod +x native-apps/studio/resources/top-runtime-manager \
+            native-apps/studio/resources/top-studio-helper
 
       - name: Build the shared UI package
         run: |
@@ -327,6 +394,23 @@ jobs:
             exit 1
           }
           echo 'Smoke test passed: the shipped sidecar speaks its protocol.'
+
+          HELPER=$(find unpacked -name 'top-studio-helper' -type f | head -1)
+          [ -n "$HELPER" ] || {
+            echo 'The packaged app does not contain the top-studio-helper sidecar.'
+            exit 1
+          }
+          chmod +x "$HELPER"
+          OUT=$(printf '%s\n' \
+            '{"id":1,"cmd":"remote_status"}' \
+            '{"cmd":"shutdown"}' \
+            | "$HELPER" --root "$RUNNER_TEMP/rt")
+          echo "$OUT"
+          echo "$OUT" | grep -q '"ok":true' || {
+            echo 'The packaged helper did not answer a status request.'
+            exit 1
+          }
+          echo 'Smoke test passed: the shipped helper speaks its protocol.'
 
   release:
     permissions:

@@ -6,8 +6,6 @@
 //! - [`publish`]  building a release, used only by `top-runtime-publish`
 
 pub mod publish;
-#[cfg(feature = "remote")]
-pub mod remote;
 pub mod runtime;
 pub mod shell;
 pub mod storage;

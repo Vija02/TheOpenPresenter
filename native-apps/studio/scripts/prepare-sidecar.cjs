@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Make the runtime manager sidecar available before the shell starts. Without
- * it, `npm run dev` launches an app whose offline mode is dead, and the only
- * clue is a status message in the UI.
+ * Make the sidecars available before the shell starts: the runtime manager
+ * and top-studio-helper. Without the manager, `npm run dev` launches an app whose
+ * offline mode is dead, and the only clue is a status message in the UI.
+ * Without the helper, remote access and clicker grabbing are.
  *
- * Packaged builds do not use this: CI compiles the sidecar per platform and
- * electron-builder copies it out of resources/.
+ * Packaged builds do not use this: CI compiles the sidecars per platform and
+ * electron-builder copies them out of resources/.
  */
 const { execFileSync, spawnSync } = require("child_process");
 const {
@@ -19,9 +20,11 @@ const {
 const { join, resolve } = require("path");
 
 const MANAGER_DIR = resolve(__dirname, "../../runtime-manager");
+const HELPER_DIR = resolve(__dirname, "../../studio-helper");
 const RESOURCES = resolve(__dirname, "../resources");
 const EXE = process.platform === "win32" ? ".exe" : "";
 const BIN = `top-runtime-manager${EXE}`;
+const HELPER_BIN = `top-studio-helper${EXE}`;
 
 function log(...args) {
   console.log("[sidecar]", ...args);
@@ -68,10 +71,12 @@ function ensureDevKey() {
 }
 
 function main() {
-  const staged = join(RESOURCES, BIN);
-  if (existsSync(staged) && !process.env.TOP_FORCE_SIDECAR) {
-    log(`already staged, leaving it alone: ${staged}`);
-    log("set TOP_FORCE_SIDECAR=1 to rebuild it anyway");
+  const force = !!process.env.TOP_FORCE_SIDECAR;
+  const needManager = force || !existsSync(join(RESOURCES, BIN));
+  const needHelper = force || !existsSync(join(RESOURCES, HELPER_BIN));
+  if (!needManager && !needHelper) {
+    log(`already staged, leaving them alone: ${RESOURCES}`);
+    log("set TOP_FORCE_SIDECAR=1 to rebuild them anyway");
     return;
   }
 
@@ -81,6 +86,29 @@ function main() {
     return;
   }
 
+  if (needManager) buildManager();
+  if (needHelper) buildHelper();
+}
+
+function buildHelper() {
+  log("building top-studio-helper (first build takes a minute)");
+  const build = spawnSync("cargo", ["build", "--bin", "top-studio-helper"], {
+    cwd: HELPER_DIR,
+    stdio: "inherit",
+  });
+  if (build.status !== 0) {
+    log("helper build failed — remote access will be unavailable");
+    return;
+  }
+  mkdirSync(RESOURCES, { recursive: true });
+  stageBinary(
+    join(HELPER_DIR, "target/debug", HELPER_BIN),
+    join(RESOURCES, HELPER_BIN),
+  );
+  log(`ready: ${join(RESOURCES, HELPER_BIN)}`);
+}
+
+function buildManager() {
   // An explicit key means "build a binary that trusts the real releases", so
   // the dev key is skipped entirely: build.rs prefers the variable anyway.
   const explicitKey = (process.env.TOP_RUNTIME_PUBKEY || "").trim();
