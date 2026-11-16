@@ -4,7 +4,7 @@ import path from "path";
 export default (app: Express) => {
   app.use(
     staticMiddleware(path.resolve(__dirname, "../public"), {
-      maxAge: 31536000,
+      maxAge: "1y",
       immutable: true,
     }),
   );
