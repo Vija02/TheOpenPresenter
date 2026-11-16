@@ -231,6 +231,7 @@ export const NewScene = () => {
               {other.map(({ creator }) => (
                 <Option
                   key={creator.pluginName}
+                  testId={`scene-creator-${creator.pluginName}`}
                   onClick={() => addPlugin(creator.pluginName, creator.title)}
                   title={
                     <span className="flex items-center gap-2">
