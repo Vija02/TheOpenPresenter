@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BchUQpek5cg1f58v7CQzEFYPiQk29o93ki3JTKGXUFgMmwfZaabOgAV0HA5yfKw
+\restrict hzIycwbsTQ61ywJExqiOPQqPceAEu2nMMmjEoJ3doR3EhNYHWWjWLwTPCOPCF4n
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -3246,7 +3246,8 @@ COMMENT ON TABLE app_public.screens IS 'A persistent display identity in an orga
 -- Name: COLUMN screens.current_project_id; Type: COMMENT; Schema: app_public; Owner: -
 --
 
-COMMENT ON COLUMN app_public.screens.current_project_id IS 'Project currently shown on this screen, or NULL if idle.';
+COMMENT ON COLUMN app_public.screens.current_project_id IS 'Project currently shown on this screen, or NULL if idle.
+@omit update';
 
 
 --
@@ -8728,7 +8729,7 @@ GRANT INSERT(slug),UPDATE(slug) ON TABLE app_public.screens TO theopenpresenter_
 -- Name: COLUMN screens.current_project_id; Type: ACL; Schema: app_public; Owner: -
 --
 
-GRANT INSERT(current_project_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
+GRANT INSERT(current_project_id),UPDATE(current_project_id) ON TABLE app_public.screens TO theopenpresenter_visitor;
 
 
 --
@@ -9532,5 +9533,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BchUQpek5cg1f58v7CQzEFYPiQk29o93ki3JTKGXUFgMmwfZaabOgAV0HA5yfKw
+\unrestrict hzIycwbsTQ61ywJExqiOPQqPceAEu2nMMmjEoJ3doR3EhNYHWWjWLwTPCOPCF4n
 

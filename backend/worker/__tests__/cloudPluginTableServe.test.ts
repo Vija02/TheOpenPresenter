@@ -396,6 +396,75 @@ describe("as the cloud's visitor role", () => {
     });
   });
 
+  it("applies a pushed screen's assignment", async () => {
+    await inCloud(async ({ client, orgId, userId }) => {
+      const {
+        rows: [project],
+      } = await client.query(
+        `insert into app_public.projects (organization_id, slug, name)
+         values ($1, 'easter', 'Easter') returning id`,
+        [orgId],
+      );
+      await becomeMember(client, orgId, userId);
+      const table = tableNamed("screens");
+      const screen = (currentProjectId: string | null) => ({
+        name: "Foyer",
+        slug: "foyer",
+        code: "Q7W8",
+        current_project_id: currentProjectId,
+      });
+
+      const [created] = (await applyPushedChanges(
+        client,
+        table,
+        orgId,
+        userId,
+        [{ key: { slug: "foyer" }, expectedUpdatedAt: null, row: screen(null) }],
+      )) as { status: string; updatedAt: string }[];
+      expect(created).toMatchObject({ status: "applied" });
+
+      const [assigned] = (await applyPushedChanges(
+        client,
+        table,
+        orgId,
+        userId,
+        [
+          {
+            key: { slug: "foyer" },
+            expectedUpdatedAt: created!.updatedAt,
+            row: screen(project.id),
+          },
+        ],
+      )) as { status: string; updatedAt: string }[];
+      expect(assigned).toMatchObject({ status: "applied" });
+
+      const current = async () =>
+        (
+          await client.query(
+            "select current_project_id from app_public.screens where organization_id = $1",
+            [orgId],
+          )
+        ).rows[0].current_project_id;
+      expect(await current()).toBe(project.id);
+
+      const [unassigned] = await applyPushedChanges(
+        client,
+        table,
+        orgId,
+        userId,
+        [
+          {
+            key: { slug: "foyer" },
+            expectedUpdatedAt: assigned!.updatedAt,
+            row: screen(null),
+          },
+        ],
+      );
+      expect(unassigned).toMatchObject({ status: "applied" });
+      expect(await current()).toBeNull();
+    });
+  });
+
   it("refuses an organization the user is not a member of", async () => {
     await inCloud(async ({ client, orgId, userId }) => {
       await client.query(
