@@ -1,12 +1,9 @@
-// Connect to the bridge over iroh and speak HTTP through it, proving the
-// tunnel carries real traffic rather than merely starting.
+// HTTP GET through a tunnel: `tunnel_probe <ticket>`.
 use std::env;
 
 use anyhow::{Context, Result};
 use iroh::{endpoint::Endpoint, SecretKey};
 use iroh_tickets::endpoint::EndpointTicket;
-// read()/write_all() are inherent on quinn's Recv/SendStream; no tokio
-// extension traits needed.
 
 const ALPN: &[u8] = b"DUMBPIPEV0";
 const HANDSHAKE: [u8; 5] = *b"hello";

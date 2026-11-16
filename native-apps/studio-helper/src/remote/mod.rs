@@ -1,42 +1,36 @@
+mod client;
 mod forward;
+mod host;
 
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
-use iroh::{endpoint::Accepting, endpoint::Endpoint, SecretKey};
+use iroh::{endpoint::Endpoint, SecretKey};
 use iroh_tickets::endpoint::EndpointTicket;
-use tokio::net::TcpStream;
-use tokio::select;
-use tokio::sync::oneshot;
+use tokio_util::sync::CancellationToken;
 
+pub use client::{parse_peer, ClientStatus};
 pub use forward::forward_bidi;
 
 /// Dumbpipe's ALPN and handshake, so the `dumbpipe` CLI can talk to us directly.
 pub const ALPN: &[u8] = b"DUMBPIPEV0";
 pub const HANDSHAKE: [u8; 5] = *b"hello";
 
-/// How long to wait for a home relay before giving up and carrying on.
-/// A bridge without a relay still works on the local network.
+/// Without a relay we still work on the local network, so don't wait forever.
 const ONLINE_TIMEOUT: Duration = Duration::from_secs(10);
 
-/// Where incoming tunnel connections are forwarded to.
 #[derive(Debug, Clone)]
 pub enum Target {
-    /// A fixed local port.
     Port(u16),
-    /// Whatever port the runtime under this root is serving on right now.
-    ///
-    /// Looked up per connection rather than once, so a runtime that crashes
-    /// and comes back on another port keeps working through the same tunnel,
-    /// with the same ticket, without anyone having to restart it.
+    /// The runtime's current port, read from its lock file on use, so a
+    /// runtime that restarts on another port keeps the same tunnel.
     Runtime(PathBuf),
 }
 
 impl Target {
-    /// The local address to forward the next connection to.
     pub fn resolve(&self) -> Result<SocketAddr> {
         let port = match self {
             Target::Port(port) => *port,
@@ -48,32 +42,6 @@ impl Target {
     }
 }
 
-/// A running peer-to-peer tunnel to the local server.
-pub struct Bridge {
-    endpoint: Endpoint,
-    shutdown: Option<oneshot::Sender<()>>,
-    ticket: String,
-    node_id: String,
-}
-
-impl Bridge {
-    pub fn ticket(&self) -> &str {
-        &self.ticket
-    }
-
-    pub fn node_id(&self) -> &str {
-        &self.node_id
-    }
-
-    pub async fn shutdown(&mut self) {
-        if let Some(tx) = self.shutdown.take() {
-            let _ = tx.send(());
-        }
-        self.endpoint.close().await;
-    }
-}
-
-/// The node's long-lived identity.
 pub fn get_or_create_secret(data_dir: &Path) -> Result<SecretKey> {
     let key_path = data_dir.join("iroh_secret_key");
 
@@ -89,8 +57,7 @@ pub fn get_or_create_secret(data_dir: &Path) -> Result<SecretKey> {
     std::fs::create_dir_all(data_dir).context("Failed to create the data directory")?;
     std::fs::write(&key_path, secret.to_bytes()).context("Failed to write the iroh secret key")?;
 
-    // The key is the node's identity: anyone holding it can impersonate
-    // this install, so keep it to the owner on platforms that can.
+    // Anyone with the key can impersonate this install.
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -100,120 +67,104 @@ pub fn get_or_create_secret(data_dir: &Path) -> Result<SecretKey> {
     Ok(secret)
 }
 
-/// Serve one incoming tunnel connection by splicing it onto the local port.
-async fn handle_connection(accepting: Accepting, target: Arc<Target>) -> Result<()> {
-    let connection = accepting.await.context("Error accepting the connection")?;
-    let remote = connection.remote_id();
-    tracing::info!("Tunnel connection from {remote}");
-
-    let (send, mut recv) = connection
-        .accept_bi()
-        .await
-        .context("Error accepting a bidirectional stream")?;
-
-    let mut handshake = [0u8; HANDSHAKE.len()];
-    recv.read_exact(&mut handshake)
-        .await
-        .context("Error reading the handshake")?;
-    if handshake != HANDSHAKE {
-        anyhow::bail!("Invalid handshake from {remote}");
-    }
-
-    // The lock file read can shell out on Windows to check a pid, so keep
-    // it off the async workers.
-    let addr = tokio::task::spawn_blocking(move || target.resolve())
-        .await
-        .context("Failed to look up the local server")??;
-
-    let tcp = TcpStream::connect(addr)
-        .await
-        .with_context(|| format!("Error connecting to the local server at {addr}"))?;
-
-    let (read, write) = tcp.into_split();
-    forward_bidi(read, write, recv, send).await?;
-
-    tracing::info!("Tunnel connection from {remote} closed");
-    Ok(())
+struct Hosting {
+    resolver: Arc<host::Resolver>,
+    /// Closes every accepted connection when hosting stops.
+    stop: CancellationToken,
+    ticket: String,
 }
 
-/// Start a tunnel forwarding to a local TCP port.
-pub async fn start(target: Target, data_dir: PathBuf) -> Result<Bridge> {
-    let secret = get_or_create_secret(&data_dir)?;
+/// One endpoint for both hosting and joining: two endpoints with the same
+/// key would knock each other off the relay.
+struct Node {
+    endpoint: Endpoint,
+    hosting: Arc<Mutex<Option<Arc<Hosting>>>>,
+}
 
-    // `N0` is the production preset: n0's relays plus DNS-based discovery,
-    // which is what makes a ticket work from another network without any
-    // router configuration.
-    let endpoint = Endpoint::builder(iroh::endpoint::presets::N0)
-        .secret_key(secret)
-        .alpns(vec![ALPN.to_vec()])
-        .bind()
-        .await
-        .context("Failed to create the iroh endpoint")?;
+impl Node {
+    async fn bind(data_dir: &Path) -> Result<Self> {
+        let secret = get_or_create_secret(data_dir)?;
 
-    if tokio::time::timeout(ONLINE_TIMEOUT, endpoint.online())
-        .await
-        .is_err()
-    {
-        // Not fatal: without a relay the tunnel still works on the local
-        // network, which is better than refusing to start.
-        tracing::warn!("No home relay within {ONLINE_TIMEOUT:?}; continuing");
-    }
+        // n0's relays and DNS lookup make a bare endpoint ID reachable from
+        // other networks.
+        let endpoint = Endpoint::builder(iroh::endpoint::presets::N0)
+            .secret_key(secret)
+            .alpns(vec![ALPN.to_vec()])
+            .bind()
+            .await
+            .context("Failed to create the iroh endpoint")?;
 
-    let addr = endpoint.addr();
-    let node_id = addr.id.to_string();
-    let ticket = EndpointTicket::new(addr.clone()).to_string();
-
-    tracing::info!("Remote access ready, forwarding to {target:?}");
-    tracing::info!("Node id: {node_id}");
-
-    let (shutdown_tx, mut shutdown_rx) = oneshot::channel::<()>();
-
-    let target = Arc::new(target);
-    let accept_endpoint = endpoint.clone();
-    tokio::spawn(async move {
-        loop {
-            select! {
-                incoming = accept_endpoint.accept() => {
-                    let Some(incoming) = incoming else {
-                        tracing::info!("Endpoint closed, stopping the accept loop");
-                        break;
-                    };
-                    let accepting = match incoming.accept() {
-                        Ok(c) => c,
-                        Err(err) => {
-                            tracing::warn!("Error accepting a connection: {err}");
-                            continue;
-                        }
-                    };
-                    let target = target.clone();
-                    tokio::spawn(async move {
-                        if let Err(err) = handle_connection(accepting, target).await {
-                            tracing::warn!("Tunnel connection failed: {err:#}");
-                        }
-                    });
-                }
-                _ = &mut shutdown_rx => {
-                    tracing::info!("Stopping remote access");
-                    break;
-                }
-            }
+        if tokio::time::timeout(ONLINE_TIMEOUT, endpoint.online())
+            .await
+            .is_err()
+        {
+            tracing::warn!("No home relay within {ONLINE_TIMEOUT:?}; continuing");
         }
-    });
+        tracing::info!("Endpoint id: {}", endpoint.id());
 
-    Ok(Bridge {
-        endpoint,
-        shutdown: Some(shutdown_tx),
-        ticket,
-        node_id,
-    })
+        let hosting: Arc<Mutex<Option<Arc<Hosting>>>> = Arc::default();
+        let accept_endpoint = endpoint.clone();
+        let accept_hosting = hosting.clone();
+        tokio::spawn(async move {
+            while let Some(incoming) = accept_endpoint.accept().await {
+                let hosting = accept_hosting.lock().expect("hosting lock").clone();
+                let Some(hosting) = hosting else {
+                    incoming.refuse();
+                    continue;
+                };
+                let accepting = match incoming.accept() {
+                    Ok(accepting) => accepting,
+                    Err(err) => {
+                        tracing::warn!("Error accepting a connection: {err}");
+                        continue;
+                    }
+                };
+                tokio::spawn(async move {
+                    let result = host::handle_connection(
+                        accepting,
+                        hosting.resolver.clone(),
+                        hosting.stop.clone(),
+                    )
+                    .await;
+                    if let Err(err) = result {
+                        tracing::warn!("Tunnel connection failed: {err:#}");
+                    }
+                });
+            }
+            tracing::info!("Endpoint closed, stopping the accept loop");
+        });
+
+        Ok(Self { endpoint, hosting })
+    }
+
+    fn hosting(&self) -> Option<Arc<Hosting>> {
+        self.hosting.lock().expect("hosting lock").clone()
+    }
+
+    fn host(&self, target: Target) {
+        let hosting = Arc::new(Hosting {
+            resolver: Arc::new(host::Resolver::new(target)),
+            stop: CancellationToken::new(),
+            ticket: EndpointTicket::new(self.endpoint.addr()).to_string(),
+        });
+        *self.hosting.lock().expect("hosting lock") = Some(hosting);
+    }
+
+    fn stop_hosting(&self) {
+        if let Some(hosting) = self.hosting.lock().expect("hosting lock").take() {
+            hosting.stop.cancel();
+        }
+    }
 }
 
-/// Everything a shell needs to show about remote access.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct RemoteStatus {
+    /// Whether this install is hosting.
     pub enabled: bool,
     pub ticket: Option<String>,
     pub node_id: Option<String>,
+    /// The host this install has joined, if any.
+    pub client: Option<ClientStatus>,
 }
 
 impl RemoteStatus {
@@ -222,14 +173,17 @@ impl RemoteStatus {
             enabled: false,
             ticket: None,
             node_id: None,
+            client: None,
         }
     }
 }
 
-/// Owns the bridge and the runtime it needs.
+/// The endpoint is bound on first use and closed when neither hosting nor
+/// joined, so an idle helper holds no relay connection.
 pub struct Remote {
     runtime: Arc<tokio::runtime::Runtime>,
-    bridge: Option<Bridge>,
+    node: Option<Node>,
+    client: Option<client::Client>,
 }
 
 impl Remote {
@@ -241,35 +195,114 @@ impl Remote {
             .context("Failed to start the async runtime for remote access")?;
         Ok(Self {
             runtime: Arc::new(runtime),
-            bridge: None,
+            node: None,
+            client: None,
         })
     }
 
     pub fn status(&self) -> RemoteStatus {
-        match &self.bridge {
-            Some(bridge) => RemoteStatus {
-                enabled: true,
-                ticket: Some(bridge.ticket().to_string()),
-                node_id: Some(bridge.node_id().to_string()),
+        let hosting = self.node.as_ref().and_then(Node::hosting);
+        RemoteStatus {
+            enabled: hosting.is_some(),
+            ticket: hosting.as_ref().map(|h| h.ticket.clone()),
+            node_id: match (&hosting, &self.node) {
+                (Some(_), Some(node)) => Some(node.endpoint.id().to_string()),
+                _ => None,
             },
-            None => RemoteStatus::off(),
+            client: self.client_status(),
         }
     }
 
-    pub fn start(&mut self, target: Target, data_dir: PathBuf) -> Result<RemoteStatus> {
-        if self.bridge.is_some() {
-            // Already on: hand back the existing ticket rather than
-            // building a second tunnel to the same server.
-            return Ok(self.status());
+    pub fn client_status(&self) -> Option<ClientStatus> {
+        self.client.as_ref().map(client::Client::status)
+    }
+
+    fn node(&mut self, data_dir: &Path) -> Result<&Node> {
+        if self.node.is_none() {
+            let node = self.runtime.block_on(Node::bind(data_dir))?;
+            self.node = Some(node);
         }
-        let bridge = self.runtime.block_on(start(target, data_dir))?;
-        self.bridge = Some(bridge);
+        Ok(self.node.as_ref().expect("just set"))
+    }
+
+    pub fn start(&mut self, target: Target, data_dir: PathBuf) -> Result<RemoteStatus> {
+        let node = self.node(&data_dir)?;
+        if node.hosting().is_none() {
+            node.host(target);
+            tracing::info!("Hosting");
+        }
         Ok(self.status())
     }
 
     pub fn stop(&mut self) {
-        if let Some(mut bridge) = self.bridge.take() {
-            self.runtime.block_on(bridge.shutdown());
+        if let Some(node) = &self.node {
+            node.stop_hosting();
+        }
+        self.close_if_idle();
+    }
+
+    pub fn connect(
+        &mut self,
+        peer: &str,
+        port: Option<u16>,
+        data_dir: PathBuf,
+    ) -> Result<ClientStatus> {
+        let peer = parse_peer(peer)?;
+        if let Some(client) = &self.client {
+            let same_port = port.is_none_or(|port| port == client.port());
+            if client.peer() == peer.id && same_port {
+                return Ok(client.status());
+            }
+        }
+
+        let endpoint = self.node(&data_dir)?.endpoint.clone();
+
+        // Dial before dropping the current host, so a bad ticket keeps it.
+        let connection = match self.runtime.block_on(client::dial(&endpoint, &peer)) {
+            Ok(connection) => connection,
+            Err(err) => {
+                self.close_if_idle();
+                return Err(err);
+            }
+        };
+
+        // Close the old one first so the new one can bind the same port.
+        self.disconnect_client();
+        let served = self
+            .runtime
+            .block_on(client::serve(endpoint, peer, connection.clone(), port));
+        match served {
+            Ok(client) => {
+                let status = client.status();
+                self.client = Some(client);
+                Ok(status)
+            }
+            Err(err) => {
+                connection.close(0u32.into(), b"failed to serve");
+                self.close_if_idle();
+                Err(err)
+            }
+        }
+    }
+
+    pub fn disconnect(&mut self) {
+        self.disconnect_client();
+        self.close_if_idle();
+    }
+
+    fn disconnect_client(&mut self) {
+        if let Some(client) = self.client.take() {
+            self.runtime.block_on(client.close());
+        }
+    }
+
+    fn close_if_idle(&mut self) {
+        let hosting = self.node.as_ref().and_then(Node::hosting).is_some();
+        if hosting || self.client.is_some() {
+            return;
+        }
+        if let Some(node) = self.node.take() {
+            self.runtime.block_on(node.endpoint.close());
         }
     }
 }
@@ -297,7 +330,6 @@ mod tests {
     fn a_runtime_target_follows_the_port_in_the_lock() {
         let root = tempfile::tempdir().unwrap();
         let lock = |port| top_runtime_manager::storage::lock::RuntimeLock {
-            // Our own pid, so the lock reads as live.
             manager_pid: std::process::id(),
             runtime_pid: None,
             http_port: Some(port),
@@ -310,7 +342,6 @@ mod tests {
         top_runtime_manager::storage::lock::write(root.path(), &lock(5000)).unwrap();
         assert_eq!(target.resolve().unwrap().port(), 5000);
 
-        // A runtime that restarted elsewhere: the same target follows it.
         top_runtime_manager::storage::lock::write(root.path(), &lock(5001)).unwrap();
         assert_eq!(target.resolve().unwrap().port(), 5001);
     }

@@ -1,5 +1,4 @@
-//! The stateful core behind both the NDJSON protocol and the CLI, so the two
-//! front ends cannot drift apart. Nothing here prints.
+//! State shared by the NDJSON protocol and the CLI. Nothing here prints.
 
 use std::time::{Duration, Instant};
 
@@ -10,9 +9,7 @@ use top_runtime_manager::Layout;
 use crate::protocol::Command;
 use crate::remote::{Remote, RemoteStatus, Target};
 
-/// How often `pump` checks that the lock file still advertises our tunnel.
-/// Slow on purpose: reading the lock checks pids, which on Windows means
-/// running `tasklist`.
+/// Slow on purpose: reading the lock checks pids (`tasklist` on Windows).
 const REPUBLISH_EVERY: Duration = Duration::from_secs(5);
 
 pub struct Helper {
@@ -35,6 +32,8 @@ impl Helper {
             Command::RemoteStart { port } => self.remote_start(port),
             Command::RemoteStop => self.remote_stop(),
             Command::RemoteStatus => self.remote_status(),
+            Command::RemoteConnect { peer, port } => self.remote_connect(&peer, port),
+            Command::RemoteDisconnect => self.remote_disconnect(),
             Command::Shutdown => {
                 self.shutdown();
                 Ok(serde_json::json!({ "shuttingDown": true }))
@@ -49,10 +48,7 @@ impl Helper {
             .filter(|status| status.enabled)
     }
 
-    /// Start peer-to-peer remote access to the running server.
-    ///
-    /// Requires the server to be up: a tunnel to nothing would hand out a
-    /// ticket that fails on first use.
+    /// Refused without a running server: the ticket would fail on first use.
     fn remote_start(&mut self, port: Option<u16>) -> Result<serde_json::Value> {
         if let Some(status) = self.ours() {
             return Ok(serde_json::to_value(status)?);
@@ -67,28 +63,30 @@ impl Helper {
             bail!("Start the server before turning on remote access");
         }
 
-        // Another process sharing this runtime already has a tunnel to it.
-        // Hand back the same ticket rather than opening a second one to the
-        // same server, which would waste a relay connection and give out two
-        // addresses for one machine.
+        // Another process sharing this runtime already hosts it: reuse that.
         if let Some(info) = lock::remote(&root) {
             if info.owner_pid != std::process::id() {
-                return Ok(serde_json::json!({
-                    "enabled": true,
-                    "ticket": info.ticket,
-                    "node_id": info.node_id,
-                }));
+                return Ok(serde_json::to_value(RemoteStatus {
+                    enabled: true,
+                    ticket: Some(info.ticket),
+                    node_id: Some(info.node_id),
+                    client: self.client_status(),
+                })?);
             }
         }
 
-        if self.remote.is_none() {
-            self.remote = Some(Remote::new()?);
-        }
-        let remote = self.remote.as_mut().expect("just set");
-        let status = remote.start(target, self.layout.state_dir())?;
+        let data_dir = self.layout.state_dir();
+        let status = self.remote()?.start(target, data_dir)?;
 
         self.publish(&status);
         Ok(serde_json::to_value(status)?)
+    }
+
+    fn remote(&mut self) -> Result<&mut Remote> {
+        if self.remote.is_none() {
+            self.remote = Some(Remote::new()?);
+        }
+        Ok(self.remote.as_mut().expect("just set"))
     }
 
     fn remote_stop(&mut self) -> Result<serde_json::Value> {
@@ -96,13 +94,39 @@ impl Helper {
             remote.stop();
         }
         self.unpublish();
-        Ok(serde_json::to_value(RemoteStatus::off())?)
+        // Off even if another app still hosts, or the toggle would snap back.
+        Ok(serde_json::to_value(RemoteStatus {
+            client: self.client_status(),
+            ..RemoteStatus::off()
+        })?)
+    }
+
+    /// Needs no local server.
+    fn remote_connect(&mut self, peer: &str, port: Option<u16>) -> Result<serde_json::Value> {
+        // Same identity as theirs: the relay would drop one of us.
+        if let Some(info) = lock::remote(self.layout.root()) {
+            if info.owner_pid != std::process::id() {
+                bail!("Another app on this computer is sharing. Turn that off first.");
+            }
+        }
+        let data_dir = self.layout.state_dir();
+        let status = self.remote()?.connect(peer, port, data_dir)?;
+        Ok(serde_json::to_value(status)?)
+    }
+
+    fn remote_disconnect(&mut self) -> Result<serde_json::Value> {
+        if let Some(remote) = &mut self.remote {
+            remote.disconnect();
+        }
+        self.remote_status()
+    }
+
+    fn client_status(&self) -> Option<crate::remote::ClientStatus> {
+        self.remote.as_ref().and_then(Remote::client_status)
     }
 
     fn remote_status(&self) -> Result<serde_json::Value> {
-        // Ours if we opened it, otherwise whatever the lock says: a second
-        // app sharing the runtime has to see the tunnel the first one opened,
-        // not report remote access as off.
+        // Fall back to the lock, to show a tunnel another app opened.
         let status = match self.ours() {
             Some(status) => status,
             None => match lock::remote(self.layout.root()) {
@@ -110,18 +134,18 @@ impl Helper {
                     enabled: true,
                     ticket: Some(info.ticket),
                     node_id: Some(info.node_id),
+                    client: self.client_status(),
                 },
-                None => RemoteStatus::off(),
+                None => RemoteStatus {
+                    client: self.client_status(),
+                    ..RemoteStatus::off()
+                },
             },
         };
         Ok(serde_json::to_value(status)?)
     }
 
-    /// Keep the lock advertising our tunnel.
-    ///
-    /// A runtime that stops and starts again writes a fresh lock with no
-    /// remote entry, which would leave other processes reporting remote
-    /// access as off while the tunnel is still serving.
+    /// A restarted runtime writes a fresh lock without our tunnel; put it back.
     pub fn pump(&mut self) {
         if self
             .last_republish
@@ -136,22 +160,19 @@ impl Helper {
         };
         let root = self.layout.root();
         let Some(current) = lock::read(root) else {
-            // No runtime: nothing to advertise to.
             return;
         };
-        // Someone else's live tunnel wins; `read` already dropped dead ones.
+        // Someone else's live tunnel wins.
         if current.remote.is_none() {
             self.publish(&status);
         }
     }
 
-    /// Stop everything this process owns, before exiting.
     pub fn shutdown(&mut self) {
         let _ = self.remote_stop();
+        let _ = self.remote_disconnect();
     }
 
-    /// Record our tunnel in the lock, so other processes sharing this
-    /// runtime can see that remote access is on and show the same ticket.
     fn publish(&self, status: &RemoteStatus) {
         if let (Some(ticket), Some(node_id)) = (&status.ticket, &status.node_id) {
             lock::set_remote(
@@ -165,8 +186,7 @@ impl Helper {
         }
     }
 
-    /// Clear the lock's entry, but only if it is ours. Another app may be
-    /// running a tunnel, and stopping ours must not make theirs invisible.
+    /// Only if it's ours: another app's tunnel must stay visible.
     fn unpublish(&self) {
         if let Some(info) = lock::remote(self.layout.root()) {
             if info.owner_pid == std::process::id() {
@@ -213,8 +233,7 @@ mod tests {
     #[test]
     fn another_processs_tunnel_is_reported_and_reused() {
         let root = tempfile::tempdir().unwrap();
-        // A live pid that isn't ours: our parent, the test runner's shell
-        // or cargo, which outlives this test.
+        // A live pid that isn't ours.
         let other = std::os::unix::process::parent_id();
         let info = RemoteInfo {
             ticket: "endpointabc".into(),
@@ -228,13 +247,20 @@ mod tests {
         assert_eq!(status["enabled"], true);
         assert_eq!(status["ticket"], "endpointabc");
 
-        // Starting hands back the same ticket instead of a second tunnel.
         let started = helper.handle(Command::RemoteStart { port: None }).unwrap();
         assert_eq!(started["ticket"], "endpointabc");
         assert!(helper.ours().is_none());
 
-        // And stopping ours leaves theirs alone.
-        helper.handle(Command::RemoteStop).unwrap();
+        let err = helper
+            .handle(Command::RemoteConnect {
+                peer: "abc".into(),
+                port: None,
+            })
+            .unwrap_err();
+        assert!(err.to_string().contains("Another app"));
+
+        let stopped = helper.handle(Command::RemoteStop).unwrap();
+        assert_eq!(stopped["enabled"], false);
         assert!(lock::remote(root.path()).is_some());
     }
 }
