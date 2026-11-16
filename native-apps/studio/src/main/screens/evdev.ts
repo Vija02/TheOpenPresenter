@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import { closeSync, constants, existsSync, openSync, readSync } from "fs";
 import { readFile } from "fs/promises";
 
-import { RuntimeClient } from "../runtime/client";
+import { HelperClient } from "../runtime/helper";
 
 /** Linux input devices, read straight from /dev/input. */
 
@@ -94,10 +94,10 @@ export async function listInputDevices(): Promise<InputDevice[]> {
 // -- Exclusive grab, so presses don't also reach the focused window ------------
 
 /** Whether grabbing can work at all: the sidecar that does it is there. */
-export const canGrab = (): boolean => existsSync(RuntimeClient.binaryPath());
+export const canGrab = (): boolean => existsSync(HelperClient.binaryPath());
 
 /**
- * The runtime manager sidecar does the EVIOCGRAB on our fd, passed as its
+ * The top-studio-helper sidecar does the EVIOCGRAB on our fd, passed as its
  * fd 3, and exits. The grab belongs to the open device, so it lasts until we
  * close it; Node can't make the ioctl itself. In the background, so the main
  * process never waits on it.
@@ -105,7 +105,7 @@ export const canGrab = (): boolean => existsSync(RuntimeClient.binaryPath());
 function grab(fd: number): Promise<string | null> {
   return new Promise((resolve) => {
     let stderr = "";
-    const child = spawn(RuntimeClient.binaryPath(), ["grab-input"], {
+    const child = spawn(HelperClient.binaryPath(), ["grab-input"], {
       stdio: ["ignore", "ignore", "pipe", fd],
       timeout: 5000,
     });

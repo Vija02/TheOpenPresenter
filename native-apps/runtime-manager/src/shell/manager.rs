@@ -40,9 +40,6 @@ pub struct Manager {
     holders: BTreeSet<String>,
     /// What the running runtime is serving
     running: Option<(u16, String)>,
-    /// Remote access
-    #[cfg(feature = "remote")]
-    remote: Option<crate::remote::Remote>,
     marked_good: bool,
     /// When each recent automatic restart happened, for the restart budget.
     restarts: Vec<Instant>,
@@ -70,8 +67,6 @@ impl Manager {
             supervisor: None,
             holders: BTreeSet::new(),
             running: None,
-            #[cfg(feature = "remote")]
-            remote: None,
             marked_good: false,
             restarts: Vec::new(),
             preferred_port: None,
@@ -143,9 +138,6 @@ impl Manager {
                 state.save(&path)?;
                 Ok(serde_json::json!({ "migratedSchemaVersion": state.migrated_schema_version }))
             }
-            Command::RemoteStart => self.remote_start(),
-            Command::RemoteStop => self.remote_stop(),
-            Command::RemoteStatus => self.remote_status(),
             Command::Shutdown => {
                 let unheld = self.release_all();
 
@@ -172,110 +164,6 @@ impl Manager {
             "runningVersion": self.running.as_ref().map(|(_, version)| version),
             "managerVersion": env!("CARGO_PKG_VERSION"),
         }))
-    }
-
-    /// Start peer-to-peer remote access to the running server.
-    ///
-    /// Requires the server to be up: the tunnel forwards to its port, and
-    /// a tunnel to nothing would hand out a ticket that fails on first use.
-    #[cfg(feature = "remote")]
-    fn remote_start(&mut self) -> Result<serde_json::Value> {
-        let Some((port, _)) = self.running else {
-            bail!("Start the server before turning on remote access");
-        };
-
-        // Another process sharing this runtime already has a tunnel to it.
-        // Hand back the same ticket rather than opening a second one to
-        // the same server, which would waste a relay connection and give
-        // out two addresses for one machine.
-        if let Some(info) = crate::storage::lock::remote(self.layout.root()) {
-            if info.owner_pid != std::process::id() {
-                return Ok(serde_json::json!({
-                    "enabled": true,
-                    "ticket": info.ticket,
-                    "node_id": info.node_id,
-                }));
-            }
-        }
-
-        let remote = match &mut self.remote {
-            Some(remote) => remote,
-            None => {
-                self.remote = Some(crate::remote::Remote::new()?);
-                self.remote.as_mut().expect("just set")
-            }
-        };
-
-        let target = std::net::SocketAddr::from(([127, 0, 0, 1], port));
-        let status = remote.start(target, self.layout.state_dir())?;
-
-        // Publish it so other processes sharing this runtime can see that
-        // remote access is on and show the same ticket.
-        if let (Some(ticket), Some(node_id)) = (&status.ticket, &status.node_id) {
-            crate::storage::lock::set_remote(
-                self.layout.root(),
-                Some(crate::storage::lock::RemoteInfo {
-                    ticket: ticket.clone(),
-                    node_id: node_id.clone(),
-                    owner_pid: std::process::id(),
-                }),
-            );
-        }
-
-        Ok(serde_json::to_value(status)?)
-    }
-
-    #[cfg(feature = "remote")]
-    fn remote_stop(&mut self) -> Result<serde_json::Value> {
-        if let Some(remote) = &mut self.remote {
-            remote.stop();
-        }
-        // Only clear the shared entry if this process owns the tunnel.
-        // Another app may be running one, and stopping ours must not make
-        // theirs invisible.
-        if let Some(info) = crate::storage::lock::remote(self.layout.root()) {
-            if info.owner_pid == std::process::id() {
-                crate::storage::lock::set_remote(self.layout.root(), None);
-            }
-        }
-        Ok(serde_json::to_value(crate::remote::RemoteStatus::off())?)
-    }
-
-    #[cfg(feature = "remote")]
-    fn remote_status(&self) -> Result<serde_json::Value> {
-        // Ours if we opened it, otherwise whatever the lock says: a
-        // second app joining a shared runtime has to see the tunnel the
-        // first one opened, not report remote access as off.
-        let status = match &self.remote {
-            Some(remote) if remote.status().enabled => remote.status(),
-            _ => match crate::storage::lock::remote(self.layout.root()) {
-                Some(info) => crate::remote::RemoteStatus {
-                    enabled: true,
-                    ticket: Some(info.ticket),
-                    node_id: Some(info.node_id),
-                },
-                None => crate::remote::RemoteStatus::off(),
-            },
-        };
-        Ok(serde_json::to_value(status)?)
-    }
-
-    // Without the feature the commands still exist on the protocol, so a
-    // shell built against a full manager gets a clear answer instead of an
-    // unknown-command error.
-    #[cfg(not(feature = "remote"))]
-    fn remote_start(&mut self) -> Result<serde_json::Value> {
-        bail!("This build has no remote access support")
-    }
-
-    #[cfg(not(feature = "remote"))]
-    fn remote_stop(&mut self) -> Result<serde_json::Value> {
-        Ok(serde_json::json!({ "enabled": false }))
-    }
-
-    #[cfg(not(feature = "remote"))]
-    fn remote_status(&self) -> Result<serde_json::Value> {
-        Ok(serde_json::json!({ "enabled": false, "supported": false }))
     }
 
     /// Download a version and make it present on disk.
@@ -761,21 +649,6 @@ impl Manager {
         }
     }
 
-    /// An open tunnel forwards to the port it was opened against, so a
-    /// runtime that came back elsewhere needs a new one.
-    fn retarget_remote(&mut self) {
-        #[cfg(feature = "remote")]
-        {
-            let on = self.remote.as_ref().is_some_and(|r| r.status().enabled);
-            if on {
-                let _ = self.remote_stop();
-                if let Err(e) = self.remote_start() {
-                    tracing::warn!("Could not reopen remote access after a restart: {e:#}");
-                }
-            }
-        }
-    }
-
     fn may_restart(&mut self) -> bool {
         self.restarts.retain(|at| at.elapsed() < RESTART_WINDOW);
         self.restarts.len() < MAX_RESTARTS
@@ -801,10 +674,9 @@ impl Manager {
                 for name in names {
                     let _ = self.start(Some(name));
                 }
+                // A remote tunnel needs nothing here: top-studio-helper reads the
+                // port from the lock file on every connection.
                 let new_port = result["httpPort"].as_u64().unwrap_or_default() as u16;
-                if new_port != port {
-                    self.retarget_remote();
-                }
                 emit(&Event::Restarted {
                     url: result["url"].as_str().unwrap_or_default().to_string(),
                     port: new_port,

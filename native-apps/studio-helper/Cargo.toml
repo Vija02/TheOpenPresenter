@@ -1,0 +1,44 @@
+[package]
+name = "top-studio-helper"
+version = "0.1.0"
+description = "Native helper for TheOpenPresenter Studio: peer-to-peer remote access and OS calls Node can't make"
+authors = ["vija02"]
+edition = "2021"
+license = "AGPL-3.0"
+
+[[bin]]
+name = "top-studio-helper"
+path = "src/main.rs"
+
+[lib]
+name = "top_studio_helper"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# The runtime root's layout and lock file, shared with the manager so both
+# agree on where the identity lives and which port the server is on.
+top-runtime-manager = { path = "../runtime-manager" }
+
+# Remote access over iroh
+iroh = "1.2"
+iroh-base = "1.2"
+iroh-tickets = "1.0"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "sync", "time", "macros"] }
+tokio-util = "0.7"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

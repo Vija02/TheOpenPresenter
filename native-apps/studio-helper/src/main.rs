@@ -1,0 +1,173 @@
+//! Native helper for TheOpenPresenter Studio.
+
+use std::io::{BufRead, IsTerminal, Write};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
+
+use anyhow::Result;
+use top_runtime_manager::Layout;
+use top_studio_helper::{
+    cli,
+    protocol::{encode, parse_line, Command, Response},
+    service::Helper,
+};
+
+static INTERRUPTED: AtomicBool = AtomicBool::new(false);
+
+#[cfg(unix)]
+fn install_interrupt_handler() {
+    extern "C" fn handle(_: libc::c_int) {
+        INTERRUPTED.store(true, Ordering::SeqCst);
+    }
+    unsafe {
+        libc::signal(libc::SIGINT, handle as *const () as libc::sighandler_t);
+        libc::signal(libc::SIGTERM, handle as *const () as libc::sighandler_t);
+    }
+}
+
+#[cfg(windows)]
+fn install_interrupt_handler() {
+    // Windows terminates on Ctrl-C by default. The lock entry is dropped by
+    // the next reader once our pid is gone, so nothing is left advertised.
+}
+
+fn main() -> Result<()> {
+    tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
+        .with_ansi(std::io::stderr().is_terminal())
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_env("TOP_STUDIO_HELPER_LOG")
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
+
+    let parsed = cli::parse(std::env::args().skip(1), std::io::stdin().is_terminal());
+
+    match parsed.cli {
+        cli::Cli::Help => {
+            print!("{}", cli::USAGE);
+            Ok(())
+        }
+        cli::Cli::Version => {
+            println!("top-studio-helper {}", env!("CARGO_PKG_VERSION"));
+            Ok(())
+        }
+        // No layout needed, and must stay instant: the app waits on it.
+        cli::Cli::GrabInput => top_studio_helper::input::grab_input(),
+        command => {
+            let layout = match parsed.options.root.clone() {
+                Some(root) => Layout::new(root),
+                None => Layout::discover()?,
+            };
+            let helper = Helper::new(layout);
+            match command {
+                cli::Cli::Serve => serve(helper),
+                cli::Cli::RemoteStart => remote_start(helper, parsed.options),
+                cli::Cli::RemoteStatus => remote_status(helper, parsed.options),
+                _ => unreachable!("handled above"),
+            }
+        }
+    }
+}
+
+fn remote_status(mut helper: Helper, options: cli::Options) -> Result<()> {
+    let result = helper.handle(Command::RemoteStatus)?;
+    if options.json {
+        println!("{}", serde_json::to_string_pretty(&result)?);
+    } else if result["enabled"] == true {
+        println!("Remote access is on.");
+        println!("\nTicket:\n{}", result["ticket"].as_str().unwrap_or(""));
+    } else {
+        println!("Remote access is off.");
+    }
+    Ok(())
+}
+
+fn remote_start(mut helper: Helper, options: cli::Options) -> Result<()> {
+    let result = helper.handle(Command::RemoteStart { port: options.port })?;
+    if options.json {
+        println!("{}", serde_json::to_string(&result)?);
+    } else {
+        println!("Remote access is on. Share this ticket:\n");
+        println!("{}", result["ticket"].as_str().unwrap_or(""));
+        println!("\nPress Ctrl-C to stop.\n");
+    }
+
+    install_interrupt_handler();
+    while !INTERRUPTED.load(Ordering::SeqCst) {
+        helper.pump();
+        std::thread::sleep(Duration::from_millis(200));
+    }
+
+    println!("Stopping…");
+    helper.shutdown();
+    Ok(())
+}
+
+/// The long-lived NDJSON loop the desktop shell drives.
+fn serve(mut helper: Helper) -> Result<()> {
+    tracing::info!("Helper ready (root: {})", helper.layout.root().display());
+
+    // Read stdin on its own thread so the loop can wake without a command.
+    let (lines_tx, lines) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        for line in std::io::stdin().lock().lines() {
+            if lines_tx.send(line).is_err() {
+                break;
+            }
+        }
+    });
+
+    loop {
+        let line = match lines.recv_timeout(Duration::from_millis(500)) {
+            Ok(Ok(line)) => line,
+            // A line that isn't UTF-8 can't be a command. Skip it, as with
+            // JSON that doesn't parse, rather than exit without cleaning up.
+            Ok(Err(e)) if e.kind() == std::io::ErrorKind::InvalidData => {
+                tracing::warn!("Ignoring a line that isn't UTF-8");
+                continue;
+            }
+            // Any other read error means stdin is unusable: treat it as closed.
+            Ok(Err(e)) => {
+                tracing::warn!("Reading stdin failed: {e}");
+                break;
+            }
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+                helper.pump();
+                continue;
+            }
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+        };
+        helper.pump();
+
+        let Some(parsed) = parse_line(&line) else {
+            continue;
+        };
+        let request = match parsed {
+            Ok(request) => request,
+            Err(e) => {
+                println!("{}", encode(&Response::err(None, e)));
+                std::io::stdout().flush()?;
+                continue;
+            }
+        };
+
+        let id = request.id;
+        let shutdown = matches!(request.command, Command::Shutdown);
+        let response = match helper.handle(request.command) {
+            Ok(result) => Response::ok(id, result),
+            Err(e) => Response::err(id, format!("{e:#}")),
+        };
+        println!("{}", encode(&response));
+        std::io::stdout().flush()?;
+
+        if shutdown {
+            return Ok(());
+        }
+    }
+
+    // stdin closed: the shell is gone. Take the tunnel down with it rather
+    // than leave a ticket advertised for a process nobody controls.
+    helper.shutdown();
+    Ok(())
+}

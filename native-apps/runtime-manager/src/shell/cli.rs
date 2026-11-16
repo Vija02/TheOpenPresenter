@@ -48,15 +48,6 @@ pub enum Cli {
         /// Show the previous run's log instead of the current one.
         previous: bool,
     },
-    /// Start peer-to-peer remote access to the running server.
-    RemoteStart,
-    /// Stop remote access
-    RemoteStop,
-    /// Report whether remote access is on, and the ticket if it is.
-    RemoteStatus,
-    /// Grab the input device open on fd 3 for the app, then exit. The grab
-    /// stays with the open device, which the app keeps open.
-    GrabInput,
     /// Print usage.
     Help,
     /// Print the version.
@@ -179,18 +170,11 @@ where
             force: options.force,
         },
         Some("prune") => Cli::Prune,
-        Some("grab-input") => Cli::GrabInput,
         Some("paths") => Cli::Paths,
         Some("log") | Some("logs") => Cli::Log {
             follow: options.follow,
             lines: options.lines.unwrap_or(200),
             previous: options.previous,
-        },
-        Some("remote") => match positional.get(1).map(String::as_str) {
-            Some("stop") => Cli::RemoteStop,
-            Some("status") | None => Cli::RemoteStatus,
-            Some("start") | Some("on") => Cli::RemoteStart,
-            Some(_) => Cli::RemoteStatus,
         },
         Some("--version" | "-V" | "version") => Cli::Version,
         Some("--help" | "-h" | "help") => Cli::Help,
@@ -243,11 +227,6 @@ SUBCOMMANDS:
     log                Show the runtime log. --follow to keep watching,
                        --lines N for a different amount (default 200),
                        --previous for the run before this one.
-    remote [start|stop|status]
-                       Peer-to-peer access to the running server, for
-                       reaching it from outside the building without port
-                       forwarding. `start` runs in the foreground and
-                       prints a ticket to share.
 
 OPTIONS:
     --root <DIR>       Where runtimes and data live.
@@ -290,12 +269,6 @@ mod tests {
         // The desktop shell spawns us with piped stdio and sends commands
         // without a subcommand. That must keep working.
         assert_eq!(parse_args(&[], false).cli, Cli::Serve);
-    }
-
-    #[test]
-    fn grab_input_is_its_own_subcommand() {
-        // Spawned from a pipe by the app; must not fall through to serve.
-        assert_eq!(parse_args(&["grab-input"], false).cli, Cli::GrabInput);
     }
 
     #[test]
@@ -480,40 +453,11 @@ mod tests {
         assert!(parsed.options.force);
     }
 
+    /// Remote access moved to top-studio-helper. The old subcommand must not fall
+    /// through to anything that does work.
     #[test]
-    fn remote_defaults_to_status() {
-        assert!(matches!(
-            parse_args(&["remote"], true).cli,
-            Cli::RemoteStatus
-        ));
-        assert!(matches!(
-            parse_args(&["remote", "status"], true).cli,
-            Cli::RemoteStatus
-        ));
-    }
-
-    #[test]
-    fn remote_start_and_stop() {
-        assert!(matches!(
-            parse_args(&["remote", "start"], true).cli,
-            Cli::RemoteStart
-        ));
-        assert!(matches!(
-            parse_args(&["remote", "on"], true).cli,
-            Cli::RemoteStart
-        ));
-        assert!(matches!(
-            parse_args(&["remote", "stop"], true).cli,
-            Cli::RemoteStop
-        ));
-    }
-
-    /// A typo falls back to status rather than silently starting a tunnel.
-    #[test]
-    fn remote_typo_is_not_a_silent_start() {
-        assert!(matches!(
-            parse_args(&["remote", "sttart"], true).cli,
-            Cli::RemoteStatus
-        ));
+    fn remote_is_no_longer_a_subcommand() {
+        assert_eq!(parse_args(&["remote", "start"], true).cli, Cli::Help);
+        assert_eq!(parse_args(&["grab-input"], true).cli, Cli::Help);
     }
 }

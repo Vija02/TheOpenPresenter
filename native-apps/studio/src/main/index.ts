@@ -2,6 +2,7 @@ import { BrowserWindow, app, screen } from "electron";
 
 import { registerIPC } from "./ipc";
 import { runtime } from "./runtime/client";
+import { helper } from "./runtime/helper";
 import { registerTicket } from "./runtime/remote";
 import { openScreensOnLaunch, syncAll as syncScreens } from "./screens/windows";
 import { chromiumDir, runtimeRoot } from "./settings/paths";
@@ -118,6 +119,7 @@ if (!gotLock) {
     setupTray();
     setupUpdates();
     forwardRuntimeEvents();
+    resumeRemoteAfterHelperCrash();
 
     const onDisplaysChanged = () => {
       repositionPresentWindows();
@@ -159,6 +161,9 @@ if (!gotLock) {
     // `quitAndInstall`. Replacing that with a plain `app.quit()` here would
     // restart the app on the old version.
     if (isInstallingUpdate()) return;
+    // Takes the tunnel down and clears it from the lock. Not awaited: the
+    // helper also exits on its own when our end of its stdin closes.
+    void helper.shutdown();
     if (shuttingDown || !runtime.isRunning) {
       void runtime.shutdown();
       return;
@@ -301,13 +306,36 @@ function startLocalInBackground(settings: Settings): void {
  */
 async function resumeRemoteAccess(): Promise<void> {
   try {
-    const status = await runtime.startRemote();
+    const status = await helper.startRemote();
     if (status.enabled && status.ticket && status.node_id) {
       await registerTicket(status.ticket, status.node_id);
     }
   } catch (err) {
     logShell("error", "[main] failed to resume remote access:", err);
   }
+}
+
+/** Helper crashes that bring remote access back, and over what window. */
+const MAX_HELPER_RESUMES = 3;
+const HELPER_RESUME_WINDOW_MS = 5 * 60 * 1000;
+
+/**
+ * A helper that died took the tunnel with it. Start it again if remote
+ * access is meant to be on, but give up on one that dies every time.
+ */
+function resumeRemoteAfterHelperCrash(): void {
+  let resumes: number[] = [];
+  helper.on("unexpected-exit", () => {
+    if (getSettings().remoteAccess === false || !runtime.url) return;
+    const now = Date.now();
+    resumes = resumes.filter((at) => now - at < HELPER_RESUME_WINDOW_MS);
+    if (resumes.length >= MAX_HELPER_RESUMES) {
+      logShell("error", "[main] helper keeps exiting; remote access is off");
+      return;
+    }
+    resumes.push(now);
+    setTimeout(() => void resumeRemoteAccess(), 1000);
+  });
 }
 
 /** Relay manager events to every window showing the shell UI. */
@@ -379,8 +407,8 @@ function forwardRuntimeEvents(): void {
       crashedUrl = null;
       serverUrl = payload.url;
       reloadServerWindows(previous, payload.url);
-      // A tunnel opened against the old port was reopened by the manager,
-      // possibly with a new ticket the cloud needs to hear about.
+      // The helper's tunnel follows the new port by itself. Re-registering
+      // is cheap and covers a tunnel that never came up the first time.
       if (previous !== payload.url && getSettings().remoteAccess !== false) {
         void resumeRemoteAccess();
       }
@@ -403,7 +431,8 @@ function forwardRuntimeEvents(): void {
         if (!started.reused || started.url !== previous) {
           reloadServerWindows(previous, started.url);
         }
-        // The tunnel lived in the manager that died.
+        // The tunnel lives in the helper, so it usually survived; this
+        // brings it back if the runtime it pointed at did not.
         if (getSettings().remoteAccess !== false) void resumeRemoteAccess();
       } catch (err) {
         logShell(

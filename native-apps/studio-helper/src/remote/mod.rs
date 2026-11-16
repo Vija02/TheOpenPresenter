@@ -12,7 +12,7 @@ use tokio::net::TcpStream;
 use tokio::select;
 use tokio::sync::oneshot;
 
-use forward::forward_bidi;
+pub use forward::forward_bidi;
 
 /// Dumbpipe's ALPN and handshake, so the `dumbpipe` CLI can talk to us directly.
 pub const ALPN: &[u8] = b"DUMBPIPEV0";
@@ -21,6 +21,32 @@ pub const HANDSHAKE: [u8; 5] = *b"hello";
 /// How long to wait for a home relay before giving up and carrying on.
 /// A bridge without a relay still works on the local network.
 const ONLINE_TIMEOUT: Duration = Duration::from_secs(10);
+
+/// Where incoming tunnel connections are forwarded to.
+#[derive(Debug, Clone)]
+pub enum Target {
+    /// A fixed local port.
+    Port(u16),
+    /// Whatever port the runtime under this root is serving on right now.
+    ///
+    /// Looked up per connection rather than once, so a runtime that crashes
+    /// and comes back on another port keeps working through the same tunnel,
+    /// with the same ticket, without anyone having to restart it.
+    Runtime(PathBuf),
+}
+
+impl Target {
+    /// The local address to forward the next connection to.
+    pub fn resolve(&self) -> Result<SocketAddr> {
+        let port = match self {
+            Target::Port(port) => *port,
+            Target::Runtime(root) => top_runtime_manager::storage::lock::read(root)
+                .and_then(|lock| lock.http_port)
+                .context("The local server is not running")?,
+        };
+        Ok(SocketAddr::from(([127, 0, 0, 1], port)))
+    }
+}
 
 /// A running peer-to-peer tunnel to the local server.
 pub struct Bridge {
@@ -48,7 +74,7 @@ impl Bridge {
 }
 
 /// The node's long-lived identity.
-fn get_or_create_secret(data_dir: &Path) -> Result<SecretKey> {
+pub fn get_or_create_secret(data_dir: &Path) -> Result<SecretKey> {
     let key_path = data_dir.join("iroh_secret_key");
 
     if key_path.is_file() {
@@ -75,7 +101,7 @@ fn get_or_create_secret(data_dir: &Path) -> Result<SecretKey> {
 }
 
 /// Serve one incoming tunnel connection by splicing it onto the local port.
-async fn handle_connection(accepting: Accepting, target: SocketAddr) -> Result<()> {
+async fn handle_connection(accepting: Accepting, target: Arc<Target>) -> Result<()> {
     let connection = accepting.await.context("Error accepting the connection")?;
     let remote = connection.remote_id();
     tracing::info!("Tunnel connection from {remote}");
@@ -93,9 +119,15 @@ async fn handle_connection(accepting: Accepting, target: SocketAddr) -> Result<(
         anyhow::bail!("Invalid handshake from {remote}");
     }
 
-    let tcp = TcpStream::connect(target)
+    // The lock file read can shell out on Windows to check a pid, so keep
+    // it off the async workers.
+    let addr = tokio::task::spawn_blocking(move || target.resolve())
         .await
-        .with_context(|| format!("Error connecting to the local server at {target}"))?;
+        .context("Failed to look up the local server")??;
+
+    let tcp = TcpStream::connect(addr)
+        .await
+        .with_context(|| format!("Error connecting to the local server at {addr}"))?;
 
     let (read, write) = tcp.into_split();
     forward_bidi(read, write, recv, send).await?;
@@ -105,7 +137,7 @@ async fn handle_connection(accepting: Accepting, target: SocketAddr) -> Result<(
 }
 
 /// Start a tunnel forwarding to a local TCP port.
-pub async fn start(target: SocketAddr, data_dir: PathBuf) -> Result<Bridge> {
+pub async fn start(target: Target, data_dir: PathBuf) -> Result<Bridge> {
     let secret = get_or_create_secret(&data_dir)?;
 
     // `N0` is the production preset: n0's relays plus DNS-based discovery,
@@ -131,11 +163,12 @@ pub async fn start(target: SocketAddr, data_dir: PathBuf) -> Result<Bridge> {
     let node_id = addr.id.to_string();
     let ticket = EndpointTicket::new(addr.clone()).to_string();
 
-    tracing::info!("Remote access ready, forwarding to {target}");
+    tracing::info!("Remote access ready, forwarding to {target:?}");
     tracing::info!("Node id: {node_id}");
 
     let (shutdown_tx, mut shutdown_rx) = oneshot::channel::<()>();
 
+    let target = Arc::new(target);
     let accept_endpoint = endpoint.clone();
     tokio::spawn(async move {
         loop {
@@ -152,9 +185,10 @@ pub async fn start(target: SocketAddr, data_dir: PathBuf) -> Result<Bridge> {
                             continue;
                         }
                     };
+                    let target = target.clone();
                     tokio::spawn(async move {
                         if let Err(err) = handle_connection(accepting, target).await {
-                            tracing::warn!("Tunnel connection failed: {err}");
+                            tracing::warn!("Tunnel connection failed: {err:#}");
                         }
                     });
                 }
@@ -222,7 +256,7 @@ impl Remote {
         }
     }
 
-    pub fn start(&mut self, target: SocketAddr, data_dir: PathBuf) -> Result<RemoteStatus> {
+    pub fn start(&mut self, target: Target, data_dir: PathBuf) -> Result<RemoteStatus> {
         if self.bridge.is_some() {
             // Already on: hand back the existing ticket rather than
             // building a second tunnel to the same server.
@@ -237,5 +271,47 @@ impl Remote {
         if let Some(mut bridge) = self.bridge.take() {
             self.runtime.block_on(bridge.shutdown());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_fixed_port_resolves_to_loopback() {
+        let addr = Target::Port(4321).resolve().unwrap();
+        assert_eq!(addr, SocketAddr::from(([127, 0, 0, 1], 4321)));
+    }
+
+    #[test]
+    fn a_runtime_with_no_lock_is_not_running() {
+        let root = tempfile::tempdir().unwrap();
+        let err = Target::Runtime(root.path().to_path_buf())
+            .resolve()
+            .unwrap_err();
+        assert!(err.to_string().contains("not running"));
+    }
+
+    #[test]
+    fn a_runtime_target_follows_the_port_in_the_lock() {
+        let root = tempfile::tempdir().unwrap();
+        let lock = |port| top_runtime_manager::storage::lock::RuntimeLock {
+            // Our own pid, so the lock reads as live.
+            manager_pid: std::process::id(),
+            runtime_pid: None,
+            http_port: Some(port),
+            version: None,
+            holders: Vec::new(),
+            remote: None,
+        };
+        let target = Target::Runtime(root.path().to_path_buf());
+
+        top_runtime_manager::storage::lock::write(root.path(), &lock(5000)).unwrap();
+        assert_eq!(target.resolve().unwrap().port(), 5000);
+
+        // A runtime that restarted elsewhere: the same target follows it.
+        top_runtime_manager::storage::lock::write(root.path(), &lock(5001)).unwrap();
+        assert_eq!(target.resolve().unwrap().port(), 5001);
     }
 }

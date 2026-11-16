@@ -54,4 +54,36 @@ describe("offline mode is usable straight after a dev build", () => {
     expect(reply, `no response in output:\n${output}`).toBeTruthy();
     expect(reply.ok).toBe(true);
   });
+
+  it("prepare:sidecar stages top-studio-helper, and it speaks its protocol", () => {
+    // Remote access and clicker grabbing live in the helper, so a dev build
+    // without it looks fine until either is used.
+    const binary = join(DESKTOP, "resources", `top-studio-helper${EXE}`);
+    expect(
+      existsSync(binary),
+      `Expected the helper at ${binary}. Run \`npm run prepare:sidecar\`.`,
+    ).toBe(true);
+
+    const output = execFileSync(binary, ["--root", "/tmp/top-dev-check"], {
+      input: '{"id":1,"cmd":"remote_status"}\n{"cmd":"shutdown"}\n',
+      encoding: "utf8",
+      env: { PATH: process.env.PATH ?? "" },
+      timeout: 20_000,
+    });
+
+    const reply = output
+      .split("\n")
+      .map((line) => {
+        try {
+          return JSON.parse(line);
+        } catch {
+          return null;
+        }
+      })
+      .find((msg) => msg?.id === 1);
+
+    expect(reply, `no response in output:\n${output}`).toBeTruthy();
+    expect(reply.ok).toBe(true);
+    expect(reply.result.enabled).toBe(false);
+  });
 });

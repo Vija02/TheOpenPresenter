@@ -14,6 +14,7 @@ import { refreshMenu } from "../shell/menu";
 import { relaunchApp } from "../shell/updates";
 import { showAppWindow } from "../shell/windows";
 import { runtime } from "./client";
+import { helper } from "./helper";
 import { registerTicket } from "./remote";
 
 /** Installing, activating, starting and inspecting the local runtime. */
@@ -131,10 +132,11 @@ export function registerRuntimeIPC(): void {
 
   // -- Remote access --------------------------------------------------------
 
-  ipcMain.handle("runtime:remote-status", () => runtime.remoteStatus());
+  // The tunnel lives in top-studio-helper; the IPC names stay for the renderer.
+  ipcMain.handle("runtime:remote-status", () => helper.remoteStatus());
 
   ipcMain.handle("runtime:remote-start", async () => {
-    const status = await runtime.startRemote();
+    const status = await helper.startRemote();
     logShell("info", "[remote] tunnel started, enabled=" + status.enabled);
 
     if (status.enabled && status.ticket && status.node_id) {
@@ -146,7 +148,7 @@ export function registerRuntimeIPC(): void {
   });
 
   ipcMain.handle("runtime:remote-stop", async () => {
-    const status = await runtime.stopRemote();
+    const status = await helper.stopRemote();
     logShell("info", "[remote] tunnel stopped");
     updateSettings({ remoteAccess: false });
     return status;
