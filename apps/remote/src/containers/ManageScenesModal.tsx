@@ -95,11 +95,11 @@ const ManageScenesModal = () => {
     >
       <DialogContent size="md">
         <DialogHeader>
-          <DialogTitle>Manage scenes</DialogTitle>
+          <DialogTitle>Manage components</DialogTitle>
         </DialogHeader>
         <DialogBody>
           {scenes.length === 0 ? (
-            <p className="py-4 text-sm text-secondary">No scenes yet.</p>
+            <p className="py-4 text-sm text-secondary">No components yet.</p>
           ) : (
             <DndContext
               sensors={sensors}
@@ -137,7 +137,7 @@ const ManageScenesModal = () => {
             }}
           >
             <VscAdd />
-            Add scene
+            Add component
           </Button>
           <Button variant="outline" onClick={onToggle}>
             Done
@@ -201,7 +201,7 @@ const SceneRow = ({
         // Remounts when the name changes elsewhere, so it never shows stale text
         key={name}
         defaultValue={name}
-        aria-label="Scene name"
+        aria-label="Component name"
         data-scene-name-input
         className="h-8 flex-1 min-w-0"
         onBlur={(e) => {

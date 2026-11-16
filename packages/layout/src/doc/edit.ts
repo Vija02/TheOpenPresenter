@@ -452,7 +452,7 @@ export const hostElementDisplayName = (element: HostElement): string => {
     case "screen":
       return `Screen ${source.rendererId}`;
     case "scene":
-      return `Scene on screen ${source.rendererId}`;
+      return `Component on screen ${source.rendererId}`;
     case "plugin":
       return `Plugin on screen ${source.rendererId}`;
     case "self":

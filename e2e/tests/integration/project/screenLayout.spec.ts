@@ -68,7 +68,7 @@ const openLayoutEditor = async (page: any) => {
 // the scene or screen they point at.
 const addLiveContent = async (page: any) => {
   await page.getByRole("button", { name: "Add live content" }).click();
-  await page.getByRole("button", { name: "Unnamed scene" }).click();
+  await page.getByRole("button", { name: "Unnamed component" }).click();
 };
 
 test.describe("Screen layouts", () => {
