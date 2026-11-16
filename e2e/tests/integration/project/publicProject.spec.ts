@@ -87,14 +87,14 @@ test.describe("Public Project", () => {
       await unauthPage.locator(".rt--top-bar--scene-settings-icon").click();
       const unauthSceneDialog = unauthPage.getByRole("dialog");
       await expect(
-        unauthSceneDialog.getByRole("heading", { name: "Scene Settings" }),
+        unauthSceneDialog.getByRole("heading", { name: "Component Settings" }),
       ).toBeVisible();
 
       const unauthSceneNameInput = unauthSceneDialog.getByLabel("Name");
       await unauthSceneNameInput.fill("Renamed By Public Viewer");
       await unauthSceneDialog.getByRole("button", { name: "Save" }).click();
       await expect(
-        unauthSceneDialog.getByRole("heading", { name: "Scene Settings" }),
+        unauthSceneDialog.getByRole("heading", { name: "Component Settings" }),
       ).not.toBeVisible();
 
       // The owner's sidebar should reflect the unauth viewer's rename.

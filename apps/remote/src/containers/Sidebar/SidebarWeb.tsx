@@ -69,8 +69,8 @@ export const SidebarContent = ({
             <>
               <button
                 type="button"
-                title="Add scene"
-                aria-label="Add scene"
+                title="Add component"
+                aria-label="Add component"
                 onClick={() => {
                   closeMobileSidebar();
                   if (location !== "/new") navigate("/new");
@@ -82,8 +82,8 @@ export const SidebarContent = ({
                 toggler={({ onToggle }) => (
                   <button
                     type="button"
-                    title="Manage scenes"
-                    aria-label="Manage scenes"
+                    title="Manage components"
+                    aria-label="Manage components"
                     onClick={onToggle}
                   >
                     <VscSettingsGear />

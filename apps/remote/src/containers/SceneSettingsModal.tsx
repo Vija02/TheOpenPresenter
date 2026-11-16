@@ -83,7 +83,7 @@ const SceneSettingsModal = ({ selectedScene }: SceneSettingsModalPropTypes) => {
           render={<form onSubmit={form.handleSubmit(handleSubmit)} />}
         >
           <DialogHeader>
-            <DialogTitle>Scene Settings</DialogTitle>
+            <DialogTitle>Component Settings</DialogTitle>
           </DialogHeader>
           <DialogBody>
             <div className="stack-col items-start py-2">

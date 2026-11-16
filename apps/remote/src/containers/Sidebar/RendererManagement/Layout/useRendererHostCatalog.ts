@@ -126,11 +126,11 @@ export const useRendererHostCatalog = (outputId: string): LayoutHostCatalog => {
 
         sources.push({
           id: `scene:${sourceRendererId}:${sceneId}`,
-          label: scene.name || "Unnamed scene",
+          label: scene.name || "Unnamed component",
           group:
             sourceRendererId === MAIN_PROGRAM_ID
-              ? "Scenes"
-              : `Scenes on program ${sourceRendererId}`,
+              ? "Components"
+              : `Components on program ${sourceRendererId}`,
           source: {
             kind: "scene",
             rendererId: sourceRendererId,

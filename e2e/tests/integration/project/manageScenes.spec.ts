@@ -73,7 +73,7 @@ test.describe("Manage scenes", () => {
 
     // Header actions only show while the section is hovered
     await page.getByTestId("scenes-section").hover();
-    await page.getByRole("button", { name: "Add scene" }).click();
+    await page.getByRole("button", { name: "Add component" }).click();
     await expect(page).toHaveURL(/\/new/);
   });
 
@@ -85,10 +85,10 @@ test.describe("Manage scenes", () => {
     await page.goto(`/app/${ORG_SLUG}/${PROJECT_SLUG}`);
 
     await page.getByTestId("scenes-section").hover();
-    await page.getByRole("button", { name: "Manage scenes" }).click();
+    await page.getByRole("button", { name: "Manage components" }).click();
     await page
       .getByRole("dialog")
-      .getByRole("button", { name: "Add scene" })
+      .getByRole("button", { name: "Add component" })
       .click();
 
     await expect(page.getByRole("dialog")).toBeHidden();
@@ -103,12 +103,12 @@ test.describe("Manage scenes", () => {
       .toEqual(["Welcome", "Worship", "Sermon"]);
 
     await page.getByTestId("scenes-section").hover();
-    await page.getByRole("button", { name: "Manage scenes" }).click();
+    await page.getByRole("button", { name: "Manage components" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByTestId("manage-scenes-row")).toHaveCount(3);
 
     // Rename: saved when leaving the field
-    const nameInputs = dialog.getByRole("textbox", { name: "Scene name" });
+    const nameInputs = dialog.getByRole("textbox", { name: "Component name" });
     await nameInputs.nth(0).fill("Announcements");
     await nameInputs.nth(0).press("Enter");
     await expect

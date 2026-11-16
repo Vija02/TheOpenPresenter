@@ -80,7 +80,7 @@ export const PluginRow = ({
         </Button>
         <PopConfirm
           title="Are you sure you want to delete this plugin?"
-          description="This action is not reversible. All published versions will be deleted and any scene using this plugin will stop rendering."
+          description="This action is not reversible. All published versions will be deleted and any component using this plugin will stop rendering."
           onConfirm={onDelete}
           okText="Yes"
           cancelText="No"
