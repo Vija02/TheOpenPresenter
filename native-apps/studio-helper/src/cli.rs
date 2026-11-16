@@ -1,20 +1,14 @@
-//! Command line surface.
-//!
-//! Two users, like the runtime manager: the desktop shell speaking NDJSON on
-//! stdin and stdout (`serve`), and a person at a terminal.
+//! Command line: the desktop shell (`serve`) or a person at a terminal.
 
 use std::path::PathBuf;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Cli {
-    /// Speak NDJSON on stdin/stdout for a shell to drive.
     Serve,
-    /// Start remote access and stay in the foreground until interrupted.
     RemoteStart,
-    /// Report whether remote access is on, and the ticket if it is.
     RemoteStatus,
-    /// Grab the input device open on fd 3 for the app, then exit. The grab
-    /// stays with the open device, which the app keeps open.
+    RemoteConnect(String),
+    /// The grab stays with the device, which the app keeps open.
     GrabInput,
     Help,
     Version,
@@ -33,8 +27,7 @@ pub struct Parsed {
     pub options: Options,
 }
 
-/// Parse arguments. `interactive` is whether stdin is a terminal, which
-/// decides what a bare invocation means.
+/// `interactive` (stdin is a terminal) decides what a bare invocation means.
 pub fn parse<I>(args: I, interactive: bool) -> Parsed
 where
     I: IntoIterator<Item = String>,
@@ -66,12 +59,15 @@ where
         Some("grab-input") => Cli::GrabInput,
         Some("remote") => match positional.get(1).map(String::as_str) {
             Some("start") | Some("on") => Cli::RemoteStart,
+            Some("connect") | Some("join") => match positional.get(2) {
+                Some(peer) => Cli::RemoteConnect(peer.clone()),
+                None => Cli::Help,
+            },
             // A typo must never start a tunnel.
             _ => Cli::RemoteStatus,
         },
         Some("--version" | "-V" | "version") => Cli::Version,
         Some("--help" | "-h" | "help") => Cli::Help,
-        // A shell pipes us commands and passes no subcommand.
         None if !interactive => Cli::Serve,
         _ => Cli::Help,
     };
@@ -96,12 +92,18 @@ SUBCOMMANDS:
                        forwarding. `start` runs in the foreground, prints a
                        ticket to share, and stops on Ctrl-C. Start the
                        server first with `top-runtime-manager start`.
+    remote connect <TICKET|ID>
+                       Join another computer's server and serve it here on
+                       a local port. Takes a ticket from `remote start` or
+                       just its endpoint ID. Stops on Ctrl-C.
     grab-input         Grab the input device on fd 3 (Linux, used by the app).
 
 OPTIONS:
     --root <DIR>       Where runtimes and data live. Must match the runtime
                        manager's. [env: TOP_RUNTIME_ROOT]
-    --port <PORT>      Forward to this local port instead of the runtime's.
+    --port <PORT>      With `start`: forward to this local port instead of
+                       the runtime's. With `connect`: the local port to
+                       serve on, if free.
     --json             Machine-readable output.
     -h, --help         Print this help.
     -V, --version      Print the version.
@@ -138,6 +140,15 @@ mod tests {
             Cli::RemoteStatus
         );
         assert_eq!(parse_args(&["remote", "start"], true).cli, Cli::RemoteStart);
+    }
+
+    #[test]
+    fn connect_needs_a_peer() {
+        assert_eq!(
+            parse_args(&["remote", "connect", "abc", "--port", "4000"], true).cli,
+            Cli::RemoteConnect("abc".into())
+        );
+        assert_eq!(parse_args(&["remote", "connect"], true).cli, Cli::Help);
     }
 
     #[test]

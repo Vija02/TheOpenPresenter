@@ -64,6 +64,7 @@ fn main() -> Result<()> {
                 cli::Cli::Serve => serve(helper),
                 cli::Cli::RemoteStart => remote_start(helper, parsed.options),
                 cli::Cli::RemoteStatus => remote_status(helper, parsed.options),
+                cli::Cli::RemoteConnect(peer) => remote_connect(helper, peer, parsed.options),
                 _ => unreachable!("handled above"),
             }
         }
@@ -104,11 +105,33 @@ fn remote_start(mut helper: Helper, options: cli::Options) -> Result<()> {
     Ok(())
 }
 
-/// The long-lived NDJSON loop the desktop shell drives.
+fn remote_connect(mut helper: Helper, peer: String, options: cli::Options) -> Result<()> {
+    let result = helper.handle(Command::RemoteConnect {
+        peer,
+        port: options.port,
+    })?;
+    if options.json {
+        println!("{}", serde_json::to_string(&result)?);
+    } else {
+        println!("Connected. Open this in a browser:\n");
+        println!("{}", result["local_url"].as_str().unwrap_or(""));
+        println!("\nPress Ctrl-C to disconnect.\n");
+    }
+
+    install_interrupt_handler();
+    while !INTERRUPTED.load(Ordering::SeqCst) {
+        std::thread::sleep(Duration::from_millis(200));
+    }
+
+    println!("Disconnecting…");
+    helper.shutdown();
+    Ok(())
+}
+
 fn serve(mut helper: Helper) -> Result<()> {
     tracing::info!("Helper ready (root: {})", helper.layout.root().display());
 
-    // Read stdin on its own thread so the loop can wake without a command.
+    // On its own thread so the loop can `pump` between commands.
     let (lines_tx, lines) = std::sync::mpsc::channel();
     std::thread::spawn(move || {
         for line in std::io::stdin().lock().lines() {
@@ -121,13 +144,11 @@ fn serve(mut helper: Helper) -> Result<()> {
     loop {
         let line = match lines.recv_timeout(Duration::from_millis(500)) {
             Ok(Ok(line)) => line,
-            // A line that isn't UTF-8 can't be a command. Skip it, as with
-            // JSON that doesn't parse, rather than exit without cleaning up.
+            // Skip, rather than exit without cleaning up.
             Ok(Err(e)) if e.kind() == std::io::ErrorKind::InvalidData => {
                 tracing::warn!("Ignoring a line that isn't UTF-8");
                 continue;
             }
-            // Any other read error means stdin is unusable: treat it as closed.
             Ok(Err(e)) => {
                 tracing::warn!("Reading stdin failed: {e}");
                 break;
@@ -166,8 +187,7 @@ fn serve(mut helper: Helper) -> Result<()> {
         }
     }
 
-    // stdin closed: the shell is gone. Take the tunnel down with it rather
-    // than leave a ticket advertised for a process nobody controls.
+    // The shell is gone; don't leave a tunnel nobody controls.
     helper.shutdown();
     Ok(())
 }

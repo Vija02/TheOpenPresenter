@@ -7,13 +7,21 @@ import { join } from "path";
 import { runtimeRoot } from "../settings/paths";
 import { logShell } from "../shell/log";
 
-/** Peer-to-peer remote access state. */
+export type JoinedHost = {
+  peer: string;
+  local_url: string;
+  /** False between a drop and the next request, which dials again. */
+  connected: boolean;
+};
+
 export type RemoteStatus = {
+  /** Whether this install is hosting. */
   enabled: boolean;
   ticket: string | null;
   node_id: string | null;
-  /** False when this install has no helper, so the settings panel hides. */
+  /** False when there's no helper binary; hides the settings panel. */
   supported?: boolean;
+  client?: JoinedHost | null;
 };
 
 type Pending = {
@@ -26,26 +34,19 @@ const OFF: RemoteStatus = { enabled: false, ticket: null, node_id: null };
 /** Starting a tunnel waits up to 10s for a relay; leave room for that. */
 const REQUEST_TIMEOUT_MS = 60 * 1000;
 
-/**
- * The `top-studio-helper` sidecar: native pieces Electron can't do by itself, such
- * as peer-to-peer remote access over iroh and grabbing input devices.
- *
- * Unlike the runtime manager it is started on first use, not at launch, so a
- * Studio that never turns on remote access never runs it.
- */
+/** The `top-studio-helper` sidecar. Started on first use, not at launch. */
 export class HelperClient extends EventEmitter {
   private child: ChildProcessWithoutNullStreams | null = null;
   private pending = new Map<number, Pending>();
   private nextId = 1;
   private buffer = "";
-  /** Set by `shutdown`, so an exit we asked for is not mistaken for a crash. */
+  /** So an exit we asked for isn't treated as a crash. */
   private stopping = false;
 
   get isRunning(): boolean {
     return this.child !== null;
   }
 
-  /** Locate the sidecar binary. */
   static binaryPath(): string {
     const name =
       process.platform === "win32"
@@ -55,7 +56,7 @@ export class HelperClient extends EventEmitter {
     const candidates = app.isPackaged
       ? [join(process.resourcesPath, name)]
       : [
-          // Populated by scripts/prepare-sidecar.cjs, like the manager.
+          // Staged by scripts/prepare-sidecar.cjs.
           join(__dirname, "../../resources", name),
           join(__dirname, "../../../studio-helper/target/release", name),
           join(__dirname, "../../../studio-helper/target/debug", name),
@@ -79,8 +80,7 @@ export class HelperClient extends EventEmitter {
       );
     }
 
-    // Same root as the runtime manager: the helper reads the server's port
-    // and keeps the iroh identity there.
+    // Must match the runtime manager's root.
     const child = spawn(binary, ["--root", runtimeRoot()], {
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -97,8 +97,7 @@ export class HelperClient extends EventEmitter {
       }
     });
 
-    // A helper that dies mid-write would otherwise surface as an unhandled
-    // EPIPE in the main process. The exit handler deals with the death.
+    // Otherwise a helper dying mid-write is an unhandled EPIPE.
     child.stdin.on("error", (err) => {
       logShell("warn", "[helper] stdin:", err);
     });
@@ -118,7 +117,6 @@ export class HelperClient extends EventEmitter {
     return child;
   }
 
-  /** Forget a dead helper and fail whatever was waiting on it. */
   private onGone(
     child: ChildProcessWithoutNullStreams,
     message: string,
@@ -193,11 +191,7 @@ export class HelperClient extends EventEmitter {
     });
   }
 
-  /**
-   * Remote access state. Asks the helper when it's running; otherwise reads
-   * the lock file, which still shows a tunnel that another app sharing this
-   * runtime opened, without starting a helper just to look.
-   */
+  /** Reads the lock file when the helper isn't running, rather than start it. */
   remoteStatus(): Promise<RemoteStatus> {
     if (this.child) {
       return this.request<RemoteStatus>({ cmd: "remote_status" });
@@ -212,7 +206,17 @@ export class HelperClient extends EventEmitter {
     return this.request<RemoteStatus>({ cmd: "remote_start" });
   }
 
-  /** Nothing to stop when the helper isn't running: its tunnel died with it. */
+  /** `peer` is a ticket or endpoint ID; `port` is preferred if free. */
+  connectRemote(peer: string, port?: number): Promise<JoinedHost> {
+    return this.request<JoinedHost>({ cmd: "remote_connect", peer, port });
+  }
+
+  async disconnectRemote(): Promise<RemoteStatus> {
+    if (!this.child) return OFF;
+    return this.request<RemoteStatus>({ cmd: "remote_disconnect" });
+  }
+
+  /** A helper that isn't running has no tunnel. */
   async stopRemote(): Promise<RemoteStatus> {
     if (!this.child) return OFF;
     return this.request<RemoteStatus>({ cmd: "remote_stop" });
@@ -225,17 +229,14 @@ export class HelperClient extends EventEmitter {
     try {
       await this.request({ cmd: "shutdown" });
     } catch {
-      // It may have exited already; killing below covers it.
+      // Killed below either way.
     }
     child.kill();
     if (this.child === child) this.child = null;
   }
 }
 
-/**
- * The tunnel recorded in `<root>/runtime.lock`, if its owner is still alive.
- * Written by `top-studio-helper`; see `storage/lock.rs` in the runtime manager.
- */
+/** Mirrors `storage/lock.rs` in the runtime manager. */
 function remoteFromLock(): RemoteStatus | null {
   let lock: {
     remote?: { ticket?: unknown; node_id?: unknown; owner_pid?: unknown };

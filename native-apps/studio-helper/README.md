@@ -8,6 +8,10 @@ to do with installing or running the server runtime.
   `DUMBPIPEV0`) to the local server, so the cloud, or the `dumbpipe` CLI, can
   reach it without port forwarding. The identity lives at
   `<root>/data/iroh_secret_key`, so the endpoint ID survives restarts.
+- **Joining another install.** The other half: dial a host by ticket or bare
+  endpoint ID and serve its app on a local port. One QUIC connection carries
+  a stream per TCP connection, and a dropped connection is dialed again on
+  the next request. Needs no runtime on the joining machine.
 - **`grab-input`.** `EVIOCGRAB` on an evdev device passed as fd 3 (Linux), so
   clicker presses go only to the app.
 
@@ -20,6 +24,9 @@ same shape as the runtime manager. Studio starts it on first use.
 > {"id":1,"cmd":"remote_start"}
 < {"id":1,"ok":true,"result":{"enabled":true,"node_id":"…","ticket":"endpoint…"}}
 > {"id":2,"cmd":"remote_status"}
+> {"id":3,"cmd":"remote_connect","peer":"<ticket or endpoint id>","port":3000}
+< {"id":3,"ok":true,"result":{"peer":"…","local_url":"http://localhost:3000","connected":true}}
+> {"id":4,"cmd":"remote_disconnect"}
 > {"cmd":"shutdown"}
 ```
 
@@ -30,10 +37,16 @@ Closing stdin stops the tunnel and exits.
 ```sh
 top-runtime-manager start        # in one terminal
 top-studio-helper remote start          # in another; prints a ticket, Ctrl-C stops
+
+top-studio-helper remote connect <ticket or id>   # on the joining machine
 ```
 
 `--root` must match the runtime manager's (both default to the same place).
-`--port` forwards to a fixed port instead of the runtime's.
+With `start`, `--port` forwards to a fixed port instead of the runtime's. With
+`connect`, it's the local port to serve on if it's free.
+
+Both roles share one iroh endpoint and identity. Incoming connections are
+refused unless hosting is on.
 
 ## How it finds the server
 
