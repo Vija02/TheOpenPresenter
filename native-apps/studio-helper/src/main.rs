@@ -122,6 +122,7 @@ fn remote_discover(layout: Layout) -> Result<()> {
             println!("+ {}{port}\n  {}", host.name, host.id);
         }
         Event::HostExpired { id } => println!("- {id}"),
+        Event::TunnelClosed { .. } => {}
     });
     let mut helper = Helper::with_events(layout, events);
     helper.handle(Command::DiscoverStart)?;

@@ -64,7 +64,10 @@ export async function switchServer(
   }
 
   updateSettings(patch);
-  void import("../join").then(({ syncTunnel }) => syncTunnel());
+  void import("../join").then(({ stopWaiting, syncTunnel }) => {
+    stopWaiting();
+    return syncTunnel();
+  });
   // The offline setup only shows online; organization copies show anywhere.
   refreshSetupBar();
 

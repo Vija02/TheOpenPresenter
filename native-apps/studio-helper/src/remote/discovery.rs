@@ -47,8 +47,17 @@ pub struct DiscoveredHost {
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
 pub enum Event {
-    HostDiscovered { host: DiscoveredHost },
-    HostExpired { id: String },
+    HostDiscovered {
+        host: DiscoveredHost,
+    },
+    HostExpired {
+        id: String,
+    },
+    /// The joined host's connection dropped, and we didn't close it. The
+    /// next local request dials again.
+    TunnelClosed {
+        peer: String,
+    },
 }
 
 pub type EventSink = Arc<dyn Fn(Event) + Send + Sync>;

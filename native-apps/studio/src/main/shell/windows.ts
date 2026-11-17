@@ -110,7 +110,8 @@ export function loadShellUI(
     | "loading"
     | "unreachable"
     | "update"
-    | "setupbar",
+    | "setupbar"
+    | "disconnected",
   panel?: string,
 ): void {
   const hash = panel ? `#${panel}` : "";

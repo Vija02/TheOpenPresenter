@@ -1094,6 +1094,38 @@ code {
   padding: 4px 0;
 }
 
+/* Over the app window while the joined computer is away: the page shows
+   through, dimmed, so it's clear what's waiting to come back. */
+html:has(body.disconnected-page),
+body.disconnected-page {
+  background: transparent;
+}
+
+.disconnected {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+}
+
+.disconnected h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.disconnected p {
+  margin: 0;
+  max-width: 420px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* The offline-setup card floating over the bottom of the app window. Its view
    is a little larger than the card, transparent, to leave room for the
    shadow. */
