@@ -17,6 +17,8 @@ export type DesktopSettings = {
   channel?: string;
   autoStartRuntime?: boolean;
   remoteAccess?: boolean;
+  /** Other computers joined, each served here on a local port. */
+  computers?: { peer: string; name: string | null; port: number }[];
 };
 
 export type LaunchedApp = {
