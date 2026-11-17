@@ -8,6 +8,7 @@ pub enum Cli {
     RemoteStart,
     RemoteStatus,
     RemoteConnect(String),
+    RemoteDiscover,
     /// The grab stays with the device, which the app keeps open.
     GrabInput,
     Help,
@@ -59,6 +60,7 @@ where
         Some("grab-input") => Cli::GrabInput,
         Some("remote") => match positional.get(1).map(String::as_str) {
             Some("start") | Some("on") => Cli::RemoteStart,
+            Some("discover") | Some("list") => Cli::RemoteDiscover,
             Some("connect") | Some("join") => match positional.get(2) {
                 Some(peer) => Cli::RemoteConnect(peer.clone()),
                 None => Cli::Help,
@@ -95,7 +97,9 @@ SUBCOMMANDS:
     remote connect <TICKET|ID>
                        Join another computer's server and serve it here on
                        a local port. Takes a ticket from `remote start` or
-                       just its endpoint ID. Stops on Ctrl-C.
+                       just its endpoint ID. Without --port, uses the
+                       host's own port if it's free here. Stops on Ctrl-C.
+    remote discover    List Studios hosting on this network as they appear.
     grab-input         Grab the input device on fd 3 (Linux, used by the app).
 
 OPTIONS:

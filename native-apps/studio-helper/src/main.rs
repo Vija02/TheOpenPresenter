@@ -2,6 +2,7 @@
 
 use std::io::{BufRead, IsTerminal, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
@@ -9,6 +10,7 @@ use top_runtime_manager::Layout;
 use top_studio_helper::{
     cli,
     protocol::{encode, parse_line, Command, Response},
+    remote::Event,
     service::Helper,
 };
 
@@ -43,6 +45,12 @@ fn main() -> Result<()> {
 
     let parsed = cli::parse(std::env::args().skip(1), std::io::stdin().is_terminal());
 
+    let options = parsed.options;
+    let layout = || match options.root.clone() {
+        Some(root) => Ok(Layout::new(root)),
+        None => Layout::discover(),
+    };
+
     match parsed.cli {
         cli::Cli::Help => {
             print!("{}", cli::USAGE);
@@ -54,20 +62,19 @@ fn main() -> Result<()> {
         }
         // No layout needed, and must stay instant: the app waits on it.
         cli::Cli::GrabInput => top_studio_helper::input::grab_input(),
-        command => {
-            let layout = match parsed.options.root.clone() {
-                Some(root) => Layout::new(root),
-                None => Layout::discover()?,
-            };
-            let helper = Helper::new(layout);
-            match command {
-                cli::Cli::Serve => serve(helper),
-                cli::Cli::RemoteStart => remote_start(helper, parsed.options),
-                cli::Cli::RemoteStatus => remote_status(helper, parsed.options),
-                cli::Cli::RemoteConnect(peer) => remote_connect(helper, peer, parsed.options),
-                _ => unreachable!("handled above"),
-            }
+        cli::Cli::Serve => {
+            // One line per event, written under the stdout lock so it can't
+            // interleave with a response. Errors are ignored: `println!`
+            // would panic once the shell has closed stdout.
+            let events = Arc::new(|event: Event| {
+                let _ = writeln!(std::io::stdout().lock(), "{}", encode(&event));
+            });
+            serve(Helper::with_events(layout()?, events))
         }
+        cli::Cli::RemoteDiscover => remote_discover(layout()?),
+        cli::Cli::RemoteStart => remote_start(Helper::new(layout()?), options),
+        cli::Cli::RemoteStatus => remote_status(Helper::new(layout()?), options),
+        cli::Cli::RemoteConnect(peer) => remote_connect(Helper::new(layout()?), peer, options),
     }
 }
 
@@ -85,7 +92,10 @@ fn remote_status(mut helper: Helper, options: cli::Options) -> Result<()> {
 }
 
 fn remote_start(mut helper: Helper, options: cli::Options) -> Result<()> {
-    let result = helper.handle(Command::RemoteStart { port: options.port })?;
+    let result = helper.handle(Command::RemoteStart {
+        port: options.port,
+        name: None,
+    })?;
     if options.json {
         println!("{}", serde_json::to_string(&result)?);
     } else {
@@ -101,6 +111,26 @@ fn remote_start(mut helper: Helper, options: cli::Options) -> Result<()> {
     }
 
     println!("Stopping…");
+    helper.shutdown();
+    Ok(())
+}
+
+fn remote_discover(layout: Layout) -> Result<()> {
+    let events = Arc::new(|event: Event| match event {
+        Event::HostDiscovered { host } => {
+            let port = host.port.map(|p| format!(", port {p}")).unwrap_or_default();
+            println!("+ {}{port}\n  {}", host.name, host.id);
+        }
+        Event::HostExpired { id } => println!("- {id}"),
+    });
+    let mut helper = Helper::with_events(layout, events);
+    helper.handle(Command::DiscoverStart)?;
+    println!("Looking for Studios on this network. Press Ctrl-C to stop.\n");
+
+    install_interrupt_handler();
+    while !INTERRUPTED.load(Ordering::SeqCst) {
+        std::thread::sleep(Duration::from_millis(200));
+    }
     helper.shutdown();
     Ok(())
 }

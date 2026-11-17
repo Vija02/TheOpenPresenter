@@ -9,10 +9,23 @@ import { logShell } from "../shell/log";
 
 export type JoinedHost = {
   peer: string;
+  name: string | null;
   local_url: string;
   /** False between a drop and the next request, which dials again. */
   connected: boolean;
 };
+
+/** A Studio hosting on the local network. */
+export type DiscoveredHost = {
+  id: string;
+  name: string;
+  /** Its server port, to join on the same one. */
+  port: number | null;
+};
+
+export type DiscoveryEvent =
+  | { event: "host_discovered"; host: DiscoveredHost }
+  | { event: "host_expired"; id: string };
 
 export type RemoteStatus = {
   /** Whether this install is hosting. */
@@ -151,6 +164,11 @@ export class HelperClient extends EventEmitter {
         continue;
       }
 
+      if (typeof message.event === "string") {
+        this.emit("discovery", message as DiscoveryEvent);
+        continue;
+      }
+
       const id = message.id;
       if (typeof id !== "number") continue;
       const pending = this.pending.get(id);
@@ -214,6 +232,19 @@ export class HelperClient extends EventEmitter {
   async disconnectRemote(): Promise<RemoteStatus> {
     if (!this.child) return OFF;
     return this.request<RemoteStatus>({ cmd: "remote_disconnect" });
+  }
+
+  /** Lists hosts known so far; `discovery` events follow. */
+  async discoverStart(): Promise<DiscoveredHost[]> {
+    const result = await this.request<{ hosts: DiscoveredHost[] }>({
+      cmd: "discover_start",
+    });
+    return result.hosts;
+  }
+
+  async discoverStop(): Promise<void> {
+    if (!this.child) return;
+    await this.request({ cmd: "discover_stop" });
   }
 
   /** A helper that isn't running has no tunnel. */

@@ -7,7 +7,7 @@ use top_runtime_manager::storage::lock::{self, RemoteInfo};
 use top_runtime_manager::Layout;
 
 use crate::protocol::Command;
-use crate::remote::{Remote, RemoteStatus, Target};
+use crate::remote::{hostname, EventSink, Remote, RemoteStatus, Target};
 
 /// Slow on purpose: reading the lock checks pids (`tasklist` on Windows).
 const REPUBLISH_EVERY: Duration = Duration::from_secs(5);
@@ -16,24 +16,43 @@ pub struct Helper {
     pub layout: Layout,
     remote: Option<Remote>,
     last_republish: Option<Instant>,
+    events: EventSink,
 }
 
 impl Helper {
     pub fn new(layout: Layout) -> Self {
+        Self::with_events(layout, std::sync::Arc::new(|_| {}))
+    }
+
+    /// `events` receives discovery events, from another thread.
+    pub fn with_events(layout: Layout, events: EventSink) -> Self {
         Self {
             layout,
             remote: None,
             last_republish: None,
+            events,
         }
     }
 
     pub fn handle(&mut self, command: Command) -> Result<serde_json::Value> {
         match command {
-            Command::RemoteStart { port } => self.remote_start(port),
+            Command::RemoteStart { port, name } => self.remote_start(port, name),
             Command::RemoteStop => self.remote_stop(),
             Command::RemoteStatus => self.remote_status(),
             Command::RemoteConnect { peer, port } => self.remote_connect(&peer, port),
             Command::RemoteDisconnect => self.remote_disconnect(),
+            Command::DiscoverStart => {
+                self.ensure_identity_free()?;
+                let data_dir = self.layout.state_dir();
+                let hosts = self.remote()?.discover_start(data_dir)?;
+                Ok(serde_json::json!({ "hosts": hosts }))
+            }
+            Command::DiscoverStop => {
+                if let Some(remote) = &mut self.remote {
+                    remote.discover_stop();
+                }
+                Ok(serde_json::json!({ "hosts": [] }))
+            }
             Command::Shutdown => {
                 self.shutdown();
                 Ok(serde_json::json!({ "shuttingDown": true }))
@@ -49,7 +68,11 @@ impl Helper {
     }
 
     /// Refused without a running server: the ticket would fail on first use.
-    fn remote_start(&mut self, port: Option<u16>) -> Result<serde_json::Value> {
+    fn remote_start(
+        &mut self,
+        port: Option<u16>,
+        name: Option<String>,
+    ) -> Result<serde_json::Value> {
         if let Some(status) = self.ours() {
             return Ok(serde_json::to_value(status)?);
         }
@@ -76,7 +99,15 @@ impl Helper {
         }
 
         let data_dir = self.layout.state_dir();
-        let status = self.remote()?.start(target, data_dir)?;
+        // Replies are size-capped, so a long name would hide the host.
+        let name: String = name
+            .map(|n| n.trim().to_string())
+            .filter(|n| !n.is_empty())
+            .unwrap_or_else(hostname)
+            .chars()
+            .take(64)
+            .collect();
+        let status = self.remote()?.start(target, name, data_dir)?;
 
         self.publish(&status);
         Ok(serde_json::to_value(status)?)
@@ -84,7 +115,7 @@ impl Helper {
 
     fn remote(&mut self) -> Result<&mut Remote> {
         if self.remote.is_none() {
-            self.remote = Some(Remote::new()?);
+            self.remote = Some(Remote::new(self.events.clone())?);
         }
         Ok(self.remote.as_mut().expect("just set"))
     }
@@ -102,13 +133,19 @@ impl Helper {
     }
 
     /// Needs no local server.
-    fn remote_connect(&mut self, peer: &str, port: Option<u16>) -> Result<serde_json::Value> {
-        // Same identity as theirs: the relay would drop one of us.
+    /// Joining and browsing bring up this install's identity. If another
+    /// process is hosting with it, the relay would drop one of us.
+    fn ensure_identity_free(&self) -> Result<()> {
         if let Some(info) = lock::remote(self.layout.root()) {
             if info.owner_pid != std::process::id() {
                 bail!("Another app on this computer is sharing. Turn that off first.");
             }
         }
+        Ok(())
+    }
+
+    fn remote_connect(&mut self, peer: &str, port: Option<u16>) -> Result<serde_json::Value> {
+        self.ensure_identity_free()?;
         let data_dir = self.layout.state_dir();
         let status = self.remote()?.connect(peer, port, data_dir)?;
         Ok(serde_json::to_value(status)?)
@@ -171,6 +208,7 @@ impl Helper {
     pub fn shutdown(&mut self) {
         let _ = self.remote_stop();
         let _ = self.remote_disconnect();
+        let _ = self.handle(Command::DiscoverStop);
     }
 
     fn publish(&self, status: &RemoteStatus) {
@@ -216,7 +254,10 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         let mut helper = Helper::new(Layout::new(root.path()));
         let err = helper
-            .handle(Command::RemoteStart { port: None })
+            .handle(Command::RemoteStart {
+                port: None,
+                name: None,
+            })
             .unwrap_err();
         assert!(err.to_string().contains("Start the server"));
     }
@@ -247,7 +288,12 @@ mod tests {
         assert_eq!(status["enabled"], true);
         assert_eq!(status["ticket"], "endpointabc");
 
-        let started = helper.handle(Command::RemoteStart { port: None }).unwrap();
+        let started = helper
+            .handle(Command::RemoteStart {
+                port: None,
+                name: None,
+            })
+            .unwrap();
         assert_eq!(started["ticket"], "endpointabc");
         assert!(helper.ours().is_none());
 
@@ -257,6 +303,8 @@ mod tests {
                 port: None,
             })
             .unwrap_err();
+        assert!(err.to_string().contains("Another app"));
+        let err = helper.handle(Command::DiscoverStart).unwrap_err();
         assert!(err.to_string().contains("Another app"));
 
         let stopped = helper.handle(Command::RemoteStop).unwrap();
