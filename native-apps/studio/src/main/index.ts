@@ -199,6 +199,37 @@ async function refreshBeforeOnboarding(): Promise<void> {
 }
 
 /**
+ * Start the runtime, making sure it serves the activated version.
+ *
+ * A server left running from the previous session (an update install quits
+ * the app without always taking the server down with it) is adopted as is,
+ * so a runtime update downloaded alongside an app update would only apply
+ * after a second restart. Restart it onto the new version instead, unless
+ * something else still holds it.
+ */
+async function startCurrentRuntime(): Promise<
+  Awaited<ReturnType<typeof runtime.startRuntime>>
+> {
+  const started = await runtime.startRuntime();
+  if (!started?.reused) return started;
+
+  const status = await runtime.status().catch(() => null);
+  const current = status?.current;
+  if (!current || started.version === current) return started;
+
+  logShell(
+    "info",
+    `[startup] adopted runtime ${started.version} but ${current} is active, restarting it`,
+  );
+  const stopped = (await runtime.stopRuntime().catch((err) => {
+    logShell("error", "[startup] could not stop the old runtime:", err);
+    return null;
+  })) as { stopped?: boolean } | null;
+  if (!stopped?.stopped) return started;
+  return runtime.startRuntime();
+}
+
+/**
  * Decide what the user sees on launch. The runtime manager starts regardless
  * of mode: it is a small idle process.
  */
@@ -231,7 +262,7 @@ async function startupRoute(): Promise<string> {
   if (settings.mode === "local") {
     try {
       if (settings.autoStartRuntime !== false) {
-        const started = await runtime.startRuntime();
+        const started = await startCurrentRuntime();
         if (started?.url) {
           if (settings.remoteAccess !== false) void resumeRemoteAccess();
           showAppWindow(started.url);

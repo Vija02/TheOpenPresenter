@@ -74,11 +74,13 @@ test.describe("joining another computer", () => {
           timeout: 30_000,
         })
         .toBe(host.id);
-      const saved = readSettings(root);
-      const port = saved.computers![0]!.port;
+      const port = readSettings(root).computers![0]!.port;
       const page = await appPage(app, port);
       await expect(page.locator("#host-page")).toContainText(host.name);
-      expect(saved.rootUrl).toBe(`http://localhost:${port}`);
+      // Saved after the computer, once setup finishes.
+      await expect
+        .poll(() => readSettings(root).rootUrl)
+        .toBe(`http://localhost:${port}`);
     } finally {
       await close();
       await host.close();
