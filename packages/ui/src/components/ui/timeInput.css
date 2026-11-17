@@ -1,0 +1,41 @@
+@reference "@repo/tailwind-config/index.css";
+
+@layer base {
+  .ui--time-input {
+    @apply flex h-9 w-full min-w-0 items-center rounded-sm border border-stroke bg-transparent pl-3 transition-[color,box-shadow];
+    @apply focus-within:border-ring;
+    @apply has-[[data-invalid]]:border-fill-destructive;
+    @apply data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50;
+  }
+
+  .ui--time-input__field {
+    @apply flex-1 min-w-0;
+  }
+
+  .ui--time-input__segments {
+    @apply flex items-center text-base md:text-sm tabular-nums;
+  }
+
+  .ui--time-input__segment {
+    @apply rounded-xs px-0.5 outline-hidden caret-transparent;
+    @apply focus:outline-hidden focus:bg-accent/15 focus:text-primary;
+    @apply data-[placeholder]:text-tertiary;
+    @apply data-[type=literal]:px-0;
+  }
+
+  .ui--time-input__trigger {
+    @apply flex h-full items-center px-2.5 text-tertiary cursor-pointer hover:text-primary;
+    @apply focus-visible:outline-none focus-visible:text-primary;
+    @apply disabled:pointer-events-none;
+  }
+
+  .ui--time-input__list {
+    @apply w-36 max-h-64 overflow-y-auto p-1;
+  }
+
+  .ui--time-input__option {
+    @apply flex w-full rounded-sm px-2 py-1.5 text-sm text-left cursor-pointer tabular-nums;
+    @apply hover:bg-surface-primary-hover focus-visible:bg-surface-primary-hover focus-visible:outline-none;
+    @apply aria-selected:bg-fill-default aria-selected:text-fill-default-fg;
+  }
+}
