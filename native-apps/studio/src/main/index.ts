@@ -9,6 +9,7 @@ import { chromiumDir, runtimeRoot } from "./settings/paths";
 import {
   DEFAULT_CHANNEL,
   type Settings,
+  computerAt,
   getSettings,
   resolveRootUrl,
   resolveRuntimeSource,
@@ -253,7 +254,11 @@ async function startupRoute(): Promise<string> {
 
   if (settings.rootUrl) {
     const { isLoggedIn, checkHost } = await import("./cloud/host");
-    const rootUrl = resolveRootUrl(null);
+    const { prepareHost } = await import("./join");
+    // A joined computer needs its tunnel first.
+    const rootUrl = await prepareHost(resolveRootUrl(null)).catch(() =>
+      resolveRootUrl(null),
+    );
 
     // Check if instance is up
     if (!(await checkHost(rootUrl))) {
@@ -261,12 +266,16 @@ async function startupRoute(): Promise<string> {
       // Open before closing the loading window. Closing first leaves zero
       // windows for an instant, which fires `window-all-closed` and quits the
       // app before the replacement appears.
-      openUnreachableWindow(describeConnection(settings, null).label, rootUrl);
+      openUnreachableWindow(
+        describeConnection(settings, null).label,
+        computerAt(rootUrl) ? "" : rootUrl,
+      );
       closeLoadingWindow();
       return "the unreachable screen";
     }
 
-    if (await isLoggedIn(rootUrl)) {
+    // A joined computer signs everyone in by itself.
+    if (computerAt(rootUrl) || (await isLoggedIn(rootUrl))) {
       showAppWindow(rootUrl);
       startLocalInBackground(settings);
       return "the app window";

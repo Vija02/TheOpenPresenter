@@ -7,7 +7,7 @@ use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use iroh::endpoint::{Connection, Endpoint};
 use iroh::{EndpointAddr, EndpointId};
 use tokio::net::{TcpListener, TcpStream};
@@ -18,6 +18,8 @@ use super::{forward_bidi, ALPN, HANDSHAKE};
 
 /// Kept short: the helper handles one command at a time.
 const DIAL_TIMEOUT: Duration = Duration::from_secs(10);
+
+const UNREACHABLE: &str = "Couldn't reach that computer. Check that it's on and sharing.";
 
 /// After a failed dial, fail fast rather than have every queued request dial.
 const RETRY_AFTER_FAILURE: Duration = Duration::from_secs(5);
@@ -70,9 +72,9 @@ pub fn parse_peer(text: &str) -> Result<EndpointAddr> {
     if let Ok(ticket) = text.parse::<iroh_tickets::endpoint::EndpointTicket>() {
         return Ok(ticket.into());
     }
-    let id: EndpointId = text
-        .parse()
-        .context("That isn't a ticket or an endpoint ID")?;
+    let id: EndpointId = text.parse().map_err(|_| {
+        anyhow::anyhow!("That code isn't right. Copy it again from the other computer.")
+    })?;
     Ok(id.into())
 }
 
@@ -88,17 +90,19 @@ pub async fn dial(endpoint: &Endpoint, peer: &EndpointAddr) -> Result<Connection
             .map_err(anyhow::Error::from)
     };
 
-    match attempt(peer.clone()).await {
-        Ok(connection) => Ok(connection),
+    let result = match attempt(peer.clone()).await {
         // A ticket's addresses go stale; the ID doesn't. Look it up.
         Err(err) if !peer.is_empty() => {
             tracing::info!("Dialing with the ticket's addresses failed ({err:#}); looking it up");
-            attempt(EndpointAddr::new(peer.id))
-                .await
-                .context("Couldn't reach that host")
+            attempt(EndpointAddr::new(peer.id)).await
         }
-        Err(err) => Err(err.context("Couldn't reach that host")),
-    }
+        result => result,
+    };
+    // The detail goes to the log; the app shows something plain.
+    result.map_err(|err| {
+        tracing::warn!("Couldn't reach {}: {err:#}", peer.id);
+        anyhow::anyhow!(UNREACHABLE)
+    })
 }
 
 /// `port` is preferred if free: ideally the host's own, so its absolute URLs
@@ -256,7 +260,7 @@ impl Dialer {
             .expect("failure lock")
             .is_some_and(|at| at.elapsed() < RETRY_AFTER_FAILURE);
         if failed_recently {
-            anyhow::bail!("Couldn't reach that host");
+            anyhow::bail!(UNREACHABLE);
         }
         if self.stop.is_cancelled() {
             anyhow::bail!("Disconnected");

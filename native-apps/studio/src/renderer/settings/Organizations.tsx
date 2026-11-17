@@ -20,6 +20,7 @@ import {
   EllipsisIcon,
   GlobeIcon,
   LogOutIcon,
+  MonitorIcon,
   PlusIcon,
   ServerIcon,
   Trash2Icon,
@@ -35,6 +36,7 @@ import {
   api,
   listen,
 } from "../bridge/ipc";
+import { ComputerPicker, isJoinCode } from "../shared/ComputerPicker";
 import { type AccountRow, groupOrganizations } from "./groupOrganizations";
 
 const CLOUD_URL = "https://theopenpresenter.com";
@@ -184,6 +186,17 @@ export function Organizations({
     }
   };
 
+  const removeComputer = async (account: SignedInAccount) => {
+    onError(null);
+    try {
+      await api.disconnectAccount(account.rootUrl, false);
+      refresh();
+      onSwitched();
+    } catch (err) {
+      onError(message(err));
+    }
+  };
+
   if (orgs === null || accounts === null) {
     return (
       <>
@@ -199,7 +212,11 @@ export function Organizations({
     <>
       <div className="section-head page-head">
         <h2>Accounts</h2>
-        <AddAccount onAdded={refresh} onError={onError} />
+        <AddAccount
+          onAdded={refresh}
+          onSwitched={onSwitched}
+          onError={onError}
+        />
       </div>
 
       {problem && <p className="problem">{problem}</p>}
@@ -217,6 +234,8 @@ export function Organizations({
             <p className="org-group-title">
               {account.isCloud ? (
                 <CloudIcon className="size-4" />
+              ) : account.isComputer ? (
+                <MonitorIcon className="size-4" />
               ) : (
                 <ServerIcon className="size-4" />
               )}
@@ -249,17 +268,19 @@ export function Organizations({
               >
                 {account.status === "ok" && !account.current && (
                   <PopoverMenuItem
-                    label="Use online"
+                    label={account.isComputer ? "Open" : "Use online"}
                     icon={<GlobeIcon className="size-4" />}
                     onClick={() => void openOnline(account)}
                   />
                 )}
                 <PopoverMenuItem
-                  label="Disconnect"
+                  label={account.isComputer ? "Remove" : "Disconnect"}
                   icon={<LogOutIcon className="size-4" />}
                   className="org-row-remove"
                   onClick={() =>
-                    setDisconnecting({ account, copies: copiesOf(rows) })
+                    account.isComputer
+                      ? void removeComputer(account)
+                      : setDisconnecting({ account, copies: copiesOf(rows) })
                   }
                 />
               </PopoverContent>
@@ -376,7 +397,8 @@ export function Organizations({
               )}
             </ul>
           )}
-          {account.status !== "ok" ? null : account.organizations === null ? (
+          {account.status !== "ok" ||
+          account.isComputer ? null : account.organizations === null ? (
             <p className="muted">
               Couldn&apos;t load this account&apos;s other organizations.
             </p>
@@ -429,12 +451,14 @@ const copiesOf = (rows: AccountRow[]): LocalOrganization[] =>
 
 function AddAccount({
   onAdded,
+  onSwitched,
   onError,
 }: {
   onAdded: () => void;
+  onSwitched: (summary?: ConnectionSummary) => void;
   onError: (message: string | null) => void;
 }) {
-  /** The dialog: typing an address, or waiting on the browser. */
+  /** The dialog: typing an address or picking a computer, or waiting on the browser. */
   const [open, setOpen] = useState<null | "address" | "waiting">(null);
   const [address, setAddress] = useState("");
   const [busy, setBusy] = useState(false);
@@ -461,6 +485,12 @@ function AddAccount({
     };
   }, [onAdded, onError]);
 
+  const joined = (summary: ConnectionSummary) => {
+    close();
+    onAdded();
+    onSwitched(summary);
+  };
+
   /** Typed addresses report in the dialog; the cloud on the page. */
   const start = async (url: string, typed = false) => {
     const setError = typed ? setTypedError : onError;
@@ -468,6 +498,10 @@ function AddAccount({
     setTypedError(null);
     setBusy(true);
     try {
+      if (typed && isJoinCode(url)) {
+        joined(await api.joinHost(url.trim()));
+        return;
+      }
       const target = await api.normalizeHost(url);
       if (!target) {
         setError("Enter a server address.");
@@ -517,8 +551,8 @@ function AddAccount({
             onClick={() => void start(CLOUD_URL)}
           />
           <PopoverMenuItem
-            label="Another server"
-            description="A server your church runs"
+            label="Another computer or server"
+            description="One your church runs, or one on this network"
             icon={<ServerIcon className="size-4" />}
             onClick={() => setOpen("address")}
           />
@@ -534,12 +568,14 @@ function AddAccount({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {open === "waiting" ? "Finish signing in" : "Add a server"}
+              {open === "waiting"
+                ? "Finish signing in"
+                : "Add another computer or server"}
             </DialogTitle>
             <DialogDescription>
               {open === "waiting"
                 ? "Sign in in your browser, then come back here."
-                : "The address of the server your church runs."}
+                : "Its address, or the code shown on a computer that's sharing."}
             </DialogDescription>
           </DialogHeader>
           {open === "address" && (
@@ -562,6 +598,8 @@ function AddAccount({
                   <p className="remove-org-danger">{typedError}</p>
                 )}
               </div>
+              <p className="add-account-nearby muted">On this network</p>
+              <ComputerPicker onJoined={joined} allowPaste={false} />
             </DialogBody>
           )}
           <DialogFooter>
@@ -573,7 +611,7 @@ function AddAccount({
                 disabled={busy || !address.trim()}
                 onClick={() => void start(address, true)}
               >
-                {busy ? "Connecting…" : "Sign in"}
+                {busy ? "Connecting…" : "Connect"}
               </Button>
             )}
           </DialogFooter>

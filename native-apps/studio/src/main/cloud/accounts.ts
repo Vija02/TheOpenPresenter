@@ -1,11 +1,14 @@
 import { ipcMain } from "electron";
 
+import { forgetComputer } from "../join";
 import { cancelLocalSetupFor } from "../local";
 import { runtime } from "../runtime/client";
 import { describeConnection } from "../settings/connection";
 import { sameHost } from "../settings/host";
 import {
   DEFAULT_CLOUD_URL,
+  computerAt,
+  computerUrl,
   getSettings,
   normalizeHost,
   updateSettings,
@@ -47,6 +50,8 @@ async function candidateHosts(): Promise<string[]> {
     if (unique.some((u) => sameHost(u, url))) continue;
     // The local server has a session too, but it is not an account.
     if (runtime.url && sameHost(url, runtime.url)) continue;
+    // Listed on their own: they need no sign-in.
+    if (computerAt(url)) continue;
     unique.push(url);
   }
   return unique;
@@ -76,25 +81,11 @@ async function localServer(): Promise<string | null> {
 async function disconnect(rootUrl: string, deleteCopies: boolean) {
   const settings = getSettings();
 
-  const base = await localServer();
-  if (base) {
-    const copies = (await allOrganizations(base)).filter((org) =>
-      sameHost(org.cloudHost, rootUrl),
-    );
-    for (const org of copies) {
-      await removeConnection(base, org.cloudConnectionId, org.id, deleteCopies);
-    }
-    if (copies.length > 0) {
-      refetchServerWindows(base);
-      void restartLiveRefresh();
-    }
+  if (computerAt(rootUrl)) {
+    await forgetComputer(rootUrl);
+  } else {
+    await signOut(rootUrl, deleteCopies);
   }
-
-  cancelLocalSetupFor(rootUrl);
-  await logout(rootUrl);
-  updateSettings({
-    accounts: (settings.accounts ?? []).filter((k) => !sameHost(k, rootUrl)),
-  });
 
   if (!sameHost(settings.rootUrl ?? null, rootUrl)) {
     refreshMenu();
@@ -121,12 +112,52 @@ async function disconnect(rootUrl: string, deleteCopies: boolean) {
   refreshMenu();
 }
 
+async function signOut(rootUrl: string, deleteCopies: boolean) {
+  const base = await localServer();
+  if (base) {
+    const copies = (await allOrganizations(base)).filter((org) =>
+      sameHost(org.cloudHost, rootUrl),
+    );
+    for (const org of copies) {
+      await removeConnection(base, org.cloudConnectionId, org.id, deleteCopies);
+    }
+    if (copies.length > 0) {
+      refetchServerWindows(base);
+      void restartLiveRefresh();
+    }
+  }
+
+  cancelLocalSetupFor(rootUrl);
+  await logout(rootUrl);
+  updateSettings({
+    accounts: (getSettings().accounts ?? []).filter(
+      (k) => !sameHost(k, rootUrl),
+    ),
+  });
+}
+
 export function registerAccountsIPC(): void {
   ipcMain.handle("accounts:list", async () => {
     const settings = getSettings();
     const hosts = await signedInHosts();
 
-    return Promise.all(
+    // Not probed: the helper holds one tunnel, and checking another would
+    // drop the one in use.
+    const computers = (settings.computers ?? []).map((computer) => {
+      const rootUrl = computerUrl(computer);
+      return {
+        rootUrl,
+        label: computer.name ?? "Another computer",
+        isCloud: false,
+        isComputer: true,
+        current: sameHost(settings.rootUrl ?? null, rootUrl),
+        status: "ok" as const,
+        account: null,
+        organizations: [],
+      };
+    });
+
+    const accounts = await Promise.all(
       hosts.map(async (rootUrl) => {
         const summary = describeConnection({ mode: "cloud", rootUrl }, null);
         const account = await currentAccount(rootUrl);
@@ -151,6 +182,7 @@ export function registerAccountsIPC(): void {
         };
       }),
     );
+    return [...accounts, ...computers];
   });
 
   ipcMain.handle(

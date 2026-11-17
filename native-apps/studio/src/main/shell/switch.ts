@@ -4,7 +4,6 @@ import { runtime } from "../runtime/client";
 import {
   type ConnectionSummary,
   describeConnection,
-  hostLabel,
 } from "../settings/connection";
 import {
   type Mode,
@@ -35,18 +34,27 @@ export async function switchServer(
   if (mode === "local") {
     patch.autoStartRuntime = true;
   } else if (rootUrl) {
-    const target = normalizeHost(rootUrl);
+    const { prepareHost, syncTunnel } = await import("../join");
+    const label = describeConnection({ rootUrl }, null).label;
+    try {
+      // The helper's own message: it knows why, and says it plainly.
+      const target = await prepareHost(normalizeHost(rootUrl));
 
-    // Probe before writing anything. Committing first and failing after
-    // left the app pointed at an instance that was never reachable, with
-    // the only way back being the menu.
-    const { checkHost } = await import("../cloud/host");
-    if (!(await checkHost(target))) {
-      throw new Error(
-        `Could not reach ${hostLabel(target)}. Check the address and that the instance is running.`,
-      );
+      // Probe before writing anything. Committing first and failing after
+      // left the app pointed at an instance that was never reachable, with
+      // the only way back being the menu.
+      const { checkHost } = await import("../cloud/host");
+      if (!(await checkHost(target))) {
+        throw new Error(
+          `Could not reach ${label}. Check the address and that the instance is running.`,
+        );
+      }
+      patch.rootUrl = target;
+    } catch (err) {
+      // Opening another computer's tunnel closed the one in use.
+      await syncTunnel();
+      throw err;
     }
-    patch.rootUrl = target;
   }
 
   // Started before the mode is saved, so a server that will not start does
@@ -56,6 +64,7 @@ export async function switchServer(
   }
 
   updateSettings(patch);
+  void import("../join").then(({ syncTunnel }) => syncTunnel());
   // The offline setup only shows online; organization copies show anywhere.
   refreshSetupBar();
 

@@ -20,6 +20,17 @@ export type Settings = {
   accounts?: string[];
 };
 
+/** A computer sharing on this network. */
+export type DiscoveredHost = {
+  id: string;
+  name: string;
+  port: number | null;
+};
+
+export type DiscoveryEvent =
+  | { event: "host_discovered"; host: DiscoveredHost }
+  | { event: "host_expired"; id: string };
+
 export type PendingLocal = {
   /** The account's server, which the organizations are copied from. */
   rootUrl: string;
@@ -133,6 +144,8 @@ export type SignedInAccount = {
   /** "TheOpenPresenter Cloud" or the server's host. */
   label: string;
   isCloud: boolean;
+  /** Another computer joined over iroh, rather than a server signed in to. */
+  isComputer?: boolean;
   /** The account the app goes online with. */
   current: boolean;
   status: "ok" | "signed-out" | "unreachable";
@@ -457,6 +470,13 @@ export const api = {
   remoteStatus: () => invoke<RemoteStatus>("runtime:remote-status"),
   startRemote: () => invoke<RemoteStatus>("runtime:remote-start"),
   stopRemote: () => invoke<RemoteStatus>("runtime:remote-stop"),
+
+  /** Computers known so far; `join:discovery` events follow. */
+  discoverHosts: () => invoke<DiscoveredHost[]>("join:discover-start"),
+  stopDiscovery: () => invoke<void>("join:discover-stop"),
+  /** Join a computer and switch to it. `peer` is an ID or a pasted code. */
+  joinHost: (peer: string, port?: number | null, name?: string | null) =>
+    invoke<ConnectionSummary>("join:connect", { peer, port, name }),
 
   /** Versions and connection, for the About panel. */
   aboutInfo: () => invoke<AboutInfo>("app:about"),

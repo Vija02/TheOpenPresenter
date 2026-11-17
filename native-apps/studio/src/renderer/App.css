@@ -379,6 +379,25 @@ h2 {
   opacity: 1;
 }
 
+/* Another computer found on the network, offered quietly under the setup
+   choice rather than as a third choice: most people never see it. */
+.nearby:not(:empty) {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--stroke);
+  text-align: left;
+}
+
+.nearby-heading {
+  margin: 0;
+  font-size: 13px;
+  color: var(--secondary);
+}
+
+.nearby .choices {
+  margin: 8px 0 0;
+}
+
 /* Background download: present but never the focus. */
 .download-status {
   margin-top: 24px;
@@ -1187,6 +1206,15 @@ body.setup-bar-page {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.add-account-nearby {
+  margin: 16px 0 0;
+  font-size: 13px;
+}
+
+.add-account-nearby + .choices {
+  margin-top: 8px;
 }
 
 /* Under the account name: whether the window is using it right now. */

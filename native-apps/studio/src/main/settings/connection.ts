@@ -1,4 +1,9 @@
-import { DEFAULT_CLOUD_URL, type Mode, type Settings } from "./store";
+import {
+  DEFAULT_CLOUD_URL,
+  type Mode,
+  type Settings,
+  computerAt,
+} from "./store";
 
 /** Where the server this app talks to is running. */
 export type ServerLocation = "this-computer" | "remote";
@@ -37,7 +42,9 @@ export const describeConnection = (
     mode: isCloud ? "cloud" : "selfhosted",
     rootUrl,
     isCloud,
-    label: isCloud ? "TheOpenPresenter Cloud" : hostLabel(rootUrl),
+    label: isCloud
+      ? "TheOpenPresenter Cloud"
+      : (computerAt(rootUrl)?.name ?? hostLabel(rootUrl)),
   };
 };
 

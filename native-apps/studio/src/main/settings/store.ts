@@ -4,6 +4,7 @@ import { homedir } from "os";
 import { join } from "path";
 
 import { logShell } from "../shell/log";
+import { sameHost } from "./host";
 import { shellDir } from "./paths";
 
 /** JSON-file settings store */
@@ -32,7 +33,29 @@ export type Settings = {
   pendingLocal?: PendingLocal;
   /** Servers signed in to from this app */
   accounts?: string[];
+  /** Other computers joined over iroh. Each is served on a local port. */
+  computers?: Computer[];
 };
+
+export type Computer = {
+  /** Its endpoint ID. */
+  peer: string;
+  name: string | null;
+  port: number;
+};
+
+export const computerUrl = (computer: Computer): string =>
+  `http://localhost:${computer.port}`;
+
+/** The joined computer served at `url`, if it is one. */
+export function computerAt(url: string | null | undefined): Computer | null {
+  if (!url) return null;
+  return (
+    (getSettings().computers ?? []).find((c) =>
+      sameHost(computerUrl(c), url),
+    ) ?? null
+  );
+}
 
 export type PendingLocal = {
   /** The account's server, which the organizations are copied from. */
