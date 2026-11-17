@@ -402,6 +402,7 @@ impl Remote {
             name,
             connection.clone(),
             port,
+            self.events.clone(),
         ));
         match served {
             Ok(client) => {

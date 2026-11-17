@@ -14,6 +14,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
+use super::discovery::{Event, EventSink};
 use super::{forward_bidi, ALPN, HANDSHAKE};
 
 /// Kept short: the helper handles one command at a time.
@@ -130,6 +131,7 @@ pub async fn serve(
     name: Option<String>,
     connection: Connection,
     port: Option<u16>,
+    events: EventSink,
 ) -> Result<Client> {
     let listeners = Listeners::bind(port).await?;
     let port = listeners.port;
@@ -138,11 +140,13 @@ pub async fn serve(
     let dialer = Arc::new(Dialer {
         endpoint,
         peer,
-        connection: Mutex::new(Some(connection)),
+        connection: Mutex::new(Some(connection.clone())),
         dialing: tokio::sync::Mutex::new(()),
         last_failure: Mutex::new(None),
         stop: CancellationToken::new(),
+        events,
     });
+    dialer.watch(connection);
 
     let task = tokio::spawn({
         let dialer = dialer.clone();
@@ -260,10 +264,11 @@ struct Dialer {
     dialing: tokio::sync::Mutex<()>,
     last_failure: Mutex<Option<Instant>>,
     stop: CancellationToken,
+    events: EventSink,
 }
 
 impl Dialer {
-    async fn connection(&self) -> Result<Connection> {
+    async fn connection(self: &Arc<Self>) -> Result<Connection> {
         if let Some(connection) = self.live() {
             return Ok(connection);
         }
@@ -301,7 +306,38 @@ impl Dialer {
             anyhow::bail!("Disconnected");
         }
         *slot = Some(connection.clone());
+        drop(slot);
+        self.watch(connection.clone());
         Ok(connection)
+    }
+
+    /// Tell the app when the host drops us, so it can say so at once rather
+    /// than leave the next page load to time out. Only for the connection in
+    /// use: an old one can time out after a newer one has taken over.
+    fn watch(self: &Arc<Self>, connection: Connection) {
+        let dialer = Arc::downgrade(self);
+        tokio::spawn(async move {
+            let reason = connection.closed().await;
+            let Some(dialer) = dialer.upgrade() else {
+                return;
+            };
+            if dialer.stop.is_cancelled() {
+                return;
+            }
+            let current = dialer
+                .connection
+                .lock()
+                .expect("connection lock")
+                .as_ref()
+                .map(Connection::stable_id);
+            if current != Some(connection.stable_id()) {
+                return;
+            }
+            tracing::info!("Tunnel to {} closed: {reason}", dialer.peer.id);
+            (dialer.events)(Event::TunnelClosed {
+                peer: dialer.peer.id.to_string(),
+            });
+        });
     }
 
     fn live(&self) -> Option<Connection> {
@@ -321,7 +357,7 @@ impl Dialer {
         }
     }
 
-    async fn forward(&self, tcp: TcpStream) -> Result<()> {
+    async fn forward(self: &Arc<Self>, tcp: TcpStream) -> Result<()> {
         let connection = self.connection().await?;
         let (mut send, recv) = match connection.open_bi().await {
             Ok(stream) => stream,

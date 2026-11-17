@@ -5,6 +5,7 @@ import {
   type DiscoveryEvent,
   helper,
 } from "../runtime/helper";
+import { describeConnection } from "../settings/connection";
 import { sameHost } from "../settings/host";
 import {
   type Computer,
@@ -17,10 +18,18 @@ import {
 import { logShell } from "../shell/log";
 import {
   closeUnreachableWindow,
+  getMainWindow,
   isUnreachableShowing,
+  onMainWindowCreated,
+  openUnreachableWindow,
   reloadServerWindows,
   showAppWindow,
 } from "../shell/windows";
+import {
+  hideDisconnected,
+  isDisconnectedShowing,
+  showDisconnected,
+} from "./overlay";
 
 /** Helper exits that bring the tunnel back, and over what window. */
 const MAX_REJOINS = 3;
@@ -121,6 +130,32 @@ export async function forgetComputer(url: string): Promise<void> {
 }
 
 let retrying: Promise<void> | null = null;
+/**
+ * While the computer is away under an open window: the page it covers, when
+ * it went, and whether a page load failed meanwhile.
+ */
+let lost: { page: string | null; since: number; loadFailed: boolean } | null =
+  null;
+/** Wakes the retry loop early, such as when the user switched away. */
+let wakeLoop: (() => void) | null = null;
+/**
+ * A short drop with the page intact needs no reload: the editor reconnects by
+ * itself. Past this, the app's GraphQL connection has given up retrying.
+ */
+const RELOAD_AFTER_MS = 15_000;
+
+/** Something on screen is waiting for the computer to come back. */
+const waiting = () => isUnreachableShowing() || isDisconnectedShowing();
+
+/** `page`'s path on `url`, which may be a new port for the same computer. */
+function samePageOn(page: string, url: string): string {
+  try {
+    const { pathname, search, hash } = new URL(page);
+    return new URL(pathname + search + hash, url).toString();
+  } catch {
+    return url;
+  }
+}
 
 /**
  * Try the configured server again and show it if it answers. Shared, so the
@@ -134,8 +169,18 @@ export function retryCurrent(): Promise<void> {
     if (!url || !(await checkHost(url))) {
       throw new Error("Still unreachable.");
     }
-    showAppWindow(url);
+    const was = lost;
+    lost = null;
+    const intact =
+      was?.page &&
+      !was.loadFailed &&
+      Date.now() - was.since < RELOAD_AFTER_MS &&
+      sameHost(new URL(was.page).origin, url);
+    if (!intact || !isDisconnectedShowing()) {
+      showAppWindow(was?.page ? samePageOn(was.page, url) : url);
+    }
     closeUnreachableWindow();
+    hideDisconnected();
   })().finally(() => {
     retrying = null;
   });
@@ -153,7 +198,7 @@ export async function waitForComputer(): Promise<boolean> {
   const stillWanted = () => {
     const settings = getSettings();
     return (
-      isUnreachableShowing() &&
+      waiting() &&
       settings.mode !== "local" &&
       computerAt(settings.rootUrl)?.peer === computer.peer
     );
@@ -181,8 +226,10 @@ export async function waitForComputer(): Promise<boolean> {
             clearTimeout(timer);
             resolve();
           };
+          wakeLoop = wake;
         });
         wake = null;
+        wakeLoop = null;
         if (!stillWanted()) break;
       }
       tryNow = false;
@@ -196,13 +243,91 @@ export async function waitForComputer(): Promise<boolean> {
     }
     return false;
   } finally {
+    // Switched to something else meanwhile: the overlay was about this one.
+    const now = getSettings();
+    if (
+      now.mode === "local" ||
+      computerAt(now.rootUrl)?.peer !== computer.peer
+    ) {
+      hideDisconnected();
+      lost = null;
+    }
     helper.off("discovery", onDiscovery);
     void helper.discoverStop().catch(() => undefined);
   }
 }
 
+/**
+ * The user switched to something else: the overlay was about the computer
+ * left behind, and its retry loop can stop now rather than after its wait.
+ */
+export function stopWaiting(): void {
+  lost = null;
+  hideDisconnected();
+  wakeLoop?.();
+}
+
+/**
+ * The computer the app is showing went away. Say so at once rather than
+ * leave the next page load to time out on a black window, keep trying, and
+ * come back to the same page.
+ */
+function computerLost({
+  peer,
+  failedPage,
+}: { peer?: string; failedPage?: string } = {}): void {
+  const settings = getSettings();
+  const computer =
+    settings.mode === "local" ? null : computerAt(settings.rootUrl);
+  if (!computer || (peer && peer !== computer.peer)) return;
+  if (waiting()) return;
+
+  // Only a page from this computer is worth coming back to.
+  const page = failedPage ?? getMainWindow()?.webContents.getURL();
+  const ours =
+    !!page &&
+    URL.canParse(page) &&
+    sameHost(new URL(page).origin, settings.rootUrl ?? null);
+  lost = {
+    page: ours ? page : null,
+    since: Date.now(),
+    loadFailed: !!failedPage,
+  };
+  logShell("info", "[join] lost the computer; waiting for it");
+  const label = describeConnection(settings, null).label;
+  // Over the page if there is one; the separate screen otherwise.
+  if (!showDisconnected(label)) openUnreachableWindow(label, "");
+  waitForComputer().catch((err) =>
+    logShell("error", "[join] retrying failed:", err),
+  );
+}
+
 /** Picking computers on this network, and joining one. */
 export function registerJoinIPC(): void {
+  helper.on("tunnel-closed", (peer: string) => computerLost({ peer }));
+
+  // In case the drop went unnoticed: a page that fails to load from a
+  // computer that doesn't answer either. Not one that answers, or a page that
+  // fails for another reason would loop through the unreachable screen.
+  onMainWindowCreated((win) => {
+    win.webContents.on(
+      "did-fail-load",
+      (_event, code, _description, url, isMainFrame) => {
+        // -3 is an aborted load, such as a navigation replacing another.
+        if (!isMainFrame || code === -3) return;
+        // The page under the overlay is broken: reload it when it's back.
+        if (lost) lost.loadFailed = true;
+        const rootUrl = getSettings().rootUrl;
+        if (!computerAt(rootUrl)) return;
+        void import("../cloud/host")
+          .then(({ checkHost }) => checkHost(rootUrl!))
+          .then((up) => {
+            if (!up) computerLost({ failedPage: url });
+          });
+      },
+    );
+  });
+
   helper.on("discovery", (event) => {
     for (const win of BrowserWindow.getAllWindows()) {
       if (!win.isDestroyed()) win.webContents.send("join:discovery", event);

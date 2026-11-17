@@ -166,6 +166,10 @@ export class HelperClient extends EventEmitter {
         continue;
       }
 
+      if (message.event === "tunnel_closed") {
+        this.emit("tunnel-closed", message.peer);
+        continue;
+      }
       if (typeof message.event === "string") {
         this.emit("discovery", message as DiscoveryEvent);
         continue;
