@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result};
-use iroh::endpoint::{Accepting, RecvStream, SendStream};
+use iroh::endpoint::{Connection, RecvStream, SendStream};
 use tokio::net::TcpStream;
 use tokio_util::sync::CancellationToken;
 
@@ -28,7 +28,7 @@ impl Resolver {
         }
     }
 
-    async fn resolve(&self) -> Result<SocketAddr> {
+    pub(super) async fn resolve(&self) -> Result<SocketAddr> {
         let cached = *self.cached.lock().expect("resolver lock");
         if let Some((addr, at)) = cached {
             if at.elapsed() < RESOLVE_CACHE {
@@ -64,11 +64,10 @@ impl Resolver {
 /// Each bidirectional stream is one TCP connection. `dumbpipe` opens one per
 /// connection; a joining Studio opens many on one.
 pub(super) async fn handle_connection(
-    accepting: Accepting,
+    connection: Connection,
     resolver: Arc<Resolver>,
     stop: CancellationToken,
 ) -> Result<()> {
-    let connection = accepting.await.context("Error accepting the connection")?;
     let remote = connection.remote_id();
     tracing::info!("Tunnel connection from {remote}");
 

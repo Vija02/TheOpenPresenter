@@ -25,6 +25,8 @@ const RETRY_AFTER_FAILURE: Duration = Duration::from_secs(5);
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct ClientStatus {
     pub peer: String,
+    /// From the host's info reply; `None` for hosts that don't answer it.
+    pub name: Option<String>,
     pub local_url: String,
     /// False between a drop and the next request, which dials again.
     pub connected: bool,
@@ -32,6 +34,7 @@ pub struct ClientStatus {
 
 pub struct Client {
     dialer: Arc<Dialer>,
+    name: Option<String>,
     port: u16,
     task: JoinHandle<()>,
 }
@@ -48,6 +51,7 @@ impl Client {
     pub fn status(&self) -> ClientStatus {
         ClientStatus {
             peer: self.peer().to_string(),
+            name: self.name.clone(),
             local_url: format!("http://localhost:{}", self.port),
             connected: self.dialer.live().is_some(),
         }
@@ -102,6 +106,7 @@ pub async fn dial(endpoint: &Endpoint, peer: &EndpointAddr) -> Result<Connection
 pub async fn serve(
     endpoint: Endpoint,
     peer: EndpointAddr,
+    name: Option<String>,
     connection: Connection,
     port: Option<u16>,
 ) -> Result<Client> {
@@ -144,7 +149,12 @@ pub async fn serve(
         }
     });
 
-    Ok(Client { dialer, port, task })
+    Ok(Client {
+        dialer,
+        name,
+        port,
+        task,
+    })
 }
 
 /// Both loopbacks: browsers may resolve `localhost` to either, and something
@@ -159,6 +169,10 @@ impl Listeners {
     const ATTEMPTS: usize = 8;
 
     async fn bind(preferred: Option<u16>) -> Result<Self> {
+        let preferred = match preferred {
+            Some(port) if answers_locally(port).await => None,
+            preferred => preferred,
+        };
         if let Some(port) = preferred {
             match Self::bind_port(port).await {
                 Ok(listeners) => return Ok(listeners),
@@ -195,6 +209,26 @@ impl Listeners {
         };
         Ok(tcp)
     }
+}
+
+/// Whether something here already serves `port`, such as this machine's own
+/// server. On macOS and Windows our loopback bind can succeed beside a
+/// wildcard listener and would quietly take its `localhost` traffic.
+async fn answers_locally(port: u16) -> bool {
+    let connects = |addr: SocketAddr| async move {
+        tokio::time::timeout(Duration::from_millis(300), TcpStream::connect(addr))
+            .await
+            .is_ok_and(|result| result.is_ok())
+    };
+    let (v4, v6) = tokio::join!(
+        connects(SocketAddr::from((Ipv4Addr::LOCALHOST, port))),
+        connects(SocketAddr::from((Ipv6Addr::LOCALHOST, port))),
+    );
+    let answers = v4 || v6;
+    if answers {
+        tracing::warn!("Port {port} is already in use here; using another");
+    }
+    answers
 }
 
 struct Dialer {
@@ -313,6 +347,14 @@ mod tests {
                 .await
                 .is_err());
         }
+    }
+
+    #[tokio::test]
+    async fn a_port_served_here_is_not_used() {
+        let ours = std::net::TcpListener::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
+        let taken = ours.local_addr().unwrap().port();
+        let listeners = Listeners::bind(Some(taken)).await.unwrap();
+        assert_ne!(listeners.port, taken);
     }
 
     #[tokio::test]

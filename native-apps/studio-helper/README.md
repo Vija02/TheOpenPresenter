@@ -12,6 +12,10 @@ to do with installing or running the server runtime.
   endpoint ID and serve its app on a local port. One QUIC connection carries
   a stream per TCP connection, and a dropped connection is dialed again on
   the next request. Needs no runtime on the joining machine.
+- **Finding hosts on the network.** mDNS (`_theopenpresenter._udp`),
+  advertised only while hosting. Each peer found is asked for its name and
+  server port over a small info protocol (ALPN `top/info/0`) and listed only
+  if it answers. Joining without a port uses the host's port.
 - **`grab-input`.** `EVIOCGRAB` on an evdev device passed as fd 3 (Linux), so
   clicker presses go only to the app.
 
@@ -27,6 +31,10 @@ same shape as the runtime manager. Studio starts it on first use.
 > {"id":3,"cmd":"remote_connect","peer":"<ticket or endpoint id>","port":3000}
 < {"id":3,"ok":true,"result":{"peer":"…","local_url":"http://localhost:3000","connected":true}}
 > {"id":4,"cmd":"remote_disconnect"}
+> {"id":5,"cmd":"discover_start"}
+< {"id":5,"ok":true,"result":{"hosts":[]}}
+< {"event":"host_discovered","host":{"id":"…","name":"Main hall","port":6678}}
+< {"event":"host_expired","id":"…"}
 > {"cmd":"shutdown"}
 ```
 
@@ -38,7 +46,8 @@ Closing stdin stops the tunnel and exits.
 top-runtime-manager start        # in one terminal
 top-studio-helper remote start          # in another; prints a ticket, Ctrl-C stops
 
-top-studio-helper remote connect <ticket or id>   # on the joining machine
+top-studio-helper remote discover                 # on the joining machine: lists hosts
+top-studio-helper remote connect <ticket or id>   # then join one
 ```
 
 `--root` must match the runtime manager's (both default to the same place).

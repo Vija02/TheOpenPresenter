@@ -28,6 +28,12 @@ mac:
   hardenedRuntime: true
   entitlements: packaging/entitlements.mac.plist
   entitlementsInherit: packaging/entitlements.mac.plist
+  # Finding other Studios on the network (top-studio-helper's mDNS). Without
+  # these, macOS 15+ silently blocks it.
+  extendInfo:
+    NSLocalNetworkUsageDescription: Find and connect to other TheOpenPresenter Studios on your network.
+    NSBonjourServices:
+      - _theopenpresenter._udp
 dmg:
   artifactName: ${productName}-${arch}.${ext}
 linux:

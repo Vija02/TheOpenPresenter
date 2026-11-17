@@ -11,6 +11,9 @@ pub enum Command {
         /// Instead of the runtime's port.
         #[serde(default)]
         port: Option<u16>,
+        /// Shown to Studios on the local network. Defaults to the hostname.
+        #[serde(default)]
+        name: Option<String>,
     },
     RemoteStop,
     RemoteConnect {
@@ -21,6 +24,10 @@ pub enum Command {
         port: Option<u16>,
     },
     RemoteDisconnect,
+    /// List hosts on the local network, with `host_discovered` and
+    /// `host_expired` events after.
+    DiscoverStart,
+    DiscoverStop,
     RemoteStatus,
     Shutdown,
 }
@@ -54,7 +61,10 @@ mod tests {
         assert_eq!(request.id, Some(3));
         assert!(matches!(
             request.command,
-            Command::RemoteStart { port: None }
+            Command::RemoteStart {
+                port: None,
+                name: None,
+            }
         ));
 
         let request = parse_line(r#"{"cmd":"remote_start","port":4000}"#)
@@ -62,7 +72,10 @@ mod tests {
             .unwrap();
         assert!(matches!(
             request.command,
-            Command::RemoteStart { port: Some(4000) }
+            Command::RemoteStart {
+                port: Some(4000),
+                name: None,
+            }
         ));
     }
 
