@@ -55,6 +55,8 @@ export class HelperClient extends EventEmitter {
   private buffer = "";
   /** So an exit we asked for isn't treated as a crash. */
   private stopping = false;
+  /** Callers of `discoverStart` that haven't stopped yet. */
+  private browsing = 0;
 
   get isRunning(): boolean {
     return this.child !== null;
@@ -234,8 +236,12 @@ export class HelperClient extends EventEmitter {
     return this.request<RemoteStatus>({ cmd: "remote_disconnect" });
   }
 
-  /** Lists hosts known so far; `discovery` events follow. */
+  /**
+   * Lists hosts known so far; `discovery` events follow. Counted: the helper
+   * has one browser, and it runs until every caller has stopped.
+   */
   async discoverStart(): Promise<DiscoveredHost[]> {
+    this.browsing++;
     const result = await this.request<{ hosts: DiscoveredHost[] }>({
       cmd: "discover_start",
     });
@@ -243,7 +249,8 @@ export class HelperClient extends EventEmitter {
   }
 
   async discoverStop(): Promise<void> {
-    if (!this.child) return;
+    this.browsing = Math.max(0, this.browsing - 1);
+    if (this.browsing > 0 || !this.child) return;
     await this.request({ cmd: "discover_stop" });
   }
 

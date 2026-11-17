@@ -1,20 +1,37 @@
 import { BrowserWindow, ipcMain } from "electron";
 
-import { type DiscoveredHost, helper } from "../runtime/helper";
+import {
+  type DiscoveredHost,
+  type DiscoveryEvent,
+  helper,
+} from "../runtime/helper";
 import { sameHost } from "../settings/host";
 import {
   type Computer,
   computerAt,
   computerUrl,
   getSettings,
+  resolveRootUrl,
   updateSettings,
 } from "../settings/store";
 import { logShell } from "../shell/log";
-import { reloadServerWindows } from "../shell/windows";
+import {
+  closeUnreachableWindow,
+  isUnreachableShowing,
+  reloadServerWindows,
+  showAppWindow,
+} from "../shell/windows";
 
 /** Helper exits that bring the tunnel back, and over what window. */
 const MAX_REJOINS = 3;
 const REJOIN_WINDOW_MS = 5 * 60 * 1000;
+
+/**
+ * Between tries while a joined computer can't be reached. Backs off, since
+ * each failed try holds the helper's command loop for its dial timeout;
+ * seeing the computer on the network tries at once anyway.
+ */
+const RETRY_DELAYS_MS = [5000, 10_000, 20_000, 30_000];
 
 /**
  * Open the tunnel to a computer and save it. Returns where it's served here,
@@ -101,6 +118,87 @@ export async function forgetComputer(url: string): Promise<void> {
     ),
   });
   await syncTunnel();
+}
+
+let retrying: Promise<void> | null = null;
+
+/**
+ * Try the configured server again and show it if it answers. Shared, so the
+ * "Try again" button and the automatic retry don't race each other.
+ */
+export function retryCurrent(): Promise<void> {
+  retrying ??= (async () => {
+    const { runtime } = await import("../runtime/client");
+    const { checkHost } = await import("../cloud/host");
+    const url = await prepareHost(resolveRootUrl(runtime.url)).catch(() => "");
+    if (!url || !(await checkHost(url))) {
+      throw new Error("Still unreachable.");
+    }
+    showAppWindow(url);
+    closeUnreachableWindow();
+  })().finally(() => {
+    retrying = null;
+  });
+  return retrying;
+}
+
+/**
+ * While the unreachable screen shows a joined computer, keep trying, and try
+ * at once when it's seen on the network. Resolves true once it's back.
+ */
+export async function waitForComputer(): Promise<boolean> {
+  const computer = computerAt(getSettings().rootUrl);
+  if (!computer) return false;
+  // Stops once the user has switched to something else from settings.
+  const stillWanted = () => {
+    const settings = getSettings();
+    return (
+      isUnreachableShowing() &&
+      settings.mode !== "local" &&
+      computerAt(settings.rootUrl)?.peer === computer.peer
+    );
+  };
+
+  let wake: (() => void) | null = null;
+  const onDiscovery = (event: DiscoveryEvent) => {
+    if (event.event === "host_discovered" && event.host.id === computer.peer) {
+      wake?.();
+    }
+  };
+  helper.on("discovery", onDiscovery);
+  const listed = await helper.discoverStart().catch(() => []);
+  // Already seen: no new event will come for it, so try straight away.
+  let tryNow = listed.some((host) => host.id === computer.peer);
+
+  try {
+    for (let attempt = 0; stillWanted(); attempt++) {
+      if (!tryNow) {
+        const delay =
+          RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length - 1)];
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, delay);
+          wake = () => {
+            clearTimeout(timer);
+            resolve();
+          };
+        });
+        wake = null;
+        if (!stillWanted()) break;
+      }
+      tryNow = false;
+      try {
+        await retryCurrent();
+        logShell("info", "[join] the computer is back");
+        return true;
+      } catch {
+        // Still away; go round again.
+      }
+    }
+    return false;
+  } finally {
+    helper.off("discovery", onDiscovery);
+    void helper.discoverStop().catch(() => undefined);
+  }
 }
 
 /** Picking computers on this network, and joining one. */
