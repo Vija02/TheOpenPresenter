@@ -56,8 +56,8 @@ export function RemoteAccess() {
     <section className="panel-body">
       <h2>Remote access</h2>
       <p className="muted">
-        Lets another device reach this computer from outside the building,
-        without changing anything on the router.
+        Lets other computers join this one, on this network or from outside the
+        building, without changing anything on the router.
       </p>
 
       <div className="row">
@@ -73,10 +73,10 @@ export function RemoteAccess() {
 
       {status?.enabled && status.ticket && (
         <div className="ticket">
-          <label>Connection ticket</label>
+          <label>Code for joining from outside this network</label>
           <textarea readOnly value={status.ticket} rows={3} />
           <Button variant="link" onClick={() => void copy()}>
-            {copied ? "Copied" : "Copy ticket"}
+            {copied ? "Copied" : "Copy code"}
           </Button>
         </div>
       )}

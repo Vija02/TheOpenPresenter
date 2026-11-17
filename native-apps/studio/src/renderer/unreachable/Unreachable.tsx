@@ -32,7 +32,7 @@ export function Unreachable({ label, url }: { label: string; url: string }) {
       <p className="muted">
         The instance may be switched off, or this computer may be offline.
       </p>
-      <p className="muted mono">{url}</p>
+      {url && <p className="muted mono">{url}</p>}
 
       {failedAgain && <p className="problem">Still no answer from {label}.</p>}
 

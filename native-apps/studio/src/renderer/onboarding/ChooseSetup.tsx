@@ -1,6 +1,7 @@
 import { Button, Option } from "@repo/ui";
 import { useState } from "react";
 
+import { ComputerPicker } from "../shared/ComputerPicker";
 import { Logo } from "../shared/Logo";
 import { CHANNELS, DEFAULT_CHANNEL, channelNote } from "../shared/channels";
 
@@ -108,6 +109,18 @@ export function ChooseSetup({
       <Button disabled={busy} onClick={() => onContinue({ kind, channel })}>
         Continue
       </Button>
+
+      {/* Only there once another computer is found sharing on this network.
+          Picking one joins it: nothing to download or sign in to. */}
+      <div className="nearby">
+        <ComputerPicker
+          quiet
+          allowPaste={false}
+          heading={
+            <p className="nearby-heading">Or use a computer on this network</p>
+          }
+        />
+      </div>
     </div>
   );
 }
