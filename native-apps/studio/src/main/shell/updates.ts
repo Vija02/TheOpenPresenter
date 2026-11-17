@@ -109,7 +109,8 @@ export async function checkAtLaunch(): Promise<void> {
   ]);
   if (
     appUpdate.status === "available" ||
-    runtimeUpdate.status === "available"
+    runtimeUpdate.status === "available" ||
+    (runtimeUpdate.status === "ready" && runtimeUpdate.needsRestart)
   ) {
     openUpdateWindow();
   }
@@ -254,14 +255,22 @@ export async function checkForRuntimeUpdate(): Promise<RuntimeUpdateState> {
       runtime.check(channel()),
       runtime.status(),
     ]);
+    // A server kept from the last session can still be on an older version
+    // than the one already activated: it only needs a restart.
+    const stale =
+      status.running &&
+      !!status.runningVersion &&
+      status.runningVersion !== status.current;
     setRuntimeState(
-      found.version === status.current
-        ? { status: "none" }
-        : {
+      found.version !== status.current
+        ? {
             status: "available",
-            current: status.current,
+            current: status.runningVersion ?? status.current,
             version: found.version,
-          },
+          }
+        : stale
+          ? { status: "ready", version: found.version, needsRestart: true }
+          : { status: "none" },
     );
   } catch (err) {
     // Offline, most likely. Not worth a popup.
