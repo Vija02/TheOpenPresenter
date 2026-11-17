@@ -254,7 +254,7 @@ async function startupRoute(): Promise<string> {
 
   if (settings.rootUrl) {
     const { isLoggedIn, checkHost } = await import("./cloud/host");
-    const { prepareHost } = await import("./join");
+    const { prepareHost, waitForComputer } = await import("./join");
     // A joined computer needs its tunnel first.
     const rootUrl = await prepareHost(resolveRootUrl(null)).catch(() =>
       resolveRootUrl(null),
@@ -271,6 +271,11 @@ async function startupRoute(): Promise<string> {
         computerAt(rootUrl) ? "" : rootUrl,
       );
       closeLoadingWindow();
+      if (computerAt(rootUrl)) {
+        waitForComputer()
+          .then((back) => back && startLocalInBackground(settings))
+          .catch((err) => logShell("error", "[join] retrying failed:", err));
+      }
       return "the unreachable screen";
     }
 

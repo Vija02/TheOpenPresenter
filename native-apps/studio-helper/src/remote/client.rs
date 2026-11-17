@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use anyhow::Result;
-use iroh::endpoint::{Connection, Endpoint};
+use iroh::endpoint::{ConnectOptions, Connection, Endpoint, IdleTimeout, QuicTransportConfig};
 use iroh::{EndpointAddr, EndpointId};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::task::JoinHandle;
@@ -78,16 +78,33 @@ pub fn parse_peer(text: &str) -> Result<EndpointAddr> {
     Ok(id.into())
 }
 
+/// A host that went away is noticed in 10s rather than QUIC's default 30s,
+/// so the next request dials again instead of hanging on a dead connection.
+/// Not much lower: a Wi-Fi roam can stall a few seconds, and a timeout cuts
+/// every open stream.
+fn transport() -> QuicTransportConfig {
+    QuicTransportConfig::builder()
+        .keep_alive_interval(Duration::from_secs(2))
+        .max_idle_timeout(Some(
+            IdleTimeout::try_from(Duration::from_secs(10)).expect("idle timeout in range"),
+        ))
+        .build()
+}
+
 pub async fn dial(endpoint: &Endpoint, peer: &EndpointAddr) -> Result<Connection> {
     if peer.id == endpoint.id() {
         anyhow::bail!("That's this computer");
     }
 
     let attempt = |addr: EndpointAddr| async move {
-        tokio::time::timeout(DIAL_TIMEOUT, endpoint.connect(addr, ALPN))
+        let connect = async {
+            let options = ConnectOptions::new().with_transport_config(transport());
+            let connecting = endpoint.connect_with_opts(addr, ALPN, options).await?;
+            anyhow::Ok(connecting.await?)
+        };
+        tokio::time::timeout(DIAL_TIMEOUT, connect)
             .await
             .map_err(|_| anyhow::anyhow!("timed out"))?
-            .map_err(anyhow::Error::from)
     };
 
     let result = match attempt(peer.clone()).await {

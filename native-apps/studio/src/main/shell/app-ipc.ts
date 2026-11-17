@@ -23,7 +23,6 @@ import {
 } from "./updates";
 import {
   backToShellUI,
-  closeUnreachableWindow,
   closeUpdateWindow,
   openPanelWindow,
   showAppWindow,
@@ -88,14 +87,8 @@ export function registerAppIPC(): void {
    * Try the configured instance again after it was unreachable at startup.
    */
   ipcMain.handle("app:retry-connection", async () => {
-    const { prepareHost } = await import("../join");
-    const url = await prepareHost(resolveRootUrl(runtime.url)).catch(() => "");
-    const { checkHost } = await import("../cloud/host");
-    if (!url || !(await checkHost(url))) {
-      throw new Error("Still unreachable.");
-    }
-    showAppWindow(url);
-    closeUnreachableWindow();
+    const { retryCurrent } = await import("../join");
+    await retryCurrent();
   });
 
   // This channel is reachable from whatever page is loaded, so an unfiltered

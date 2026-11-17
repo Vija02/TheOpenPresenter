@@ -402,6 +402,10 @@ export function openUnreachableWindow(
   return unreachableWin;
 }
 
+export function isUnreachableShowing(): boolean {
+  return !!unreachableWin && !unreachableWin.isDestroyed();
+}
+
 export function closeUnreachableWindow(): void {
   if (unreachableWin && !unreachableWin.isDestroyed()) unreachableWin.destroy();
   unreachableWin = null;
