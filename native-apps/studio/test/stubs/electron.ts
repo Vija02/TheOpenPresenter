@@ -24,6 +24,7 @@ export const app = {
 
 export const ipcMain = {
   handle: () => {},
+  on: () => {},
 };
 
 export const shell = {
@@ -68,6 +69,7 @@ export const nativeImage = {
 };
 export const globalShortcut = { register: () => {}, unregister: () => {} };
 export const contextBridge = { exposeInMainWorld: () => {} };
+export const webUtils = { getPathForFile: () => "" };
 export const ipcRenderer = {
   invoke: () => Promise.resolve(),
   on: () => {},

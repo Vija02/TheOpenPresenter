@@ -1,4 +1,5 @@
 import { registerCloudIPC } from "./cloud/ipc";
+import { registerLinkedFilesIPC } from "./files/linked";
 import { registerJoinIPC } from "./join";
 import { registerLocalSetupIPC } from "./local";
 import { registerRuntimeIPC } from "./runtime/ipc";
@@ -16,4 +17,5 @@ export function registerIPC(): void {
   registerLocalSetupIPC();
   registerScreensIPC();
   registerJoinIPC();
+  registerLinkedFilesIPC();
 }
