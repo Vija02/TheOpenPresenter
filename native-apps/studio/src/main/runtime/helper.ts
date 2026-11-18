@@ -226,6 +226,16 @@ export class HelperClient extends EventEmitter {
     return Promise.resolve(remoteFromLock() ?? OFF);
   }
 
+  /** This install's endpoint id; null without a helper */
+  async nodeId(): Promise<string | null> {
+    try {
+      return (await this.request<{ nodeId: string }>({ cmd: "node_id" }))
+        .nodeId;
+    } catch {
+      return null;
+    }
+  }
+
   startRemote(): Promise<RemoteStatus> {
     return this.request<RemoteStatus>({ cmd: "remote_start" });
   }
