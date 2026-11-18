@@ -31,6 +31,10 @@ import {
 import type { ImportHelpers } from "./helpers";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
 import { fetchOfficeSlideshow } from "./office/fetchOfficeSlideshow";
+import {
+  convertPptWithFallback,
+  offlineUnavailableMessage,
+} from "./office/local/localPptToPdf";
 import { isOnline } from "./office/network";
 import {
   storeOfficeSlideshow,
@@ -52,14 +56,12 @@ import { htmlNotesToPlainText, normalizeSpeakerNotes } from "./speakerNotes";
  * from carries no notes, so this is the only chance to keep them.
  */
 const readPptSpeakerNotes = async (
-  serverPluginApi: ServerPluginApi,
-  mediaName: string,
+  readPptx: () => Promise<Buffer>,
   slideCount: number,
   log: typeof logger,
 ): Promise<string[] | undefined> => {
   try {
-    const media = await serverPluginApi.media.getMedia(mediaName);
-    const slides = extractPptxSlideNotes(await streamToBuffer(media));
+    const slides = extractPptxSlideNotes(await readPptx());
     if (!slides) return undefined;
 
     const notes = notesForPages(slides, slideCount);
@@ -125,7 +127,8 @@ export const createImporters = (
   );
 
   /**
-   * Import a PowerPoint file, converting via Office Online.
+   * Import a PowerPoint file via Office Online, or this computer's PowerPoint
+   * when offline or when Office Online fails.
    */
   const importPpt = async ({
     pluginId,
@@ -140,12 +143,6 @@ export const createImporters = (
     replaceImportId?: string;
     userId: string | null;
   }) => {
-    if (!process.env.ROOT_URL) {
-      throw new Error(
-        "ROOT_URL env var missing. It is required so Office Online can fetch the uploaded file.",
-      );
-    }
-
     const log = logger.child({ pluginId, mediaName, replaceImportId });
     const loadedPlugin = loadedPlugins[pluginId]!;
     const loadedContextData = loadedContext[pluginId]!;
@@ -157,7 +154,12 @@ export const createImporters = (
     ) as PptImportData;
     loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
-    try {
+    const convertViaOfficeOnline = async () => {
+      if (!process.env.ROOT_URL) {
+        throw new Error(
+          "ROOT_URL env var missing. It is required so Office Online can fetch the uploaded file.",
+        );
+      }
       const rootUrl = process.env.PUBLIC_ROOT_URL ?? process.env.ROOT_URL;
       let publicPptUrl: string;
 
@@ -165,9 +167,7 @@ export const createImporters = (
         publicPptUrl = `${rootUrl}/media/data/${mediaName}`;
       } else {
         if (!(await isOnline())) {
-          throw new Error(
-            "Converting PowerPoint isn't available offline yet. Please connect to the internet and try again.",
-          );
+          throw new Error(offlineUnavailableMessage());
         }
         // Local/self-host with internet access:
         // Proxy our files through cloud server
@@ -204,8 +204,30 @@ export const createImporters = (
         },
       );
 
-      const pdfBuffer = await convertPptToPdfViaOfficeOnline(publicPptUrl, log);
-      log.info("PPT converted to PDF");
+      return {
+        pdfBuffer: await convertPptToPdfViaOfficeOnline(publicPptUrl, log),
+        slideshowPromise: slideshowPromise as typeof slideshowPromise | null,
+      };
+    };
+
+    const readPptx = async () =>
+      streamToBuffer(await serverPluginApi.media.getMedia(mediaName));
+
+    try {
+      const { pdfBuffer, slideshowPromise, source } =
+        await convertPptWithFallback(
+          {
+            readPptx,
+            extension: extractMediaName(mediaName).extension,
+            viaOfficeOnline: convertViaOfficeOnline,
+            localExtras: { slideshowPromise: null },
+          },
+          log,
+        );
+      (
+        loadedPlugin.pluginData.imports[newImport.importId] as PptImportData
+      ).source = source;
+      log.info({ source }, "PPT converted to PDF");
 
       const {
         fileNames,
@@ -236,8 +258,7 @@ export const createImporters = (
         uploadedPdfFileName;
 
       const speakerNotes = await readPptSpeakerNotes(
-        serverPluginApi,
-        mediaName,
+        readPptx,
         fileNames.length,
         log,
       );
@@ -246,7 +267,7 @@ export const createImporters = (
           speakerNotes;
       }
 
-      const slideshow = await slideshowPromise;
+      const slideshow = slideshowPromise && (await slideshowPromise);
       const officeFields =
         slideshow &&
         (await storeOfficeSlideshow(
