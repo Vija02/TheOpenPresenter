@@ -25,6 +25,10 @@ export type ElectronBridge = {
   platform: string;
   invoke(channel: string, args?: unknown): Promise<unknown>;
   on(channel: string, handler: (payload: unknown) => void): () => void;
+  getPathForFile?(file: File): string;
+  nodeId?(): Promise<string | null>;
+  watchLinkedFiles?(filePaths: string[]): Promise<string[]>;
+  readLinkedFile?(filePath: string): Promise<Uint8Array>;
 };
 
 declare global {

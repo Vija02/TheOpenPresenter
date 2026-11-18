@@ -26,6 +26,12 @@ export type { WindowManagementPermission } from "./web/screens";
 export { displayKey, watchCurrentScreen } from "./web/screens";
 export { getDeviceId } from "./deviceId";
 export {
+  getNodeId,
+  getPathForFile,
+  readLinkedFile,
+  watchLinkedFiles,
+} from "./files";
+export {
   FULLSCREEN_MESSAGE,
   PRESENT_WINDOW_PREFIX,
   announcePresentWindow,

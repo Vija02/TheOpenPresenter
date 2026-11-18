@@ -18,6 +18,8 @@ export type DropzoneProps = {
   height?: number;
   children?: React.ReactNode;
   className?: string;
+  /** Runs before uploading; resolves to the files to upload */
+  beforeUpload?: (files: File[]) => Promise<File[]>;
 };
 
 const getAllowedFileTypes = (mediaType?: MediaType | MediaType[]): string[] | undefined => {
@@ -179,6 +181,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({
   height = 160, 
   children,
   className,
+  beforeUpload,
 }) => {
   const resolvedFileTypes = useMemo(
     () => overrideAllowedFileTypes || getAllowedFileTypes(mediaType),
@@ -192,7 +195,8 @@ export const Dropzone: React.FC<DropzoneProps> = ({
 
   const [uppy] = useState(() =>
     new Uppy({
-      autoProceed: true,
+      // Uploads from "files-added", after `beforeUpload`
+      autoProceed: false,
       restrictions: { allowedFileTypes: resolvedFileTypes, maxNumberOfFiles },
     }).use(Tus, {
       endpoint: window.location.origin + "/media/upload/tus",
@@ -211,6 +215,24 @@ export const Dropzone: React.FC<DropzoneProps> = ({
       restrictions: { allowedFileTypes: resolvedFileTypes, maxNumberOfFiles },
     });
   }, [uppy, resolvedFileTypes, maxNumberOfFiles]);
+
+  useUppyEvent(uppy, "files-added", (added) => {
+    void (async () => {
+      const files = added.map((f) => f.data as File);
+      const kept = new Set(
+        beforeUpload ? await beforeUpload(files).catch(() => []) : files,
+      );
+      const keptIds = added
+        .filter((file) => kept.has(file.data as File))
+        .map((file) => file.id);
+      for (const file of added) {
+        if (!keptIds.includes(file.id)) uppy.removeFile(file.id);
+      }
+      // Only for this drop: an empty upload would end one still running
+      if (keptIds.length === 0) return;
+      uppy.upload().catch((err) => uppy.log(err?.stack || err?.message || err));
+    })();
+  });
 
   useUppyEvent(uppy, "upload", () => {
     setIsUploading(true);
