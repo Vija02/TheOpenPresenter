@@ -49,28 +49,9 @@ impl Target {
 }
 
 pub fn get_or_create_secret(data_dir: &Path) -> Result<SecretKey> {
-    let key_path = data_dir.join("iroh_secret_key");
-
-    if key_path.is_file() {
-        let bytes = std::fs::read(&key_path).context("Failed to read the iroh secret key")?;
-        let array: [u8; 32] = bytes
-            .try_into()
-            .map_err(|_| anyhow::anyhow!("The iroh secret key is the wrong length"))?;
-        return Ok(SecretKey::from_bytes(&array));
-    }
-
-    let secret = SecretKey::generate();
-    std::fs::create_dir_all(data_dir).context("Failed to create the data directory")?;
-    std::fs::write(&key_path, secret.to_bytes()).context("Failed to write the iroh secret key")?;
-
-    // Anyone with the key can impersonate this install.
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let _ = std::fs::set_permissions(&key_path, std::fs::Permissions::from_mode(0o600));
-    }
-
-    Ok(secret)
+    Ok(SecretKey::from_bytes(
+        &top_runtime_manager::storage::identity::secret_key_bytes(data_dir)?,
+    ))
 }
 
 struct Hosting {
@@ -506,5 +487,18 @@ mod tests {
 
         top_runtime_manager::storage::lock::write(root.path(), &lock(5001)).unwrap();
         assert_eq!(target.resolve().unwrap().port(), 5001);
+    }
+}
+
+#[cfg(test)]
+mod identity_tests {
+    #[test]
+    fn the_server_sees_the_same_id_as_iroh() {
+        let dir = tempfile::tempdir().unwrap();
+        let secret = super::get_or_create_secret(dir.path()).unwrap();
+        assert_eq!(
+            top_runtime_manager::storage::identity::node_id(dir.path()).unwrap(),
+            secret.public().to_string()
+        );
     }
 }

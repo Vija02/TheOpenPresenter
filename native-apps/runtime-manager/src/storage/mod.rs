@@ -1,5 +1,6 @@
 pub mod cas;
 pub mod disk;
+pub mod identity;
 pub mod link;
 pub mod lock;
 pub mod paths;
