@@ -166,6 +166,8 @@ export interface PptImportData extends BaseImportData {
   type: "ppt";
   /** Shapes, sprites and animations captured from PowerPoint for the web */
   office?: OfficeDeck;
+  /** Converted by this computer's PowerPoint, or by Office Online */
+  source?: "local" | "online";
   /** Same as `GoogleSlidesImportData` */
   slideTransitionDurations?: number[];
   slideClickDurations?: number[][];

@@ -9,16 +9,17 @@ works is in `docs/OFFICE-ONLINE-SLIDESHOW.md`; the code is in this folder and
 
 ## Importing
 
-|                                                       |                                                                                                                      |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| .pptx / .ppt                                          | Yes. Converted by PowerPoint for the web, so the file must be reachable from the internet at import (as for the PDF) |
-| Look of the slides (fonts, SmartArt, charts, effects) | Yes. Microsoft renders every shape                                                                                   |
-| Resolution                                            | Up to 1920×1080. Larger outputs are upscaled                                                                         |
-| Showing it offline                                    | Yes, once imported. Nothing calls Microsoft during a show                                                            |
-| Hidden slides                                         | Left out, as in a PowerPoint show                                                                                    |
-| Speaker notes                                         | Yes, including in decks with hidden slides                                                                           |
-| When the capture fails                                | The deck imports as still images (the **Image** mode)                                                                |
-| Files PowerPoint for the web can't open               | Rejected within seconds with a clear message                                                                         |
+|                                                       |                                                                                                                                  |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| .pptx / .ppt                                          | Yes. Converted by PowerPoint for the web, so the file must be reachable from the internet at import (as for the PDF)             |
+| Importing offline                                     | On Windows with PowerPoint installed (Studio), that PowerPoint converts the deck. It imports as still images, without animations |
+| Look of the slides (fonts, SmartArt, charts, effects) | Yes. Microsoft renders every shape                                                                                               |
+| Resolution                                            | Up to 1920×1080. Larger outputs are upscaled                                                                                     |
+| Showing it offline                                    | Yes, once imported. Nothing calls Microsoft during a show                                                                        |
+| Hidden slides                                         | Left out, as in a PowerPoint show                                                                                                |
+| Speaker notes                                         | Yes, including in decks with hidden slides                                                                                       |
+| When the capture fails                                | The deck imports as still images (the **Image** mode)                                                                            |
+| Files PowerPoint for the web can't open               | Rejected within seconds with a clear message                                                                                     |
 
 Decks imported before a feature below was added keep what was captured then;
 re-import to pick it up (Morph, letter builds, video, smaller WebP previews).
