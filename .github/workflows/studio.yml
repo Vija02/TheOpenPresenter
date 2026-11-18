@@ -234,8 +234,9 @@ jobs:
       # included, with the app's identity and hardened runtime. Check that it
       # really did: an unsigned sidecar passes the build and only fails on a
       # user's Mac, where Gatekeeper refuses to run it.
+      # electron-builder doesn't sign pull request builds.
       - name: Verify the sidecars are signed (macOS)
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && github.event_name != 'pull_request'
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
         shell: bash
