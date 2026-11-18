@@ -98,7 +98,7 @@ export const toLocalPowerPointError = (
 };
 
 // PowerPoint picks the format by extension, so keep the upload's
-const DECK_EXTENSIONS = ["ppt", "pptx", "pps", "ppsx", "pptm", "ppsm"];
+export const DECK_EXTENSIONS = ["ppt", "pptx", "pps", "ppsx", "pptm", "ppsm"];
 
 const runConversion = async (
   pptx: Buffer,

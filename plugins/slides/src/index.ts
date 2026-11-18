@@ -31,6 +31,10 @@ import { getGoogleOAuthConfig } from "./importers/googleSlides/oauth";
 import { createGoogleSlidesRouter } from "./importers/googleSlides/router";
 import { registerGoogleSlidesRoutes } from "./importers/googleSlides/routes";
 import { createImportHelpers } from "./importers/helpers";
+import {
+  checkLinkRequest,
+  linkedFilesEnabled,
+} from "./importers/office/local/linkedFiles";
 import { createRemoveImportById } from "./importers/removeImport";
 import {
   loadedContext,
@@ -130,6 +134,7 @@ export const init = (
     PLUGIN_GOOGLE_SLIDES_CLIENT_ID:
       process.env.PLUGIN_GOOGLE_SLIDES_CLIENT_ID ?? "",
     PLUGIN_SLIDES_CANVA_ENABLED: canvaEnabled ? "1" : "",
+    PLUGIN_SLIDES_LINKED_FILES: linkedFilesEnabled() ? "1" : "",
   });
 
   serverPluginApi.loadJsOnRemoteView(pluginName, `${pluginName}-remote.es.js`);
@@ -382,11 +387,15 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
             mediaName: z.string(),
             name: z.string().optional(),
             replaceImportId: z.string().optional(),
+            /** Re-import whenever this file is saved */
+            link: z
+              .object({ path: z.string(), watchedBy: z.string() })
+              .optional(),
           }),
         )
         .mutation(
           async ({
-            input: { pluginId, mediaName, name, replaceImportId },
+            input: { pluginId, mediaName, name, replaceImportId, link },
             ctx,
           }) =>
             importPpt({
@@ -395,6 +404,7 @@ const getAppRouter = (serverPluginApi: ServerPluginApi) => (t: TRPCObject) => {
               name,
               replaceImportId,
               userId: ctx.userId,
+              link: link && checkLinkRequest(link),
             }),
         ),
 
