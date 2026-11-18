@@ -168,10 +168,28 @@ export interface PptImportData extends BaseImportData {
   office?: OfficeDeck;
   /** Converted by this computer's PowerPoint, or by Office Online */
   source?: "local" | "online";
+  /** A file on a Studio computer, re-imported when it's saved */
+  linkedFile?: LinkedFile;
   /** Same as `GoogleSlidesImportData` */
   slideTransitionDurations?: number[];
   slideClickDurations?: number[][];
   slideAutoplayDurations?: number[];
+}
+
+/** What the client sends to link an import to a file */
+export interface LinkRequest {
+  path: string;
+  /** Endpoint id of the computer that has the file and watches it */
+  watchedBy: string;
+}
+
+export interface LinkedFile extends LinkRequest {
+  /** Of the bytes this import was made from */
+  sha256: string;
+  /** The copy uploaded for this import */
+  mediaName: string;
+  /** Why the last re-import failed */
+  error?: string;
 }
 
 export interface ImageImportData extends BaseImportData {

@@ -11,6 +11,8 @@ import { loadedContext, loadedPlugins, loadedYjsData } from "../loadedState";
 import type {
   GoogleSlidesImportData,
   ImageImportData,
+  LinkRequest,
+  LinkedFile,
   PdfImportData,
   PptImportData,
 } from "../types";
@@ -31,6 +33,7 @@ import {
 import type { ImportHelpers } from "./helpers";
 import { convertPptToPdfViaOfficeOnline } from "./office/convertPptToPdf";
 import { fetchOfficeSlideshow } from "./office/fetchOfficeSlideshow";
+import { hashFile } from "./office/local/linkedFiles";
 import {
   convertPptWithFallback,
   offlineUnavailableMessage,
@@ -45,6 +48,7 @@ import {
   notesForPages,
 } from "./office/pptxSpeakerNotes";
 import {
+  deleteOldMedia,
   processPdfToThumbnails,
   startThumbnailWorker,
   uploadPdfAndPrepare,
@@ -136,22 +140,48 @@ export const createImporters = (
     name,
     replaceImportId,
     userId,
+    link,
   }: {
     pluginId: string;
     mediaName: string;
     name?: string;
     replaceImportId?: string;
     userId: string | null;
+    link?: LinkRequest;
   }) => {
     const log = logger.child({ pluginId, mediaName, replaceImportId });
     const loadedPlugin = loadedPlugins[pluginId]!;
     const loadedContextData = loadedContext[pluginId]!;
 
-    const newImport = getBaseImport(
-      "ppt",
-      name,
-      replaceImportId,
-    ) as PptImportData;
+    const readPptx = async () =>
+      streamToBuffer(await serverPluginApi.media.getMedia(mediaName));
+
+    // A save landing after the slides were replaced or removed would add them back
+    const checkStillThere = () => {
+      if (
+        link &&
+        replaceImportId &&
+        !loadedPlugin.pluginData.imports[replaceImportId]
+      ) {
+        throw new Error("These slides were replaced or removed.");
+      }
+    };
+    checkStillThere();
+    const replaced = replaceImportId
+      ? loadedPlugin.pluginData.imports[replaceImportId]
+      : undefined;
+    const linkedFile: LinkedFile | undefined = link && {
+      ...link,
+      mediaName,
+      sha256: hashFile(await readPptx()),
+    };
+    const replacedLink =
+      replaced?.type === "ppt" ? replaced.linkedFile : undefined;
+
+    const newImport = {
+      ...getBaseImport("ppt", name, replaceImportId),
+      ...(linkedFile && { linkedFile }),
+    } as PptImportData;
     loadedPlugin.pluginData.imports[newImport.importId] = newImport;
 
     const convertViaOfficeOnline = async () => {
@@ -209,9 +239,6 @@ export const createImporters = (
         slideshowPromise: slideshowPromise as typeof slideshowPromise | null,
       };
     };
-
-    const readPptx = async () =>
-      streamToBuffer(await serverPluginApi.media.getMedia(mediaName));
 
     try {
       const { pdfBuffer, slideshowPromise, source } =
@@ -300,6 +327,7 @@ export const createImporters = (
       // Wait for thumbnails to be uploaded
       await workerPromise;
 
+      checkStillThere();
       loadedPlugin.pluginData.imports[newImport.importId]!._isFetching = false;
 
       finalizeImport({
@@ -308,6 +336,9 @@ export const createImporters = (
         slideCount: fileNames.length,
         replaceImportId,
       });
+      if (replacedLink && replacedLink.mediaName !== mediaName) {
+        deleteOldMedia(serverPluginApi, [replacedLink.mediaName]);
+      }
 
       if (officeFields) {
         // In the background: the deck is usable now, this only speeds up its
@@ -321,6 +352,13 @@ export const createImporters = (
         loadedPlugin.pluginData.imports;
       loadedPlugin.pluginData.imports = remaining;
       log.error({ err }, "Failed to import PPT");
+      // The old slides stay; say why they didn't update
+      const stillThere = replaceImportId
+        ? loadedPlugin.pluginData.imports[replaceImportId]
+        : undefined;
+      if (link && stillThere?.type === "ppt" && stillThere.linkedFile) {
+        stillThere.linkedFile.error = String((err as Error)?.message ?? err);
+      }
       throw err;
     }
   };
