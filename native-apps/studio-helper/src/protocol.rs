@@ -29,6 +29,8 @@ pub enum Command {
     DiscoverStart,
     DiscoverStop,
     RemoteStatus,
+    /// This install's endpoint id, whether or not remote access is on.
+    NodeId,
     Shutdown,
 }
 

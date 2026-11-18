@@ -160,6 +160,11 @@ impl LaunchConfig {
         .compose();
         env.extend(composed);
 
+        match crate::storage::identity::node_id(&layout.state_dir()) {
+            Ok(id) => env.push(("TOP_NODE_ID".into(), id)),
+            Err(err) => tracing::warn!("No node id for the server: {err:#}"),
+        }
+
         env.extend(self.extra_env.iter().cloned());
         env
     }

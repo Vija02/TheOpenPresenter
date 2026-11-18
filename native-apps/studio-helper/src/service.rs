@@ -53,6 +53,11 @@ impl Helper {
                 }
                 Ok(serde_json::json!({ "hosts": [] }))
             }
+            Command::NodeId => Ok(serde_json::json!({
+                "nodeId": top_runtime_manager::storage::identity::node_id(
+                    &self.layout.state_dir()
+                )?
+            })),
             Command::Shutdown => {
                 self.shutdown();
                 Ok(serde_json::json!({ "shuttingDown": true }))
