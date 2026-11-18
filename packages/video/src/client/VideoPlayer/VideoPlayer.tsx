@@ -78,8 +78,12 @@ export const VideoPlayer = ({
   );
 
   // A new source has its own load to wait out, so this starts over.
+  // React drops media events fired before the element is committed, which
+  // happens with cached files, so we catch up on what's already loaded
   useEffect(() => {
-    setLoaded(false);
+    const readyState = ref.current?.readyState ?? 0;
+    setLoaded(readyState >= HTMLMediaElement.HAVE_CURRENT_DATA);
+    if (readyState >= HTMLMediaElement.HAVE_METADATA) setReady(true);
   }, [videoUrl]);
 
   useEffect(() => {
