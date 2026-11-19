@@ -143,9 +143,13 @@ test.describe("joining another computer", () => {
       await expect
         .poll(() => readSettings(root).computers?.length, { timeout: 30_000 })
         .toBe(2);
-      const now = readSettings(root);
-      const joined = now.computers!.find((c) => c.peer === second.id)!;
-      expect(now.rootUrl).toBe(`http://localhost:${joined.port}`);
+      const joined = readSettings(root).computers!.find(
+        (c) => c.peer === second.id,
+      )!;
+      // Switched to it a moment after it's saved
+      await expect
+        .poll(() => readSettings(root).rootUrl, { timeout: 30_000 })
+        .toBe(`http://localhost:${joined.port}`);
       const secondPage = await appPage(app, joined.port);
       await expect(secondPage.locator("#host-page")).toContainText(second.name);
     } finally {
