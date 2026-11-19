@@ -1,6 +1,6 @@
 [package]
 name = "top-studio-helper"
-version = "0.1.0"
+version = "0.2.0"
 description = "Native helper for TheOpenPresenter Studio: peer-to-peer remote access and OS calls Node can't make"
 authors = ["vija02"]
 edition = "2021"
