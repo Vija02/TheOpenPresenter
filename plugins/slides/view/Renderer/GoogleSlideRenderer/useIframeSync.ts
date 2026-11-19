@@ -31,6 +31,8 @@ type UseIframeSyncArgs = {
 const STEP_MS = 50;
 // After a step has started, before finishing the video it plays
 const FINISH_DELAY_MS = 100;
+// After the first jump's last key press, for its animation to play out
+export const LAND_SETTLE_MS = 500;
 
 export const useIframeSync = ({
   ref,
@@ -44,6 +46,7 @@ export const useIframeSync = ({
 }: UseIframeSyncArgs) => {
   const [localFlatPosition, setLocalFlatPosition] = useState(-1);
   const [initialized, setInitialized] = useState(false);
+  const [landed, setLanded] = useState(false);
 
   // Epoch (OUR clock) after which the current step's animation has finished.
   // Non-zero also means "a window is armed at this step".
@@ -132,6 +135,13 @@ export const useIframeSync = ({
   );
 
   // Initialize once loaded
+  const landTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (landTimerRef.current) clearTimeout(landTimerRef.current);
+    },
+    [],
+  );
   useEffect(() => {
     if (!loaded || initialized) return;
     if (targetSlideIndex >= 0) {
@@ -139,6 +149,12 @@ export const useIframeSync = ({
       setLocalFlatPosition(targetFlatPosition);
       localClickCountRef.current = targetClickCount;
       localSlideIndexRef.current = targetSlideIndex;
+      landTimerRef.current = setTimeout(
+        () => setLanded(true),
+        STEP_MS * (Math.abs(targetClickCount) + 1) + LAND_SETTLE_MS,
+      );
+    } else {
+      setLanded(true);
     }
     setInitialized(true);
   }, [
@@ -257,4 +273,6 @@ export const useIframeSync = ({
     cancelFinish,
     scheduleFinish,
   ]);
+
+  return { landed };
 };

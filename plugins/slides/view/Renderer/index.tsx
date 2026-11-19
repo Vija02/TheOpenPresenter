@@ -1,12 +1,5 @@
 import { importWithRetry } from "@repo/ui";
-import {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { Suspense, lazy, useEffect, useMemo } from "react";
 
 import { getEffectiveDisplayMode, hasOfficeSlideshow } from "../../src/types";
 import { InkLayer } from "../Ink/InkLayer";
@@ -15,6 +8,11 @@ import { GoogleSlideRenderer } from "./GoogleSlideRenderer";
 import { ImageRenderer } from "./ImageRenderer";
 import { LayoutSlideRenderer } from "./LayoutSlideRenderer";
 import { PowerPointFallback } from "./PowerPointFallback";
+import { HeldScene } from "./ReplaceHold/HeldScene";
+import {
+  type LoadingReporters,
+  useReplaceHold,
+} from "./ReplaceHold/useReplaceHold";
 import { SlideVideoOverlay } from "./SlideVideoOverlay";
 
 // Only fetched by shows that play a PowerPoint deck
@@ -38,15 +36,13 @@ const ReportLoading = ({
   return null;
 };
 
-const Renderer = () => {
+/** One copy of the slides, drawn from the scene its `HeldScene` gives */
+const SlidesLayer = ({ onLoadingChange, onUnmount }: LoadingReporters) => {
   const pluginApi = usePluginAPI();
   const pluginData = pluginApi.scene.useData((x) => x.pluginData);
   const rendererDisplayModes = pluginApi.renderer.useData(
     (x) => x.displayModes,
   );
-  const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
-
-  const hasSlides = (pluginData.slideOrder?.length ?? 0) > 0;
 
   const googleSlidesImports = useMemo(() => {
     return Object.values(pluginData.imports).filter(
@@ -68,46 +64,18 @@ const Renderer = () => {
     [pluginData.imports, rendererDisplayModes],
   );
 
-  const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
-
-  const reportLoading = useCallback((id: string, isLoading: boolean) => {
-    setLoadingMap((prev) => {
-      if (prev[id] === isLoading) return prev;
-      return { ...prev, [id]: isLoading };
-    });
-  }, []);
-
-  const unregisterLoading = useCallback((id: string) => {
-    setLoadingMap((prev) => {
-      if (!(id in prev)) return prev;
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
-  }, []);
-
-  const isLoading = Object.values(loadingMap).some(Boolean);
-
-  useEffect(() => {
-    setAwarenessStateData({ isLoading });
-  }, [isLoading, setAwarenessStateData]);
-
-  if (!hasSlides) {
-    return null;
-  }
-
   return (
     <>
-      <ImageRenderer onLoadingChange={reportLoading} />
+      <ImageRenderer onLoadingChange={onLoadingChange} />
 
       <LayoutSlideRenderer />
 
       {hasPowerPointSlides && (
         <PowerPointFallback>
           <Suspense
-            fallback={<ReportLoading onLoadingChange={reportLoading} />}
+            fallback={<ReportLoading onLoadingChange={onLoadingChange} />}
           >
-            <PowerPointRenderer onLoadingChange={reportLoading} />
+            <PowerPointRenderer onLoadingChange={onLoadingChange} />
           </Suspense>
         </PowerPointFallback>
       )}
@@ -116,9 +84,41 @@ const Renderer = () => {
         <GoogleSlideRenderer
           key={imp.fetchId}
           importId={imp.importId}
-          onLoadingChange={reportLoading}
-          onUnmount={unregisterLoading}
+          onLoadingChange={onLoadingChange}
+          onUnmount={onUnmount}
         />
+      ))}
+    </>
+  );
+};
+
+const Renderer = () => {
+  const pluginApi = usePluginAPI();
+  const scene = pluginApi.scene.useData((x) => x);
+  const setAwarenessStateData = pluginApi.awareness.setAwarenessStateData;
+
+  const { layers, isLoading } = useReplaceHold(scene);
+
+  useEffect(() => {
+    setAwarenessStateData({ isLoading });
+  }, [isLoading, setAwarenessStateData]);
+
+  if ((scene.pluginData.slideOrder?.length ?? 0) === 0) {
+    return null;
+  }
+
+  // Keyed by layer, so a held deck keeps its elements while the new one loads beside it, hidden
+  return (
+    <>
+      {layers.map((layer) => (
+        <div
+          key={layer.key}
+          style={layer.hidden ? hiddenLayerStyle : layerStyle}
+        >
+          <HeldScene scene={layer.scene}>
+            <SlidesLayer {...layer.reporters} />
+          </HeldScene>
+        </div>
       ))}
 
       <SlideVideoOverlay />
@@ -127,5 +127,8 @@ const Renderer = () => {
     </>
   );
 };
+
+const layerStyle = { position: "absolute", inset: 0 } as const;
+const hiddenLayerStyle = { ...layerStyle, opacity: 0 } as const;
 
 export default Renderer;

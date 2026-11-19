@@ -45,7 +45,17 @@ export const ImageRenderer = ({ onLoadingChange }: ImageRendererProps) => {
     for (const id of loadedIds.current) {
       if (!validIds.has(id)) loadedIds.current.delete(id);
     }
-  }, [renderableSlides]);
+    onLoadingChange(
+      IMAGE_RENDERER_ID,
+      renderableSlides.some(
+        ({ slide }) => !loadedIds.current.has(slide.rawRef),
+      ),
+    );
+  }, [renderableSlides, onLoadingChange]);
+  useEffect(
+    () => () => onLoadingChange(IMAGE_RENDERER_ID, false),
+    [onLoadingChange],
+  );
 
   const onLoad = useCallback(
     (slideId: string) => {
