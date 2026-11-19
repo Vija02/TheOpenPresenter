@@ -82,7 +82,7 @@ export const GoogleSlideRenderer = ({
     );
   }, [effectiveLocalIndex, embedClickCount, embedClickCounts]);
 
-  useIframeSync({
+  const { landed } = useIframeSync({
     ref,
     loaded,
     targetSlideIndex: effectiveLocalIndex,
@@ -94,8 +94,8 @@ export const GoogleSlideRenderer = ({
   });
 
   useEffect(() => {
-    onLoadingChange(importId, !loaded);
-  }, [loaded, importId, onLoadingChange]);
+    onLoadingChange(importId, !loaded || !landed);
+  }, [loaded, landed, importId, onLoadingChange]);
 
   useEffect(() => {
     return () => onUnmount(importId);
