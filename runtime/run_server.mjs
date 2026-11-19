@@ -257,6 +257,7 @@ async function main() {
 
     ...Object.fromEntries(
       [
+        "TOP_MANAGED",
         "AI_BASE_URL",
         "AI_API_KEY",
         "AI_MODEL",
