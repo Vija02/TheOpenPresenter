@@ -89,7 +89,7 @@ describe("linked files", () => {
     expect(handlers.has("linked-files:allow")).toBe(false);
   });
 
-  it("tells one page about a save, however many watch it", async () => {
+  it("tells every page watching a file about a save", async () => {
     vi.useFakeTimers();
     try {
       const first = page("http://localhost:4100");
@@ -99,14 +99,15 @@ describe("linked files", () => {
       expect(watchFiles(second, [deck])).toEqual([deck]);
       await vi.advanceTimersByTimeAsync(3100);
       expect(first.sent).toEqual([["linked-files:changed", deck]]);
-      expect(second.sent).toEqual([]);
+      expect(second.sent).toEqual([["linked-files:changed", deck]]);
 
       watchFiles(first, []);
       writeFileSync(deck, "v2");
       await vi.waitFor(async () => {
         await vi.advanceTimersByTimeAsync(3100);
-        expect(second.sent).toEqual([["linked-files:changed", deck]]);
+        expect(second.sent).toHaveLength(2);
       });
+      expect(first.sent).toHaveLength(1);
       watchFiles(second, []);
     } finally {
       vi.useRealTimers();

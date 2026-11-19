@@ -167,6 +167,16 @@ export const createImporters = (
       }
     };
     checkStillThere();
+    // Two windows can hear the same save; let the first one do it
+    if (
+      link &&
+      replaceImportId &&
+      Object.values(loadedPlugin.pluginData.imports).some(
+        (imp) => imp._isFetching && imp.replaceImportId === replaceImportId,
+      )
+    ) {
+      throw new Error("These slides are already updating.");
+    }
     const replaced = replaceImportId
       ? loadedPlugin.pluginData.imports[replaceImportId]
       : undefined;

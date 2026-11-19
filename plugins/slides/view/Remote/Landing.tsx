@@ -7,6 +7,7 @@ import { RiSlideshowLine } from "react-icons/ri";
 import { SlideDropArea } from "../components/SlideDropArea";
 import { usePluginAPI } from "../pluginApi";
 import { useCustomSlides } from "./CustomSlides/useCustomSlides";
+import { useLinkOrImport } from "./LinkedFiles/useLinkOrImport";
 import { UploadLinksDialog } from "./UploadLinks/UploadLinksDialog";
 import type { EditorTarget } from "./index";
 import { IntegrationCards } from "./integrations";
@@ -24,6 +25,11 @@ const Landing = ({ onCustomSlideEdit }: LandingProps) => {
   const { isProcessing, handleUploadComplete } = useMediaUpload();
   const { createDeck } = useCustomSlides();
   const [isUploadLinksOpen, setIsUploadLinksOpen] = useState(false);
+  const {
+    beforeUpload,
+    isLinking,
+    dialog: linkOrImportDialog,
+  } = useLinkOrImport();
 
   const handleCreate = () => {
     onCustomSlideEdit({ importId: createDeck(), slideIndex: 0 });
@@ -38,7 +44,7 @@ const Landing = ({ onCustomSlideEdit }: LandingProps) => {
             <span className="text-xl mb-2">🔒</span>
             Sign in to upload media.
           </div>
-        ) : isProcessing ? (
+        ) : isProcessing || isLinking ? (
           <div className="bg-link/5 rounded-xl border-2 border-dashed border-link/50 p-6 md:p-8 text-center text-link font-medium min-h-[220px] md:min-h-[300px] flex flex-col items-center justify-center gap-4">
             <div className="w-10 h-10 border-4 border-link border-t-transparent rounded-full animate-spin" />
             <span className="text-lg">Processing your files...</span>
@@ -52,6 +58,7 @@ const Landing = ({ onCustomSlideEdit }: LandingProps) => {
             mediaType={["image", "pdf", "ppt"]}
             multiple={true}
             className="w-full"
+            beforeUpload={beforeUpload}
           >
             <SlideDropArea title="Upload your slides" />
           </Dropzone>
@@ -94,6 +101,8 @@ const Landing = ({ onCustomSlideEdit }: LandingProps) => {
             />
           )}
         </div>
+
+        {linkOrImportDialog}
 
         <UploadLinksDialog
           isOpen={isUploadLinksOpen}
