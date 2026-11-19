@@ -27,14 +27,14 @@ describe("watchLinkedFiles", () => {
     const b = vi.fn();
     const stopA = watchLinkedFiles(["/a.pptx"], a);
     watchLinkedFiles(["/b.pptx", "/a.pptx"], b);
-    expect(sent.at(-1)).toEqual(["/a.pptx", "/b.pptx"]);
+    expect(sent[sent.length - 1]).toEqual(["/a.pptx", "/b.pptx"]);
 
     emit("/b.pptx");
     expect(a).not.toHaveBeenCalled();
     expect(b).toHaveBeenCalledWith("/b.pptx");
 
     stopA();
-    expect(sent.at(-1)).toEqual(["/b.pptx", "/a.pptx"]);
+    expect(sent[sent.length - 1]).toEqual(["/b.pptx", "/a.pptx"]);
     emit("/a.pptx");
     expect(a).not.toHaveBeenCalled();
     expect(b).toHaveBeenCalledWith("/a.pptx");
@@ -43,6 +43,6 @@ describe("watchLinkedFiles", () => {
   it("clears the list when the last caller stops", async () => {
     const { watchLinkedFiles } = await import("../files");
     watchLinkedFiles(["/a.pptx"], vi.fn())();
-    expect(sent.at(-1)).toEqual([]);
+    expect(sent[sent.length - 1]).toEqual([]);
   });
 });
