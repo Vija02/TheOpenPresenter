@@ -412,6 +412,23 @@ const SettingsModal = ({
                               </PopConfirm>
                             </div>
                           </div>
+                          {imp.type === "ppt" && imp.linkedFile && (
+                            <div className="text-xs text-secondary">
+                              <p
+                                className="flex items-center gap-1 truncate"
+                                title={imp.linkedFile.path}
+                              >
+                                <FaLink className="shrink-0" />
+                                Linked to {imp.linkedFile.path}
+                              </p>
+                              {imp.linkedFile.error && (
+                                <p className="text-red-600" role="alert">
+                                  Couldn't update from the file:{" "}
+                                  {imp.linkedFile.error}
+                                </p>
+                              )}
+                            </div>
+                          )}
                           {filteredOptions.length > 1 && (
                             <Accordion type="single" collapsible>
                               <AccordionItem

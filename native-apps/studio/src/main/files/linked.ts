@@ -15,8 +15,8 @@ import { computerAt } from "../settings/store";
 import { logShell } from "../shell/log";
 
 /**
- * Slides linked to a file on this computer while the server is another one
- * (a joined computer). This computer watches the file; the page re-uploads it.
+ * Slides linked to a file on this computer, whichever computer is the server.
+ * This computer watches the file; the page re-uploads it.
  */
 
 const SETTLE_MS = 3000;
@@ -76,8 +76,8 @@ const allow = (host: string, filePath: string) => {
 };
 
 /**
- * One watch per file, however many pages want it. Only the first page hears
- * of a save, so two open pages don't both re-upload it.
+ * One watch per file, however many pages want it. Every page hears of a save:
+ * each may be a different project linking the same file.
  */
 type Shared = {
   watcher: FSWatcher;
@@ -93,9 +93,9 @@ const notify = (filePath: string) => {
   clearTimeout(shared.timer);
   // PowerPoint saves by renaming a temp file over it; wait until it's quiet
   shared.timer = setTimeout(() => {
-    shared.pages
-      .find((page) => !page.isDestroyed())
-      ?.send("linked-files:changed", filePath);
+    for (const page of shared.pages) {
+      if (!page.isDestroyed()) page.send("linked-files:changed", filePath);
+    }
   }, SETTLE_MS);
 };
 

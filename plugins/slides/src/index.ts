@@ -142,6 +142,7 @@ export const init = (
   serverPluginApi.registerRemoteViewWebComponent(
     pluginName,
     remoteWebComponentTag,
+    { alwaysRender: true },
   );
   serverPluginApi.loadJsOnRendererView(
     pluginName,

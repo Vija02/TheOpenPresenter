@@ -30,6 +30,7 @@ import CustomSlideEditorModal from "./CustomSlides/CustomSlideEditorModal";
 import { useCustomSlides } from "./CustomSlides/useCustomSlides";
 import { DriveVideoAccess } from "./DriveVideoAccess";
 import Landing from "./Landing";
+import { useLinkedFileSync } from "./LinkedFiles/useLinkedFileSync";
 import PresenterView from "./PresenterView";
 import SettingsModal from "./SettingsModal";
 import { StepBadge, StepControls } from "./SlideSteps";
@@ -41,6 +42,13 @@ import { useSlideMediaPicker } from "./integrations";
 export type EditorTarget = { importId: string; slideIndex: number };
 
 const Remote = () => {
+  const pluginApi = usePluginAPI();
+  const inView = pluginApi.remote.usePluginInView();
+  useLinkedFileSync();
+  return inView ? <SlidesRemote /> : null;
+};
+
+const SlidesRemote = () => {
   const pluginApi = usePluginAPI();
 
   const sceneId = pluginApi.pluginContext.sceneId;
