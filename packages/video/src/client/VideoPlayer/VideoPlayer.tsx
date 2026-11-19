@@ -168,6 +168,9 @@ export const VideoPlayer = ({
           }
           setReady(true);
         }}
+        onLoadedMetadata={() => {
+          setReady(true);
+        }}
         onLoadedData={() => {
           setLoaded(true);
         }}
