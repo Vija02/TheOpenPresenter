@@ -37,6 +37,18 @@
           }
         }
       },
+      "app_public.screens": {
+        "attribute": {
+          "current_project_id": {
+            "tags": {
+              // Assign through set_existing_project_to_screen, which checks the project.
+              // The update grant is for cloud sync.
+              "omit": "update"
+            },
+            "description": "Project currently shown on this screen, or NULL if idle."
+          }
+        }
+      },
       "app_public.organizations": {
         "tags": {
           "omit": "create,delete"

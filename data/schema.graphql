@@ -9319,6 +9319,9 @@ type UpdateCategoryPayload {
   Our root query field type. Allows us to run any query from our mutation payload.
   """
   query: Query
+
+  """Reads a single `Project` that is related to this `Category`."""
+  templateProject: Project
 }
 
 """All input for the `updateClientPluginDraft` mutation."""
@@ -9546,9 +9549,6 @@ type UpdateOrganizationPayload {
   Our root query field type. Allows us to run any query from our mutation payload.
   """
   query: Query
-
-  """Reads a single `Project` that is related to this `Category`."""
-  templateProject: Project
 }
 
 """All input for the `updateProject` mutation."""
