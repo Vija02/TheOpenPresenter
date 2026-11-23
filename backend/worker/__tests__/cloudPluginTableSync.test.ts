@@ -610,6 +610,75 @@ describe("syncPluginTables", () => {
         "Sunday AM",
       ]);
     });
+
+    // Its default project is usually in the category itself, and projects
+    // sync after categories, so neither may wait for the other.
+    describe("default project", () => {
+      const CLOUD_PROJECT_ID = "c2000000-0000-4000-8000-000000000002";
+      const templates = () =>
+        query(
+          `select name, template_project_id from ${CATEGORIES} where organization_id = $1`,
+          [orgId],
+        );
+      const cloudEaster = () =>
+        fake.tables.get(CATEGORIES)!.find((r) => r.name === "Easter");
+
+      it("pulls a category before its default project, then links it", async () => {
+        fake.tables.set(CATEGORIES, [
+          { ...cloudCategory("Easter"), template_project_id: CLOUD_PROJECT_ID },
+        ]);
+
+        expect(await sync()).toMatchObject({ pulled: 1, failedTables: 0 });
+        expect(await templates()).toEqual([
+          { name: "Easter", template_project_id: null },
+        ]);
+
+        const [{ id: projectId }] = await query(
+          `insert into app_public.projects
+             (organization_id, slug, name, cloud_project_id, cloud_connection_id)
+           values ($1, 'easter', 'Easter', $2, $3) returning id`,
+          [orgId, CLOUD_PROJECT_ID, connection.id],
+        );
+        expect(await sync()).toMatchObject({ pulled: 1 });
+        expect(await templates()).toEqual([
+          { name: "Easter", template_project_id: projectId },
+        ]);
+        expect(await sync()).toMatchObject({ pulled: 0, pushed: 0 });
+      });
+
+      it("pushes a category before its default project, then links it", async () => {
+        const [{ id: projectId }] = await query(
+          `insert into app_public.projects (organization_id, slug, name)
+           values ($1, 'easter', 'Easter') returning id`,
+          [orgId],
+        );
+        await query(
+          `insert into ${CATEGORIES} (organization_id, name, template_project_id)
+           values ($1, 'Easter', $2)`,
+          [orgId, projectId],
+        );
+
+        expect(await sync()).toMatchObject({ pushed: 1, pushRejected: 0 });
+        expect(cloudEaster()?.template_project_id ?? null).toBeNull();
+        // Not sent again while its project is still missing on the cloud
+        expect(await sync()).toMatchObject({ pushed: 0 });
+
+        // Project sync puts it on the cloud
+        await query(
+          `update app_public.projects
+           set cloud_project_id = $2, cloud_connection_id = $3 where id = $1`,
+          [projectId, CLOUD_PROJECT_ID, connection.id],
+        );
+        expect(await sync()).toMatchObject({ pushed: 1 });
+        expect(cloudEaster()).toMatchObject({
+          template_project_id: CLOUD_PROJECT_ID,
+        });
+        expect(await sync()).toMatchObject({ pulled: 0, pushed: 0 });
+        expect(await templates()).toEqual([
+          { name: "Easter", template_project_id: projectId },
+        ]);
+      });
+    });
   });
 
   describe("references to projects and media", () => {

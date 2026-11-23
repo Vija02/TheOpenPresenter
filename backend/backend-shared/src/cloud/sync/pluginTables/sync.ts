@@ -189,6 +189,7 @@ const syncCloudPluginTable = async (
           left join state on state.row_key = cloud.key
           where $4 or state.row_key is null
             or state.cloud_updated_at <> cloud."updatedAt"
+            or state.pull_deferred
         ), '[]'::jsonb) as changed
       `,
       [JSON.stringify(cloudKeys), cloudConnection.id, entity, forceResync],
@@ -251,7 +252,7 @@ const applyCloudPluginRows = async (
   { withPgClient, cloudConnection, table, entity }: Ctx,
   pulledRows: Record<string, unknown>[],
 ): Promise<{ pulled: number; conflicts: number }> => {
-  const cloudRows = await withPgClient((pgClient) =>
+  const resolved = await withPgClient((pgClient) =>
     withLocalProjects(
       pgClient,
       table,
@@ -259,7 +260,8 @@ const applyCloudPluginRows = async (
       pulledRows,
     ),
   );
-  if (cloudRows.length === 0) return { pulled: 0, conflicts: 0 };
+  if (resolved.length === 0) return { pulled: 0, conflicts: 0 };
+  const cloudRows = resolved.map((r) => r.row);
 
   // The cloud may run a newer plugin version with columns we lack; only write
   // what exists here, and let local defaults fill the rest.
@@ -335,6 +337,27 @@ const applyCloudPluginRows = async (
         [params[0]],
       );
 
+      // A deferred reference keeps this side's value until its project arrives
+      const deferredIdx = resolved.flatMap((r, i) =>
+        r.deferred.length > 0 ? [i + 1] : [],
+      );
+      if (deferredIdx.length > 0) {
+        const { rows: locals } = await pgClient.query<{
+          idx: string;
+          local: Record<string, unknown>;
+        }>(
+          `select e.idx, to_jsonb(l) as local from ${incomingRows} join ${target} l on ${keyMatch}`,
+          [params[0]],
+        );
+        const localOf = new Map(locals.map((r) => [Number(r.idx), r.local]));
+        for (const idx of deferredIdx) {
+          for (const c of resolved[idx - 1]!.deferred) {
+            incoming[idx - 1]![c] = localOf.get(idx)?.[c] ?? null;
+          }
+        }
+        params[0] = JSON.stringify(incoming);
+      }
+
       const { rows: classified } = await pgClient.query<{
         idx: string;
         action: Action;
@@ -386,17 +409,21 @@ const applyCloudPluginRows = async (
       await pgClient.query(
         `
           insert into app_private.cloud_sync_rows
-            (cloud_connection_id, entity, row_key, cloud_updated_at, local_updated_at)
-          select $2, $3, ${rowKeySql(table, "c")}, (e.r->>'updated_at')::timestamptz, l.updated_at
+            (cloud_connection_id, entity, row_key, cloud_updated_at, local_updated_at,
+             pull_deferred, push_deferred)
+          select $2, $3, ${rowKeySql(table, "c")}, (e.r->>'updated_at')::timestamptz, l.updated_at,
+            e.idx = any($5::bigint[]), false
           from ${incomingRows}
           join ${target} l on ${keyMatch}
           -- Only rows applied or already equal: a skipped one is pulled again.
           where e.idx = any($4::bigint[])
           on conflict (cloud_connection_id, entity, row_key) do update
             set cloud_updated_at = excluded.cloud_updated_at,
-                local_updated_at = excluded.local_updated_at
+                local_updated_at = excluded.local_updated_at,
+                pull_deferred = excluded.pull_deferred,
+                push_deferred = excluded.push_deferred
         `,
-        [...params, classified.map((x) => x.idx)],
+        [...params, classified.map((x) => x.idx), deferredIdx],
       );
 
       await pgClient.query("COMMIT");
@@ -411,15 +438,18 @@ const applyCloudPluginRows = async (
 /**
  * The cloud's rows with their project references made local. A row naming a
  * project not here yet is left out; with no state recorded, a later sync
- * pulls it again.
+ * pulls it again. An optional reference is deferred instead, and the rest of
+ * the row applies now.
  */
 const withLocalProjects = async (
   pgClient: Parameters<Parameters<WithPgClient>[0]>[0],
   table: CloudSyncTable,
   organizationId: string,
   rows: Record<string, unknown>[],
-): Promise<Record<string, unknown>[]> => {
-  if (table.projectColumns.length === 0) return rows;
+): Promise<{ row: Record<string, unknown>; deferred: string[] }[]> => {
+  if (table.projectColumns.length === 0) {
+    return rows.map((row) => ({ row, deferred: [] }));
+  }
   const cloudIds = [
     ...new Set(
       rows.flatMap((row) =>
@@ -441,13 +471,15 @@ const withLocalProjects = async (
   const localId = new Map(projects.map((p) => [p.cloud_id, p.id]));
   return rows.flatMap((row) => {
     const out = { ...row };
+    const deferred: string[] = [];
     for (const c of table.projectColumns) {
       if (typeof out[c] !== "string") continue;
       const id = localId.get(out[c] as string);
-      if (!id) return [];
-      out[c] = id;
+      if (id) out[c] = id;
+      else if (table.deferrableProjectColumns.includes(c)) deferred.push(c);
+      else return [];
     }
-    return [out];
+    return [{ row: out, deferred }];
   });
 };
 

@@ -83,6 +83,8 @@ type PendingChange = {
   /** As text, to keep Postgres' microseconds through JS. */
   local_updated_at: string | null;
   expected: string | null;
+  /** Sent without an optional project reference not on the cloud yet. */
+  deferred: boolean;
 };
 
 const PUSH_BATCH = 200;
@@ -100,51 +102,63 @@ export const pushLocalChanges = async (
 
   // Project references go up as the cloud's ids. A row whose project is not
   // on the cloud yet waits for a later sync, but still counts as present here.
+  // An optional reference is left out instead, and sent once it is there.
   const projectOf = (c: string) =>
     `(select p from app_public.projects p where p.id = l.${quoteIdent(c)})`;
+  const readyOf = (c: string) =>
+    `(l.${quoteIdent(c)} is null or coalesce((${projectOf(c)}).cloud_connection_id = $1, false))`;
+  const deferrable = new Set(table.deferrableProjectColumns);
   const cloudProjects = table.projectColumns
     .map(
       (c) =>
-        ` || jsonb_build_object(${quoteLiteral(c)}, (${projectOf(c)}).cloud_project_id)`,
+        ` || case when ${readyOf(c)} then jsonb_build_object(${quoteLiteral(c)}, (${projectOf(c)}).cloud_project_id) else '{}'::jsonb end`,
     )
+    .join("");
+  const withoutProjects = table.projectColumns
+    .map((c) => ` - ${quoteLiteral(c)}`)
     .join("");
   const ready =
     table.projectColumns
-      .map(
-        (c) =>
-          `(l.${quoteIdent(c)} is null or (${projectOf(c)}).cloud_connection_id = $1)`,
-      )
+      .filter((c) => !deferrable.has(c))
+      .map(readyOf)
+      .join(" and ") || "true";
+  const complete =
+    table.projectColumns
+      .filter((c) => deferrable.has(c))
+      .map(readyOf)
       .join(" and ") || "true";
 
   const { rows: all } = await withPgClient((pgClient) =>
     pgClient.query<PendingChange>(
       `
         with state as (
-          select row_key, cloud_updated_at, local_updated_at
+          select row_key, cloud_updated_at, local_updated_at, push_deferred
           from app_private.cloud_sync_rows
           where cloud_connection_id = $1 and entity = $2
         ),
         local as (
           select ${rowKeySql(table, "l")} as row_key,
-            to_jsonb(l)${cloudProjects} as row,
-            l.updated_at, ${ready} as ready
+            (to_jsonb(l)${withoutProjects})${cloudProjects} as row,
+            l.updated_at, ${ready} as ready, ${complete} as complete
           from ${target} l where l.${org} = $3
         )
         select 'create' as kind, local.row_key, local.row,
           to_jsonb(local.updated_at) #>> '{}' as local_updated_at,
-          null as expected
+          null as expected, not local.complete as deferred
         from local
         where local.ready
           and not exists (select 1 from state where state.row_key = local.row_key)
         union all
         select 'update', local.row_key, local.row,
           to_jsonb(local.updated_at) #>> '{}',
-          to_jsonb(state.cloud_updated_at) #>> '{}'
+          to_jsonb(state.cloud_updated_at) #>> '{}', not local.complete
         from local join state on state.row_key = local.row_key
-        where local.ready and local.updated_at <> state.local_updated_at
+        where local.ready
+          and (local.updated_at <> state.local_updated_at
+            or (state.push_deferred and local.complete))
         union all
         select 'delete', state.row_key, null, null,
-          to_jsonb(state.cloud_updated_at) #>> '{}'
+          to_jsonb(state.cloud_updated_at) #>> '{}', false
         from state
         where not exists (select 1 from local where local.row_key = state.row_key)
       `,
@@ -187,7 +201,8 @@ export const pushLocalChanges = async (
           with landed as (
             select * from jsonb_to_recordset($3::jsonb) as x(
               row_key jsonb, deleted boolean,
-              cloud_updated_at timestamptz, local_updated_at timestamptz
+              cloud_updated_at timestamptz, local_updated_at timestamptz,
+              deferred boolean
             )
           ),
           forgotten as (
@@ -197,12 +212,15 @@ export const pushLocalChanges = async (
               and s.row_key = landed.row_key
           )
           insert into app_private.cloud_sync_rows
-            (cloud_connection_id, entity, row_key, cloud_updated_at, local_updated_at)
-          select $1, $2, row_key, cloud_updated_at, local_updated_at
+            (cloud_connection_id, entity, row_key, cloud_updated_at, local_updated_at,
+             pull_deferred, push_deferred)
+          select $1, $2, row_key, cloud_updated_at, local_updated_at, false, deferred
           from landed where not deleted
           on conflict (cloud_connection_id, entity, row_key) do update
             set cloud_updated_at = excluded.cloud_updated_at,
-                local_updated_at = excluded.local_updated_at
+                local_updated_at = excluded.local_updated_at,
+                pull_deferred = excluded.pull_deferred,
+                push_deferred = excluded.push_deferred
         `,
         [
           cloudConnectionId,
@@ -213,6 +231,7 @@ export const pushLocalChanges = async (
               deleted: change.kind === "delete",
               cloud_updated_at: result.updatedAt,
               local_updated_at: change.local_updated_at,
+              deferred: change.deferred,
             })),
           ),
         ],
