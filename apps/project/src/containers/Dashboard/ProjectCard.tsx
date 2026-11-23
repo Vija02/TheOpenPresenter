@@ -1,5 +1,5 @@
 import { Tag } from "@/components/Tag";
-import { fromProjectDateValue } from "@/lib/projectDate";
+import { fromProjectDateValue, fromProjectTimeValue } from "@/lib/projectDate";
 import { ProjectFragment } from "@repo/graphql";
 import { PROJECT_DATE_FORMAT, untitledProjectName } from "@repo/lib";
 import {
@@ -33,6 +33,8 @@ type ProjectCardProps = {
   screens?: ProjectCardScreen[];
   onAssignToScreen?: (screenId: string) => void;
   onDuplicate?: () => void;
+  /** Names of categories that start new projects from this one */
+  templateFor?: string[];
 };
 
 export const ProjectCard = ({
@@ -44,9 +46,11 @@ export const ProjectCard = ({
   screens,
   onAssignToScreen,
   onDuplicate,
+  templateFor,
 }: ProjectCardProps) => {
   const assignableScreens = onAssignToScreen ? (screens ?? []) : [];
   const hasMenu = !!renderHref || !!onDuplicate || assignableScreens.length > 0;
+  const time = fromProjectTimeValue(project.targetTime);
   const cloudIcon = project.cloudConnectionId && (
     <IoCloudDoneOutline className="shrink-0" />
   );
@@ -72,6 +76,7 @@ export const ProjectCard = ({
                   formatToken={PROJECT_DATE_FORMAT}
                   className="text-sm font-bold sm:font-medium"
                 />
+                {time && <span className="text-sm text-secondary">{time}</span>}
                 {cloudIcon}
               </div>
               <p className="text-xs">{project.name}</p>
@@ -86,7 +91,16 @@ export const ProjectCard = ({
               {cloudIcon}
             </div>
           )}
-          <p className="text-xs text-tertiary">{project.category?.name}</p>
+          <p className="text-xs text-tertiary">
+            {[
+              project.category?.name,
+              templateFor && templateFor.length > 0
+                ? `Default project for ${templateFor.join(", ")}`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
         </Link>
         <div className="flex">
           {actions}

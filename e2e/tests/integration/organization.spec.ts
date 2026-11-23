@@ -61,7 +61,9 @@ test.describe("OrganizationPage", () => {
     await organizationPage.projectEditModalSaveButton.click();
 
     await expect(page.getByText("Test Project Name")).toBeInViewport();
-    await expect(page.getByText("Sunday Morning")).toBeInViewport();
+    await expect(
+      organizationPage.projectCards.getByText("Sunday Morning"),
+    ).toBeInViewport();
 
     await organizationPage.projectCardDeleteButtonNth(0).click();
     await page.getByTestId("popconfirm-confirm").click();

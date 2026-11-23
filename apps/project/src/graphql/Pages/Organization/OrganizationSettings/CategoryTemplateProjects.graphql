@@ -1,0 +1,22 @@
+# Only loaded while a category dialog is open. Recently edited first, so
+# default projects and this week's services are near the top
+query CategoryTemplateProjects($slug: String!) {
+  organizationBySlug(slug: $slug) {
+    id
+    projects(
+      condition: { isTemporary: false }
+      orderBy: [UPDATED_AT_DESC]
+      first: 100
+    ) {
+      nodes {
+        id
+        name
+        createdAt
+        targetDate
+        category {
+          id
+        }
+      }
+    }
+  }
+}

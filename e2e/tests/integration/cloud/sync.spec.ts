@@ -102,16 +102,12 @@ test.describe("Cloud Sync", () => {
     };
 
     const createCategories = async () => {
-      await cloudCategoryPage.addCategoryButton.click();
-      await cloudCategoryPage.categoryNameInput.fill("Category 1");
-      await cloudCategoryPage.createCategoryButton.click();
+      await cloudCategoryPage.createCategory("Category 1");
       await expect(cloudCategoryPage.createCategoryButton).not.toBeInViewport({
         timeout: 10000,
       });
 
-      await cloudCategoryPage.addCategoryButton.click();
-      await cloudCategoryPage.categoryNameInput.fill("Category 2");
-      await cloudCategoryPage.createCategoryButton.click();
+      await cloudCategoryPage.createCategory("Category 2");
       await expect(cloudCategoryPage.createCategoryButton).not.toBeInViewport({
         timeout: 10000,
       });
@@ -139,13 +135,17 @@ test.describe("Cloud Sync", () => {
     await page.waitForTimeout(2000);
     await currentProjectPage.reload({ waitUntil: "domcontentloaded" });
 
-    await expect(currentProjectPage.getByText("Category 1")).toBeInViewport();
+    await expect(
+      currentProjectPage.getByTestId("project-card").getByText("Category 1"),
+    ).toBeInViewport();
     await expect(currentProjectPage.getByText("Tag 1")).toBeInViewport();
     await expect(currentProjectPage.getByText("Tag 2")).toBeInViewport();
 
     // 3. Should sync when categories and media deleted
     // Remove category
-    await cloudCategoryPage.deleteExistingCategoryButton("Category 1").click();
+    await cloudCategoryPage.editExistingCategoryButton("Category 1").click();
+    await cloudCategoryPage.deleteTab.click();
+    await cloudCategoryPage.deleteCategoryButton.click();
     await cloudCategoryPage.page.getByTestId("popconfirm-confirm").click();
     await expect(
       cloudCategoryPage.page.getByText("Category 1"),
@@ -172,7 +172,7 @@ test.describe("Cloud Sync", () => {
     await currentProjectPage.reload({ waitUntil: "domcontentloaded" });
 
     await expect(
-      currentProjectPage.getByText("Category 1"),
+      currentProjectPage.getByTestId("project-card").getByText("Category 1"),
     ).not.toBeInViewport();
     await expect(currentProjectPage.getByText("Tag 1")).not.toBeInViewport();
     await expect(currentProjectPage.getByText("Tag 2")).not.toBeInViewport();

@@ -1,0 +1,8 @@
+mutation ReorderCategories($categoryIds: [UUID]!) {
+  reorderCategories(input: { categoryIds: $categoryIds }) {
+    categories {
+      id
+      sortOrder
+    }
+  }
+}

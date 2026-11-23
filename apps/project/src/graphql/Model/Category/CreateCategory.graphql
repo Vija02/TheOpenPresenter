@@ -1,7 +1,5 @@
-mutation CreateCategory($organizationId: UUID!, $name: String!) {
-  createCategory(
-    input: { category: { organizationId: $organizationId, name: $name } }
-  ) {
+mutation CreateCategory($category: CategoryInput!) {
+  createCategory(input: { category: $category }) {
     category {
       id
       ...Category

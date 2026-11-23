@@ -7,7 +7,7 @@ query OrganizationSettingsCategoriesPage($slug: String!) {
 fragment OrganizationSettingsCategoriesData on Query {
   organizationBySlug(slug: $slug) {
     id
-    categories {
+    categories(orderBy: [SORT_ORDER_ASC, NAME_ASC]) {
       nodes {
         id
         ...Category

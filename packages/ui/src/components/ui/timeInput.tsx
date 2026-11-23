@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 import { Time } from "@internationalized/date";
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { DateInput, DateSegment, TimeField } from "react-aria-components";
 import { Control } from "react-hook-form";
-import { FiClock } from "react-icons/fi";
 
 import {
   FormControl,
@@ -104,7 +104,7 @@ function TimeInput({
             aria-label="Pick a time"
             className="ui--time-input__trigger"
           >
-            <FiClock />
+            <ChevronDown className="size-4 opacity-50" />
           </button>
         </PopoverTrigger>
         <PopoverContent

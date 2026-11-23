@@ -1,7 +1,10 @@
 query AllCategoryByOrganization($slug: String!, $search: String) {
   organizationBySlug(slug: $slug) {
     id
-    categories(filter: { name: { includesInsensitive: $search } }) {
+    categories(
+      filter: { name: { includesInsensitive: $search } }
+      orderBy: [SORT_ORDER_ASC, NAME_ASC]
+    ) {
       nodes {
         id
         ...Category

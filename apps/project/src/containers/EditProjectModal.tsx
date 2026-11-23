@@ -2,7 +2,12 @@ import { ReactSelectDateProps } from "@/components/DatePicker/datePickerReactSel
 import { TagsSelector } from "@/components/Tag/TagsSelector";
 import { getOrgTypeLabels } from "@/lib/organizationType";
 import { useOrganizationType } from "@/lib/permissionHooks/organization";
-import { fromProjectDateValue, toProjectDateValue } from "@/lib/projectDate";
+import {
+  fromProjectDateValue,
+  fromProjectTimeValue,
+  toProjectDateValue,
+  toProjectTimeValue,
+} from "@/lib/projectDate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CategoryFragment,
@@ -30,17 +35,19 @@ import {
   InputControl,
   Select,
   SelectControl,
+  TimeInputControl,
   formatHumanReadableDate,
   useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 const formSchema = z.object({
   name: z.string().optional(),
   categoryId: z.string().optional(),
   targetDate: z.date().optional(),
+  targetTime: z.string(),
 });
 
 type FormInputs = z.infer<typeof formSchema>;
@@ -90,8 +97,12 @@ const EditProjectModal = ({
       targetDate: project.targetDate
         ? fromProjectDateValue(project.targetDate)
         : undefined,
+      targetTime: project.targetDate
+        ? fromProjectTimeValue(project.targetTime)
+        : "",
     },
   });
+  const targetDate = useWatch({ control: form.control, name: "targetDate" });
 
   const handleSubmit = useCallback(
     async (data: FormInputs) => {
@@ -102,6 +113,9 @@ const EditProjectModal = ({
           data.categoryId === UNCATEGORIZED ? undefined : data.categoryId,
         targetDate: data.targetDate
           ? toProjectDateValue(data.targetDate)
+          : null,
+        targetTime: data.targetDate
+          ? toProjectTimeValue(data.targetTime)
           : null,
       });
       const existingTagIds = project.projectTags.nodes.map((x) => x.tag?.id);
@@ -159,34 +173,43 @@ const EditProjectModal = ({
           <DialogBody>
             <InputControl control={form.control} name="name" label="Name" />
 
-            <FormField
-              control={form.control}
-              name="targetDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{labels.projectDate}</FormLabel>
-                  <FormControl>
-                    <Select
-                      {...ReactSelectDateProps}
-                      value={
-                        field.value
-                          ? {
-                              value: field.value,
-                              label: formatHumanReadableDate(field.value),
-                            }
-                          : null
-                      }
-                      onChange={(val) => {
-                        field.onChange(val);
-                      }}
-                      isClearable
-                      isSearchable={false}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
+              <FormField
+                control={form.control}
+                name="targetDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{labels.projectDate}</FormLabel>
+                    <FormControl>
+                      <Select
+                        {...ReactSelectDateProps}
+                        value={
+                          field.value
+                            ? {
+                                value: field.value,
+                                label: formatHumanReadableDate(field.value),
+                              }
+                            : null
+                        }
+                        onChange={(val) => {
+                          field.onChange(val);
+                        }}
+                        isClearable
+                        isSearchable={false}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <TimeInputControl
+                control={form.control}
+                name="targetTime"
+                label="Time"
+                disabled={!targetDate}
+                className="w-32"
+              />
+            </div>
 
             <SelectControl
               control={form.control}
