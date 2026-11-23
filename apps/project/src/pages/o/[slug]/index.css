@@ -1,5 +1,26 @@
 @reference "@repo/tailwind-config/index.css";
 
+.project--projects-header {
+  @apply flex items-center gap-x-3 sm:gap-x-4 mb-3;
+}
+.project--projects-header-actions {
+  @apply ml-auto shrink-0;
+}
+.project--category-select {
+  @apply flex-1 min-w-0 max-w-48 sm:hidden;
+}
+.project--category-pills {
+  @apply hidden sm:flex min-w-0 overflow-x-auto rounded-full border border-stroke p-0.5;
+}
+.project--category-pill {
+  @apply shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-sm text-secondary transition-colors;
+  @apply hover:bg-surface-primary-hover hover:text-primary;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
+}
+.project--category-pill[aria-pressed="true"] {
+  @apply bg-fill-default text-fill-default-fg hover:bg-fill-default hover:text-fill-default-fg;
+}
+
 .project--project-card {
   @apply flex flex-col sm:flex-row w-full py-2 px-1 justify-between hover:bg-surface-primary-hover border-b border-gray-200 sm:border-b-0;
   position: relative;

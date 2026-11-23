@@ -20,5 +20,6 @@ fragment Project on Project {
   cloudLastUpdated
   createdAt
   targetDate
+  targetTime
   updatedAt
 }

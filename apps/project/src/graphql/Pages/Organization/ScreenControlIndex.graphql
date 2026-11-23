@@ -17,7 +17,7 @@ query OrganizationScreenControlIndexPage(
         }
       }
     }
-    categories {
+    categories(orderBy: [SORT_ORDER_ASC, NAME_ASC]) {
       nodes {
         id
         ...Category
@@ -44,7 +44,7 @@ query OrganizationScreenControlIndexPage(
               ...Project
             }
           }
-          categories {
+          categories(orderBy: [SORT_ORDER_ASC, NAME_ASC]) {
             nodes {
               id
               ...Category

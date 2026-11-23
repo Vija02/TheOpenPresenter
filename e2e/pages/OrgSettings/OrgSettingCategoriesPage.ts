@@ -4,9 +4,12 @@ export class OrgSettingCategoriesPage {
   readonly addCategoryButton: Locator;
   readonly categoryNameInput: Locator;
   readonly createCategoryButton: Locator;
+  readonly nextButton: Locator;
 
   readonly editExistingCategoryButton: (categoryName: string) => Locator;
-  readonly deleteExistingCategoryButton: (categoryName: string) => Locator;
+  /** In the edit dialog */
+  readonly deleteTab: Locator;
+  readonly deleteCategoryButton: Locator;
 
   constructor(public readonly page: Page) {
     this.addCategoryButton = page.getByRole("button", { name: "Add Category" });
@@ -15,10 +18,24 @@ export class OrgSettingCategoriesPage {
       name: "Create",
       exact: true,
     });
+    this.nextButton = page.getByRole("button", { name: "Next" });
 
     this.editExistingCategoryButton = (categoryName: string) =>
-      page.getByRole("row", { name: categoryName }).getByRole("button").nth(0);
-    this.deleteExistingCategoryButton = (categoryName: string) =>
-      page.getByRole("row", { name: categoryName }).getByRole("button").nth(1);
+      page
+        .getByRole("row", { name: categoryName })
+        .getByRole("button", { name: "Edit category" });
+    this.deleteTab = page.getByRole("tab", { name: "Delete" });
+    this.deleteCategoryButton = page.getByRole("button", {
+      name: "Delete category",
+    });
+  }
+
+  /** Steps through the new category dialog, leaving the rest as is */
+  async createCategory(name: string) {
+    await this.addCategoryButton.click();
+    await this.categoryNameInput.fill(name);
+    await this.nextButton.click();
+    await this.nextButton.click();
+    await this.createCategoryButton.click();
   }
 }

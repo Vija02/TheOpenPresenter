@@ -5,6 +5,8 @@ mutation CreateProject(
   $categoryId: UUID
   $tags: [UUID]!
   $targetDate: Datetime
+  $targetTime: Time
+  $templateProjectId: UUID
 ) {
   createFullProject(
     input: {
@@ -14,6 +16,8 @@ mutation CreateProject(
       categoryId: $categoryId
       tags: $tags
       targetDate: $targetDate
+      targetTime: $targetTime
+      templateProjectId: $templateProjectId
     }
   ) {
     project {

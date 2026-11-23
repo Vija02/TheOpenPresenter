@@ -12,7 +12,7 @@ query OrganizationDashboardIndexPage($slug: String!) {
         ...Project
       }
     }
-    categories {
+    categories(orderBy: [SORT_ORDER_ASC, NAME_ASC]) {
       nodes {
         id
         ...Category

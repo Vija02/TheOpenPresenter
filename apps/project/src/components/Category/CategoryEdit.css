@@ -1,0 +1,56 @@
+@reference "@repo/tailwind-config/index.css";
+
+.project--category-edit {
+  @apply flex h-full min-h-0 flex-col gap-0 md:h-[34rem];
+}
+
+.project--category-edit__title {
+  @apply shrink-0 border-b border-stroke px-6 py-5;
+}
+
+.project--category-edit__body {
+  @apply flex min-h-0 flex-1 flex-col md:flex-row;
+}
+
+.project--category-edit__sidebar {
+  @apply flex shrink-0 items-center gap-1 border-b border-stroke px-4 py-2;
+  @apply md:flex-col md:items-stretch md:gap-0;
+  @apply md:w-56 md:border-b-0 md:border-r md:px-0 md:py-0;
+}
+
+.project--category-edit__nav {
+  @apply flex-row gap-1 border-0 md:flex-col md:items-stretch md:gap-0;
+}
+
+/* Matches the main sidebar's active item */
+.project--category-edit__tab {
+  @apply justify-start gap-2.5 rounded-sm px-3 py-2.5 after:hidden md:rounded-none md:px-6;
+  @apply hover:bg-surface-primary-hover data-[state=active]:bg-surface-primary-hover;
+}
+
+.project--category-edit__tab--danger {
+  @apply text-fill-destructive data-[state=active]:text-fill-destructive hover:text-fill-destructive;
+}
+
+.project--category-edit__step {
+  @apply grid size-5 place-items-center rounded-xs bg-surface-tertiary text-xs font-semibold;
+}
+.project--category-edit__tab[data-state="active"] .project--category-edit__step {
+  @apply bg-fill-default text-fill-default-fg;
+}
+
+.project--category-edit__main {
+  @apply flex min-h-0 min-w-0 flex-1 flex-col;
+}
+
+.project--category-edit__content {
+  @apply stack-col flex-1 items-stretch gap-5 overflow-y-auto p-4;
+}
+
+.project--category-edit__footer {
+  @apply flex items-start gap-2 border-t border-stroke px-4 py-3;
+}
+
+.project--category-edit [data-slot="form-description"] {
+  @apply text-tertiary;
+}

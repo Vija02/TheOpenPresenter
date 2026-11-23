@@ -22,11 +22,13 @@ import {
   PopoverContent,
   PopoverMenuItem,
   PopoverTrigger,
+  Select,
 } from "@repo/ui";
 import { useCallback, useMemo } from "react";
 import { FaFileImport, FaPlus } from "react-icons/fa";
 import { VscChevronDown, VscEdit, VscTrash } from "react-icons/vsc";
 import { toast } from "react-toastify";
+import { useSearchParams } from "wouter";
 
 import "./index.css";
 
@@ -73,10 +75,86 @@ const OrganizationPage = () => {
     [setExistingProjectToScreen, publish],
   );
 
-  const emptyProject = useMemo(
-    () => data?.organizationBySlug?.projects.nodes.length === 0,
-    [data?.organizationBySlug?.projects.nodes.length],
+  const projects = data?.organizationBySlug?.projects.nodes;
+  const categories = useMemo(
+    () => data?.organizationBySlug?.categories.nodes ?? [],
+    [data?.organizationBySlug?.categories.nodes],
   );
+
+  const emptyProject = projects?.length === 0;
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedCategory = searchParams.get("category") ?? ALL;
+  // A link to a deleted (or another org's) category shows everything
+  const categoryFilter =
+    !data ||
+    requestedCategory === UNCATEGORIZED ||
+    categories.some((c) => c.id === requestedCategory)
+      ? requestedCategory
+      : ALL;
+  const setCategoryFilter = useCallback(
+    (value: string) =>
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (value === ALL) next.delete("category");
+          else next.set("category", value);
+          return next;
+        },
+        { replace: true },
+      ),
+    [setSearchParams],
+  );
+
+  const hasUncategorized = useMemo(
+    () => projects?.some((p) => !p.category) ?? false,
+    [projects],
+  );
+
+  const categoryOptions = useMemo(
+    () => [
+      { value: ALL, label: "All" },
+      ...categories
+        // Hidden ones still show while selected (e.g. from a link)
+        .filter((c) => c.showInFilter || c.id === categoryFilter)
+        .map((c) => ({ value: c.id, label: c.name })),
+      ...(hasUncategorized
+        ? [
+            {
+              value: UNCATEGORIZED,
+              // Unless a real category already uses the short name
+              label: categories.some((c) => c.name.toLowerCase() === "other")
+                ? "Uncategorized"
+                : "Other",
+            },
+          ]
+        : []),
+    ],
+    [categories, hasUncategorized, categoryFilter],
+  );
+  const showCategoryFilter = categoryOptions.length > 1 && !emptyProject;
+
+  const templateFor = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const c of categories) {
+      if (!c.templateProjectId) continue;
+      map.set(c.templateProjectId, [
+        ...(map.get(c.templateProjectId) ?? []),
+        c.name,
+      ]);
+    }
+    return map;
+  }, [categories]);
+
+  // From "All", the dialog falls back to the default category
+  const initialCategoryId = categoryFilter !== ALL ? categoryFilter : undefined;
+
+  const filteredProjects = useMemo(() => {
+    if (!projects || categoryFilter === ALL) return projects;
+    if (categoryFilter === UNCATEGORIZED)
+      return projects.filter((p) => !p.category);
+    return projects.filter((p) => p.category?.id === categoryFilter);
+  }, [projects, categoryFilter]);
 
   return (
     <SharedOrgLayout title="Dashboard" sharedOrgQuery={query}>
@@ -86,9 +164,45 @@ const OrganizationPage = () => {
         }
       />
 
-      <div className="flex items-center justify-between mb-3">
+      <div className="project--projects-header">
         <h1 className="text-2xl font-bold mb-0">Projects</h1>
-        <div className="stack-row">
+        {showCategoryFilter && (
+          <div
+            className="project--category-select"
+            data-testid="category-filter-select"
+          >
+            <Select
+              aria-label="Filter by category"
+              value={
+                categoryOptions.find((o) => o.value === categoryFilter) ?? null
+              }
+              options={categoryOptions}
+              isSearchable={false}
+              isClearable={false}
+              onChange={(opt) => opt && setCategoryFilter(opt.value)}
+            />
+          </div>
+        )}
+        {showCategoryFilter && (
+          <div
+            className="project--category-pills"
+            role="group"
+            aria-label="Filter by category"
+          >
+            {categoryOptions.map((category) => (
+              <button
+                key={category.value}
+                type="button"
+                className="project--category-pill"
+                aria-pressed={categoryFilter === category.value}
+                onClick={() => setCategoryFilter(category.value)}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="stack-row project--projects-header-actions">
           <div className="flex">
             <OverlayToggle
               toggler={({ onToggle }) => (
@@ -105,7 +219,8 @@ const OrganizationPage = () => {
             >
               <CreateProjectModal
                 organizationId={data?.organizationBySlug?.id}
-                categories={data?.organizationBySlug?.categories.nodes ?? []}
+                categories={categories}
+                initialCategoryId={initialCategoryId}
               />
             </OverlayToggle>
             <OverlayToggle
@@ -147,7 +262,12 @@ const OrganizationPage = () => {
 
       <div className="stack-col items-center mb-2 flex-wrap gap-0">
         {emptyProject && <EmptyProject />}
-        {data?.organizationBySlug?.projects.nodes.map((project) => (
+        {!emptyProject && filteredProjects?.length === 0 && (
+          <p className="w-full mt-3 text-secondary">
+            No projects in this category yet.
+          </p>
+        )}
+        {filteredProjects?.map((project) => (
           <OverlayToggle
             key={project.id}
             isLazy
@@ -161,13 +281,12 @@ const OrganizationPage = () => {
                   handleAssignToScreen(screenId, project.id)
                 }
                 onDuplicate={onToggle}
+                templateFor={templateFor.get(project.id)}
                 actions={
                   <DashboardProjectActions
                     project={project}
                     organizationId={data?.organizationBySlug?.id}
-                    categories={
-                      data?.organizationBySlug?.categories.nodes ?? []
-                    }
+                    categories={categories}
                     handleDeleteProject={handleDeleteProject}
                   />
                 }
@@ -189,12 +308,16 @@ const OrganizationPage = () => {
       >
         <CreateProjectModal
           organizationId={data?.organizationBySlug?.id}
-          categories={data?.organizationBySlug?.categories.nodes ?? []}
+          categories={categories}
+          initialCategoryId={initialCategoryId}
         />
       </OverlayToggle>
     </SharedOrgLayout>
   );
 };
+
+const ALL = "all";
+const UNCATEGORIZED = "uncategorized";
 
 const EmptyProject = () => {
   return (

@@ -1,4 +1,18 @@
 fragment Category on Category {
   id
   name
+  sortOrder
+  showInFilter
+  isDefault
+  recurrence
+  recurrenceAnchor
+  startTime
+  durationMinutes
+  templateProjectId
+  templateProject {
+    id
+    name
+    createdAt
+    targetDate
+  }
 }
