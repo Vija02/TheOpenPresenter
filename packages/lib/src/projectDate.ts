@@ -34,3 +34,14 @@ export const comingSunday = (from = new Date()): Date => {
   day.setDate(day.getDate() + ((7 - day.getDay()) % 7));
   return day;
 };
+
+// A project's time is separate (`target_time`): wall-clock time on that day,
+// with no time zone, like a category's start time.
+
+/** "HH:mm" from a time input -> value to send as targetTime, or null */
+export const toProjectTimeValue = (time?: string | null): string | null =>
+  time && /^\d{2}:\d{2}$/.test(time) ? `${time}:00` : null;
+
+/** Stored targetTime ("10:30:00") -> "10:30", or "" when there's none */
+export const fromProjectTimeValue = (value?: string | null): string =>
+  value ? value.slice(0, 5) : "";
