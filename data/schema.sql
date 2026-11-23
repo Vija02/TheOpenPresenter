@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hzIycwbsTQ61ywJExqiOPQqPceAEu2nMMmjEoJ3doR3EhNYHWWjWLwTPCOPCF4n
+\restrict WMnddSTQ0N46VohMevKdYqgW1UwFkVBSVlKrI7PPVEgIsQ8Ioz2DdmJHdHSj1HZ
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -355,6 +355,44 @@ CREATE TYPE app_public.video_transcode_status AS ENUM (
     'completed',
     'failed'
 );
+
+
+--
+-- Name: copy_project_content(uuid, uuid); Type: FUNCTION; Schema: app_hidden; Owner: -
+--
+
+CREATE FUNCTION app_hidden.copy_project_content(p_from uuid, p_to uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+declare
+  v_from app_public.projects;
+  v_to app_public.projects;
+begin
+  select * into v_from from app_public.projects where id = p_from;
+  select * into v_to from app_public.projects where id = p_to;
+
+  -- Deleted since it was picked: leave the new project blank
+  if v_from.id is null and v_to.id is not null then
+    return;
+  end if;
+
+  if v_from.id is null or v_to.id is null
+    or v_from.organization_id <> v_to.organization_id
+    or v_from.organization_id not in (select app_public.current_user_member_organization_ids())
+  then
+    raise exception 'Project not found' using errcode = 'NTFND';
+  end if;
+
+  update app_public.projects set document = v_from.document where id = p_to;
+
+  insert into app_public.project_medias (project_id, media_id, plugin_id)
+  select p_to, pm.media_id, pm.plugin_id
+  from app_public.project_medias pm
+  where pm.project_id = p_from
+  on conflict do nothing;
+end;
+$$;
 
 
 --
@@ -1609,6 +1647,64 @@ COMMENT ON FUNCTION app_private.tg__timestamps() IS 'This trigger should be call
 
 
 --
+-- Name: tg_categories__default_sort_order(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_categories__default_sort_order() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  if NEW.sort_order is null then
+    select coalesce(max(sort_order) + 1, 0) into NEW.sort_order
+      from app_public.categories
+      where organization_id = NEW.organization_id;
+  end if;
+  return NEW;
+end;
+$$;
+
+
+--
+-- Name: tg_categories__forbid_template_from_other_org(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_categories__forbid_template_from_other_org() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  if NEW.template_project_id is not null and not exists (
+    select 1 from app_public.projects
+    where id = NEW.template_project_id and organization_id = NEW.organization_id
+  ) then
+    raise exception 'The default project must belong to the same organization' using errcode = 'CRORG';
+  end if;
+  return NEW;
+end;
+$$;
+
+
+--
+-- Name: tg_categories__single_default(); Type: FUNCTION; Schema: app_private; Owner: -
+--
+
+CREATE FUNCTION app_private.tg_categories__single_default() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+begin
+  update app_public.categories
+    set is_default = false
+    where organization_id = NEW.organization_id
+      and id <> NEW.id
+      and is_default;
+  return null;
+end;
+$$;
+
+
+--
 -- Name: tg_client_plugin_versions__autoinstall_for_owner(); Type: FUNCTION; Schema: app_private; Owner: -
 --
 
@@ -2217,7 +2313,9 @@ CREATE TABLE app_public.projects (
     cloud_should_sync boolean,
     cloud_project_id uuid,
     is_public boolean DEFAULT false,
-    is_temporary boolean DEFAULT false NOT NULL
+    is_temporary boolean DEFAULT false NOT NULL,
+    target_time time without time zone,
+    CONSTRAINT projects_target_time_needs_date CHECK (((target_time IS NULL) OR (target_date IS NOT NULL)))
 );
 
 
@@ -2229,10 +2327,17 @@ COMMENT ON COLUMN app_public.projects.is_temporary IS 'True when this project wa
 
 
 --
--- Name: create_full_project(uuid, text, text, uuid[], uuid, timestamp with time zone); Type: FUNCTION; Schema: app_public; Owner: -
+-- Name: COLUMN projects.target_time; Type: COMMENT; Schema: app_public; Owner: -
 --
 
-CREATE FUNCTION app_public.create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid DEFAULT NULL::uuid, target_date timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS app_public.projects
+COMMENT ON COLUMN app_public.projects.target_time IS 'When on `target_date` it starts, as wall-clock time in the church''s own zone. Null for a day only.';
+
+
+--
+-- Name: create_full_project(uuid, text, text, uuid[], uuid, timestamp with time zone, uuid, time without time zone); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid DEFAULT NULL::uuid, target_date timestamp with time zone DEFAULT NULL::timestamp with time zone, template_project_id uuid DEFAULT NULL::uuid, target_time time without time zone DEFAULT NULL::time without time zone) RETURNS app_public.projects
     LANGUAGE plpgsql
     SET search_path TO 'pg_catalog', 'public', 'pg_temp'
     AS $$
@@ -2240,10 +2345,15 @@ declare
   v_project app_public.projects;
   tag_id uuid;
 begin
-  insert into app_public.projects (organization_id, name, slug, category_id, target_date, creator_user_id) values (p_organization_id, name, slug, category_id, target_date, app_public.current_user_id()) returning * into v_project;
+  insert into app_public.projects (organization_id, name, slug, category_id, target_date, target_time, creator_user_id) values (p_organization_id, name, slug, category_id, target_date, target_time, app_public.current_user_id()) returning * into v_project;
   foreach tag_id in array tags loop
     insert into app_public.project_tags (project_id, tag_id) values (v_project.id, tag_id);
   end loop;
+
+  if template_project_id is not null then
+    perform app_hidden.copy_project_content(template_project_id, v_project.id);
+    select * into v_project from app_public.projects where id = v_project.id;
+  end if;
 
   return v_project;
 end;
@@ -2704,7 +2814,7 @@ begin
     slug,
     category_id,
     target_date,
-    document
+    target_time
   ) values (
     v_source.organization_id,
     app_public.current_user_id(),
@@ -2712,7 +2822,7 @@ begin
     v_slug,
     v_source.category_id,
     v_source.target_date,
-    v_source.document
+    v_source.target_time
   ) returning * into v_project;
 
   insert into app_public.project_tags (project_id, tag_id)
@@ -2720,10 +2830,9 @@ begin
   from app_public.project_tags pt
   where pt.project_id = v_source.id;
 
-  insert into app_public.project_medias (project_id, media_id, plugin_id)
-  select v_project.id, pm.media_id, pm.plugin_id
-  from app_public.project_medias pm
-  where pm.project_id = v_source.id;
+  -- Defined in 900-create-full-project.sql
+  perform app_hidden.copy_project_content(v_source.id, v_project.id);
+  select * into v_project from app_public.projects where id = v_project.id;
 
   return v_project;
 end;
@@ -3439,6 +3548,116 @@ begin
 
 end;
 $$;
+
+
+--
+-- Name: categories; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.categories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    organization_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    recurrence text,
+    recurrence_anchor date,
+    start_time time without time zone,
+    duration_minutes integer,
+    template_project_id uuid,
+    sort_order integer NOT NULL,
+    show_in_filter boolean DEFAULT true NOT NULL,
+    is_default boolean DEFAULT false NOT NULL,
+    CONSTRAINT categories_duration_minutes_check CHECK (((duration_minutes IS NULL) OR ((duration_minutes >= 1) AND (duration_minutes <= 1440)))),
+    CONSTRAINT categories_recurrence_check CHECK (((recurrence IS NULL) OR ((recurrence ~ '^FREQ='::text) AND (length(recurrence) <= 200))))
+);
+
+
+--
+-- Name: TABLE categories; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.categories IS 'Categories data
+@cloudSync';
+
+
+--
+-- Name: COLUMN categories.recurrence; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.categories.recurrence IS 'When projects in this category happen, as an RFC 5545 RRULE (e.g. FREQ=WEEKLY;BYDAY=SU).';
+
+
+--
+-- Name: COLUMN categories.recurrence_anchor; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.categories.recurrence_anchor IS 'A day the cadence lands on, so "every 2 weeks" knows which weeks.';
+
+
+--
+-- Name: COLUMN categories.start_time; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.categories.start_time IS 'Usual start time, in the organization''s local time.';
+
+
+--
+-- Name: COLUMN categories.duration_minutes; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.categories.duration_minutes IS 'Usual length in minutes.';
+
+
+--
+-- Name: COLUMN categories.template_project_id; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.categories.template_project_id IS 'New projects in this category start as a copy of this project.';
+
+
+--
+-- Name: COLUMN categories.sort_order; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.categories.sort_order IS '@hasDefault
+Position of this category in its organization''s list, lowest first.';
+
+
+--
+-- Name: COLUMN categories.show_in_filter; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.categories.show_in_filter IS 'Whether this category gets its own quick filter on the projects page.';
+
+
+--
+-- Name: COLUMN categories.is_default; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON COLUMN app_public.categories.is_default IS 'New projects start in this category when none is picked. At most one per organization.';
+
+
+--
+-- Name: reorder_categories(uuid[]); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.reorder_categories(category_ids uuid[]) RETURNS SETOF app_public.categories
+    LANGUAGE sql
+    AS $$
+  update app_public.categories c
+    set sort_order = ids.idx - 1
+    from unnest(category_ids) with ordinality as ids(id, idx)
+    where c.id = ids.id
+  returning c.*;
+$$;
+
+
+--
+-- Name: FUNCTION reorder_categories(category_ids uuid[]); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.reorder_categories(category_ids uuid[]) IS 'Sets the order of the given categories to the order of the array.';
 
 
 --
@@ -4171,7 +4390,9 @@ CREATE TABLE app_private.cloud_sync_rows (
     row_key jsonb NOT NULL,
     cloud_updated_at timestamp with time zone,
     local_updated_at timestamp with time zone,
-    synced_value jsonb
+    synced_value jsonb,
+    pull_deferred boolean DEFAULT false NOT NULL,
+    push_deferred boolean DEFAULT false NOT NULL
 );
 
 
@@ -4456,27 +4677,6 @@ CREATE TABLE app_private.user_secrets (
 --
 
 COMMENT ON TABLE app_private.user_secrets IS 'The contents of this table should never be visible to the user. Contains data mostly related to authentication.';
-
-
---
--- Name: categories; Type: TABLE; Schema: app_public; Owner: -
---
-
-CREATE TABLE app_public.categories (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name text NOT NULL,
-    organization_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: TABLE categories; Type: COMMENT; Schema: app_public; Owner: -
---
-
-COMMENT ON TABLE app_public.categories IS 'Categories data
-@cloudSync';
 
 
 --
@@ -5446,6 +5646,20 @@ CREATE INDEX categories_organization_id_idx ON app_public.categories USING btree
 
 
 --
+-- Name: categories_sort_order_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX categories_sort_order_idx ON app_public.categories USING btree (sort_order);
+
+
+--
+-- Name: categories_template_project_id_idx; Type: INDEX; Schema: app_public; Owner: -
+--
+
+CREATE INDEX categories_template_project_id_idx ON app_public.categories USING btree (template_project_id);
+
+
+--
 -- Name: client_plugin_versions_client_plugin_id_idx; Type: INDEX; Schema: app_public; Owner: -
 --
 
@@ -6174,6 +6388,13 @@ CREATE TRIGGER _100_timestamps BEFORE INSERT OR UPDATE ON app_public.users FOR E
 
 
 --
+-- Name: categories _150_default_sort_order; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _150_default_sort_order BEFORE INSERT ON app_public.categories FOR EACH ROW EXECUTE FUNCTION app_private.tg_categories__default_sort_order();
+
+
+--
 -- Name: screens _150_set_screen_code; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
@@ -6216,10 +6437,24 @@ CREATE TRIGGER _200_forbid_if_project_and_tag_within_different_org BEFORE INSERT
 
 
 --
+-- Name: categories _200_forbid_template_from_other_org; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _200_forbid_template_from_other_org BEFORE INSERT OR UPDATE OF template_project_id, organization_id ON app_public.categories FOR EACH ROW EXECUTE FUNCTION app_private.tg_categories__forbid_template_from_other_org();
+
+
+--
 -- Name: client_plugin_versions _300_autoinstall_for_owner; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
 CREATE TRIGGER _300_autoinstall_for_owner AFTER UPDATE OF build_status ON app_public.client_plugin_versions FOR EACH ROW WHEN (((new.build_status = 'built'::app_public.client_plugin_build_status) AND (old.build_status IS DISTINCT FROM 'built'::app_public.client_plugin_build_status))) EXECUTE FUNCTION app_private.tg_client_plugin_versions__autoinstall_for_owner();
+
+
+--
+-- Name: categories _300_single_default; Type: TRIGGER; Schema: app_public; Owner: -
+--
+
+CREATE TRIGGER _300_single_default AFTER INSERT OR UPDATE OF is_default ON app_public.categories FOR EACH ROW WHEN (new.is_default) EXECUTE FUNCTION app_private.tg_categories__single_default();
 
 
 --
@@ -6471,7 +6706,7 @@ CREATE TRIGGER _900_cloud_sync_hint_update AFTER UPDATE ON app_public.medias FOR
 -- Name: projects _900_cloud_sync_hint_update; Type: TRIGGER; Schema: app_public; Owner: -
 --
 
-CREATE TRIGGER _900_cloud_sync_hint_update AFTER UPDATE ON app_public.projects FOR EACH ROW WHEN (((((old.name IS DISTINCT FROM new.name) OR (old.target_date IS DISTINCT FROM new.target_date)) OR (old.category_id IS DISTINCT FROM new.category_id)) OR (old.is_temporary IS DISTINCT FROM new.is_temporary))) EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
+CREATE TRIGGER _900_cloud_sync_hint_update AFTER UPDATE ON app_public.projects FOR EACH ROW WHEN ((((((old.name IS DISTINCT FROM new.name) OR (old.target_date IS DISTINCT FROM new.target_date)) OR (old.target_time IS DISTINCT FROM new.target_time)) OR (old.category_id IS DISTINCT FROM new.category_id)) OR (old.is_temporary IS DISTINCT FROM new.is_temporary))) EXECUTE FUNCTION app_private.tg__cloud_sync_hint('organization_id');
 
 
 --
@@ -6638,6 +6873,14 @@ ALTER TABLE ONLY app_private.user_secrets
 
 ALTER TABLE ONLY app_public.categories
     ADD CONSTRAINT categories_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES app_public.organizations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: categories categories_template_project_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.categories
+    ADD CONSTRAINT categories_template_project_id_fkey FOREIGN KEY (template_project_id) REFERENCES app_public.projects(id) ON DELETE SET NULL;
 
 
 --
@@ -7960,6 +8203,14 @@ GRANT USAGE ON SCHEMA public TO theopenpresenter_visitor;
 
 
 --
+-- Name: FUNCTION copy_project_content(p_from uuid, p_to uuid); Type: ACL; Schema: app_hidden; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_hidden.copy_project_content(p_from uuid, p_to uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_hidden.copy_project_content(p_from uuid, p_to uuid) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION organization_id_by_slug(p_slug text); Type: ACL; Schema: app_hidden; Owner: -
 --
 
@@ -8185,6 +8436,27 @@ REVOKE ALL ON FUNCTION app_private.tg__timestamps() FROM PUBLIC;
 
 
 --
+-- Name: FUNCTION tg_categories__default_sort_order(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_categories__default_sort_order() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg_categories__forbid_template_from_other_org(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_categories__forbid_template_from_other_org() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION tg_categories__single_default(); Type: ACL; Schema: app_private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_private.tg_categories__single_default() FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION tg_client_plugin_versions__autoinstall_for_owner(); Type: ACL; Schema: app_private; Owner: -
 --
 
@@ -8379,11 +8651,18 @@ GRANT INSERT(is_public),UPDATE(is_public) ON TABLE app_public.projects TO theope
 
 
 --
--- Name: FUNCTION create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid, target_date timestamp with time zone); Type: ACL; Schema: app_public; Owner: -
+-- Name: COLUMN projects.target_time; Type: ACL; Schema: app_public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION app_public.create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid, target_date timestamp with time zone) FROM PUBLIC;
-GRANT ALL ON FUNCTION app_public.create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid, target_date timestamp with time zone) TO theopenpresenter_visitor;
+GRANT INSERT(target_time),UPDATE(target_time) ON TABLE app_public.projects TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid, target_date timestamp with time zone, template_project_id uuid, target_time time without time zone); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid, target_date timestamp with time zone, template_project_id uuid, target_time time without time zone) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.create_full_project(p_organization_id uuid, name text, slug text, tags uuid[], category_id uuid, target_date timestamp with time zone, template_project_id uuid, target_time time without time zone) TO theopenpresenter_visitor;
 
 
 --
@@ -8847,6 +9126,91 @@ GRANT ALL ON FUNCTION app_public.remove_from_organization(organization_id uuid, 
 
 
 --
+-- Name: TABLE categories; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT,DELETE ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.name; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(name),UPDATE(name) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.organization_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(organization_id) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.recurrence; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(recurrence),UPDATE(recurrence) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.recurrence_anchor; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(recurrence_anchor),UPDATE(recurrence_anchor) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.start_time; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(start_time),UPDATE(start_time) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.duration_minutes; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(duration_minutes),UPDATE(duration_minutes) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.template_project_id; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(template_project_id),UPDATE(template_project_id) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.sort_order; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(sort_order),UPDATE(sort_order) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.show_in_filter; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(show_in_filter),UPDATE(show_in_filter) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: COLUMN categories.is_default; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT INSERT(is_default),UPDATE(is_default) ON TABLE app_public.categories TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION reorder_categories(category_ids uuid[]); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.reorder_categories(category_ids uuid[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.reorder_categories(category_ids uuid[]) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION request_account_deletion(); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -9086,27 +9450,6 @@ GRANT ALL ON FUNCTION public.uuid_v7_to_timestamptz(uuid) TO theopenpresenter_vi
 --
 
 GRANT SELECT ON TABLE app_public.organization_memberships TO theopenpresenter_visitor;
-
-
---
--- Name: TABLE categories; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT SELECT,DELETE ON TABLE app_public.categories TO theopenpresenter_visitor;
-
-
---
--- Name: COLUMN categories.name; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT INSERT(name),UPDATE(name) ON TABLE app_public.categories TO theopenpresenter_visitor;
-
-
---
--- Name: COLUMN categories.organization_id; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT INSERT(organization_id) ON TABLE app_public.categories TO theopenpresenter_visitor;
 
 
 --
@@ -9533,5 +9876,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hzIycwbsTQ61ywJExqiOPQqPceAEu2nMMmjEoJ3doR3EhNYHWWjWLwTPCOPCF4n
+\unrestrict WMnddSTQ0N46VohMevKdYqgW1UwFkVBSVlKrI7PPVEgIsQ8Ioz2DdmJHdHSj1HZ
 

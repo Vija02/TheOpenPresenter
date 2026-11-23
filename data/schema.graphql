@@ -191,6 +191,10 @@ enum CategoriesOrderBy {
   ORGANIZATION_ID_DESC
   PRIMARY_KEY_ASC
   PRIMARY_KEY_DESC
+  SORT_ORDER_ASC
+  SORT_ORDER_DESC
+  TEMPLATE_PROJECT_ID_ASC
+  TEMPLATE_PROJECT_ID_DESC
 }
 
 """
@@ -199,7 +203,15 @@ Categories data
 """
 type Category {
   createdAt: Datetime!
+
+  """Usual length in minutes."""
+  durationMinutes: Int
   id: UUID!
+
+  """
+  New projects start in this category when none is picked. At most one per organization.
+  """
+  isDefault: Boolean!
   name: String!
 
   """Reads a single `Organization` that is related to this `Category`."""
@@ -239,6 +251,29 @@ type Category {
     """The method to use when ordering `Project`."""
     orderBy: [ProjectsOrderBy!] = [PRIMARY_KEY_ASC]
   ): ProjectsConnection!
+
+  """
+  When projects in this category happen, as an RFC 5545 RRULE (e.g. FREQ=WEEKLY;BYDAY=SU).
+  """
+  recurrence: String
+
+  """A day the cadence lands on, so "every 2 weeks" knows which weeks."""
+  recurrenceAnchor: Date
+
+  """Whether this category gets its own quick filter on the projects page."""
+  showInFilter: Boolean!
+
+  """Position of this category in its organization's list, lowest first."""
+  sortOrder: Int!
+
+  """Usual start time, in the organization's local time."""
+  startTime: Time
+
+  """Reads a single `Project` that is related to this `Category`."""
+  templateProject: Project
+
+  """New projects in this category start as a copy of this project."""
+  templateProjectId: UUID
   updatedAt: Datetime!
 }
 
@@ -255,6 +290,12 @@ input CategoryCondition {
 
   """Checks for equality with the object’s `organizationId` field."""
   organizationId: UUID
+
+  """Checks for equality with the object’s `sortOrder` field."""
+  sortOrder: Int
+
+  """Checks for equality with the object’s `templateProjectId` field."""
+  templateProjectId: UUID
 }
 
 """
@@ -278,19 +319,79 @@ input CategoryFilter {
 
   """Filter by the object’s `organizationId` field."""
   organizationId: UUIDFilter
+
+  """Filter by the object’s `sortOrder` field."""
+  sortOrder: IntFilter
+
+  """Filter by the object’s `templateProjectId` field."""
+  templateProjectId: UUIDFilter
 }
 
 """An input for mutations affecting `Category`"""
 input CategoryInput {
+  """Usual length in minutes."""
+  durationMinutes: Int
+
+  """
+  New projects start in this category when none is picked. At most one per organization.
+  """
+  isDefault: Boolean
   name: String!
   organizationId: UUID!
+
+  """
+  When projects in this category happen, as an RFC 5545 RRULE (e.g. FREQ=WEEKLY;BYDAY=SU).
+  """
+  recurrence: String
+
+  """A day the cadence lands on, so "every 2 weeks" knows which weeks."""
+  recurrenceAnchor: Date
+
+  """Whether this category gets its own quick filter on the projects page."""
+  showInFilter: Boolean
+
+  """Position of this category in its organization's list, lowest first."""
+  sortOrder: Int
+
+  """Usual start time, in the organization's local time."""
+  startTime: Time
+
+  """New projects in this category start as a copy of this project."""
+  templateProjectId: UUID
 }
 
 """
 Represents an update to a `Category`. Fields that are set will be updated.
 """
 input CategoryPatch {
+  """Usual length in minutes."""
+  durationMinutes: Int
+
+  """
+  New projects start in this category when none is picked. At most one per organization.
+  """
+  isDefault: Boolean
   name: String
+
+  """
+  When projects in this category happen, as an RFC 5545 RRULE (e.g. FREQ=WEEKLY;BYDAY=SU).
+  """
+  recurrence: String
+
+  """A day the cadence lands on, so "every 2 weeks" knows which weeks."""
+  recurrenceAnchor: Date
+
+  """Whether this category gets its own quick filter on the projects page."""
+  showInFilter: Boolean
+
+  """Position of this category in its organization's list, lowest first."""
+  sortOrder: Int
+
+  """Usual start time, in the organization's local time."""
+  startTime: Time
+
+  """New projects in this category start as a copy of this project."""
+  templateProjectId: UUID
 }
 
 """All input for the `changePassword` mutation."""
@@ -1292,6 +1393,9 @@ type CreateCategoryPayload {
   Our root query field type. Allows us to run any query from our mutation payload.
   """
   query: Query
+
+  """Reads a single `Project` that is related to this `Category`."""
+  templateProject: Project
 }
 
 """All input for the create `ClientPluginDraft` mutation."""
@@ -1431,6 +1535,8 @@ input CreateFullProjectInput {
   slug: String!
   tags: [UUID]!
   targetDate: Datetime
+  targetTime: Time
+  templateProjectId: UUID
 }
 
 """The output of our `createFullProject` mutation."""
@@ -1969,6 +2075,9 @@ type CreateUserEmailPayload {
 """A location in a connection that can be used for resuming pagination."""
 scalar Cursor
 
+"""The day, does not include a time."""
+scalar Date
+
 """
 A point in time as described by the [ISO
 8601](https://en.wikipedia.org/wiki/ISO_8601) standard. May or may not include a timezone.
@@ -2052,6 +2161,9 @@ type DeleteCategoryPayload {
   Our root query field type. Allows us to run any query from our mutation payload.
   """
   query: Query
+
+  """Reads a single `Project` that is related to this `Category`."""
+  templateProject: Project
 }
 
 """All input for the `deleteClientPluginDraft` mutation."""
@@ -2580,6 +2692,48 @@ type ForgotPasswordPayload {
   unchanged and unused. May be used by a client to track mutations.
   """
   clientMutationId: String
+}
+
+"""
+A filter to be used against Int fields. All fields are combined with a logical ‘and.’
+"""
+input IntFilter {
+  """
+  Not equal to the specified value, treating null like an ordinary value.
+  """
+  distinctFrom: Int
+
+  """Equal to the specified value."""
+  equalTo: Int
+
+  """Greater than the specified value."""
+  greaterThan: Int
+
+  """Greater than or equal to the specified value."""
+  greaterThanOrEqualTo: Int
+
+  """Included in the specified list."""
+  in: [Int!]
+
+  """
+  Is null (if `true` is specified) or is not null (if `false` is specified).
+  """
+  isNull: Boolean
+
+  """Less than the specified value."""
+  lessThan: Int
+
+  """Less than or equal to the specified value."""
+  lessThanOrEqualTo: Int
+
+  """Equal to the specified value, treating null like an ordinary value."""
+  notDistinctFrom: Int
+
+  """Not equal to the specified value."""
+  notEqualTo: Int
+
+  """Not included in the specified list."""
+  notIn: [Int!]
 }
 
 type InvitationPreview {
@@ -4132,6 +4286,14 @@ type Mutation {
     input: RemoveFromOrganizationInput!
   ): RemoveFromOrganizationPayload
 
+  """Sets the order of the given categories to the order of the array."""
+  reorderCategories(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: ReorderCategoriesInput!
+  ): ReorderCategoriesPayload
+
   """Begin the account deletion flow by requesting the confirmation email"""
   requestAccountDeletion(
     """
@@ -5442,6 +5604,40 @@ type PluginMeta {
 }
 
 type Project {
+  """Reads and enables pagination through a set of `Category`."""
+  categoriesByTemplateProjectId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: CategoryCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: CategoryFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `Category`."""
+    orderBy: [CategoriesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): CategoriesConnection!
+
   """Reads a single `Category` that is related to this `Project`."""
   category: Category
   categoryId: UUID
@@ -5569,6 +5765,11 @@ type Project {
   ): ScreensConnection!
   slug: String!
   targetDate: Datetime
+
+  """
+  When on `target_date` it starts, as wall-clock time in the church's own zone. Null for a day only.
+  """
+  targetTime: Time
   updatedAt: Datetime!
 }
 
@@ -5661,6 +5862,11 @@ input ProjectInput {
   organizationId: UUID!
   slug: String!
   targetDate: Datetime
+
+  """
+  When on `target_date` it starts, as wall-clock time in the church's own zone. Null for a day only.
+  """
+  targetTime: Time
 }
 
 type ProjectMedia {
@@ -5767,6 +5973,11 @@ input ProjectPatch {
   name: String
   slug: String
   targetDate: Datetime
+
+  """
+  When on `target_date` it starts, as wall-clock time in the church's own zone. Null for a day only.
+  """
+  targetTime: Time
 }
 
 """Many to many relation from project to tag"""
@@ -7050,6 +7261,33 @@ input RemoveFromOrganizationInput {
 
 """The output of our `removeFromOrganization` mutation."""
 type RemoveFromOrganizationPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""All input for the `reorderCategories` mutation."""
+input ReorderCategoriesInput {
+  categoryIds: [UUID]!
+
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+}
+
+"""The output of our `reorderCategories` mutation."""
+type ReorderCategoriesPayload {
+  categories: [Category!]
+
   """
   The exact same `clientMutationId` that was provided in the mutation input,
   unchanged and unused. May be used by a client to track mutations.
@@ -8916,6 +9154,11 @@ type TestBuildClientPluginPayload {
   success: Boolean!
 }
 
+"""
+The exact time of day, does not include the date. May or may not have a timezone offset.
+"""
+scalar Time
+
 """All input for the `transferOrganizationBillingContact` mutation."""
 input TransferOrganizationBillingContactInput {
   """
@@ -9303,6 +9546,9 @@ type UpdateOrganizationPayload {
   Our root query field type. Allows us to run any query from our mutation payload.
   """
   query: Query
+
+  """Reads a single `Project` that is related to this `Category`."""
+  templateProject: Project
 }
 
 """All input for the `updateProject` mutation."""
