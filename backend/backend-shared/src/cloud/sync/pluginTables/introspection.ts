@@ -44,6 +44,12 @@ export type CloudSyncTable = {
    * id here, so these are translated through `projects.cloud_project_id`.
    */
   projectColumns: string[];
+  /**
+   * The optional ones among `projectColumns`. When the project is not on the
+   * other side yet, the rest of the row syncs anyway and this column follows a
+   * pass later, so rows that projects depend on (categories) never wait on them.
+   */
+  deferrableProjectColumns: string[];
   /** Columns referencing media, which keep their id on both sides. */
   mediaColumns: string[];
   pluginReferences: PluginReference[];
@@ -66,6 +72,7 @@ export type RawCloudSyncTable = {
   columns: string[];
   /** Columns that have a default, i.e. can be generated for a copy. */
   defaulted_columns: string[];
+  nullable_columns: string[];
   unique_keys: { primary: boolean; columns: string[] }[];
   foreign_keys: {
     columns: string[];
@@ -218,10 +225,15 @@ export const resolveCloudSyncTable = (
     keyColumns: key.columns,
     rowKeyColumns: key.columns.filter((c) => c !== organizationColumn),
     localIdentityColumns: primary && primary !== key ? primary.columns : [],
-    userColumns,
-    projectColumns,
-    mediaColumns,
-    pluginReferences,
+    userColumns: userColumns.filter((c) => !omitted.includes(c)),
+    projectColumns: projectColumns.filter((c) => !omitted.includes(c)),
+    deferrableProjectColumns: projectColumns.filter(
+      (c) => !omitted.includes(c) && raw.nullable_columns.includes(c),
+    ),
+    mediaColumns: mediaColumns.filter((c) => !omitted.includes(c)),
+    pluginReferences: pluginReferences.filter(
+      (r) => !omitted.includes(r.column),
+    ),
     conflict,
     copyLabelColumn,
   };
@@ -312,6 +324,11 @@ export const introspectCloudSyncTables = async (
           where a.attrelid = c.oid and a.attnum > 0 and not a.attisdropped
             and a.atthasdef
         ) as defaulted_columns,
+        array(
+          select a.attname::text from pg_attribute a
+          where a.attrelid = c.oid and a.attnum > 0 and not a.attisdropped
+            and not a.attnotnull
+        ) as nullable_columns,
         coalesce((
           select jsonb_agg(jsonb_build_object(
             'primary', i.indisprimary,

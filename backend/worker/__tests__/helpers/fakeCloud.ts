@@ -176,7 +176,9 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
         return { status: "applied", updatedAt: null };
       }
       const updatedAt = fake.now();
+      // Like the cloud, only the columns sent are written
       const row = {
+        ...current,
         ...change.row,
         organization_id: CLOUD_ORG_ID,
         updated_at: updatedAt,

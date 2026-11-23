@@ -361,6 +361,44 @@ describe("as the cloud's visitor role", () => {
     });
   });
 
+  it("keeps a pushed category's position", async () => {
+    await inCloud(async ({ client, orgId, userId }) => {
+      await becomeMember(client, orgId, userId);
+      await client.query(
+        `insert into app_public.categories (name, organization_id)
+         values ('Cloud only', $1), ('Also cloud only', $1)`,
+        [orgId],
+      );
+      const [created] = await applyPushedChanges(
+        client,
+        tableNamed("categories"),
+        orgId,
+        userId,
+        [
+          {
+            key: { name: "Youth" },
+            expectedUpdatedAt: null,
+            row: {
+              id: "ca700000-0000-4000-8000-000000000001",
+              name: "Youth",
+              organization_id: OTHER_ORG_ID,
+              sort_order: 0,
+              created_at: "2026-01-01T00:00:00+00:00",
+              updated_at: "2026-01-01T00:00:00+00:00",
+            },
+          },
+        ],
+      );
+      expect(created).toMatchObject({ status: "applied" });
+      const { rows } = await client.query(
+        `select sort_order from app_public.categories
+         where organization_id = $1 and name = 'Youth'`,
+        [orgId],
+      );
+      expect(rows[0].sort_order).toBe(0);
+    });
+  });
+
   it("keeps a pushed screen's code, which members cannot otherwise choose", async () => {
     await inCloud(async ({ client, orgId, userId }) => {
       await becomeMember(client, orgId, userId);
