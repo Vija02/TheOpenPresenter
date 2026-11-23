@@ -361,6 +361,7 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     value: {
       slug: `cloud-${project.id.slice(0, 8)}`,
       isPublic: false,
+      targetTime: null,
       ...project.value,
     },
   });
@@ -645,7 +646,10 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
         const result = await events.next();
         return result.done
           ? result
-          : { done: false, value: { cloudOrganizationChanged: result.value[0] } };
+          : {
+              done: false,
+              value: { cloudOrganizationChanged: result.value[0] },
+            };
       },
       return: async () => {
         if (open) fake.hintSubscribers -= 1;

@@ -479,3 +479,93 @@ describe("findCloudOrganizationId", () => {
     });
   });
 });
+
+describe("version 3: target time", () => {
+  it("creates and lists it, leaving it out of older shapes", async () => {
+    await asMember(async ({ client, orgId, userId }) => {
+      const pushed = value("Easter", {
+        targetDate: "2027-03-28T00:00:00.000000Z",
+        slug: "pushed",
+        isPublic: false,
+        targetTime: "10:30:00",
+      });
+      const [result] = await applyPushedProjectChanges(
+        client,
+        orgId,
+        userId,
+        [create(PROJECT_ID, pushed)],
+        3,
+      );
+
+      expect(result).toMatchObject({ status: "applied" });
+      expect((await listCloudProjects(client, orgId, 3))[0]!.value).toEqual(
+        pushed,
+      );
+      expect(
+        (await listCloudProjects(client, orgId, 2))[0]!.value,
+      ).not.toHaveProperty("targetTime");
+    });
+  });
+
+  it("keeps the time when an older side pushes without it", async () => {
+    await asMember(async ({ client, orgId, userId }) => {
+      const day = "2027-03-28T00:00:00.000000Z";
+      const timed = value("Easter", {
+        slug: "pushed",
+        isPublic: false,
+        targetDate: day,
+        targetTime: "10:30:00",
+      });
+      const [created] = await applyPushedProjectChanges(
+        client,
+        orgId,
+        userId,
+        [create(PROJECT_ID, timed)],
+        3,
+      );
+      const before = value("Easter", {
+        slug: "pushed",
+        isPublic: false,
+        targetDate: day,
+      });
+
+      const [result] = await applyPushedProjectChanges(
+        client,
+        orgId,
+        userId,
+        [
+          {
+            id: PROJECT_ID,
+            expected: {
+              value: before,
+              updatedAt: (created as { updatedAt: string }).updatedAt,
+            },
+            value: { ...before, name: "Easter Sunday" },
+          },
+        ],
+        2,
+      );
+
+      expect(result).toMatchObject({ status: "applied" });
+      const [listed] = await listCloudProjects(client, orgId, 3);
+      expect(listed!.value).toMatchObject({
+        name: "Easter Sunday",
+        targetTime: "10:30:00",
+      });
+    });
+  });
+
+  it("drops a time that comes without a date", async () => {
+    await asMember(async ({ client, orgId, userId }) => {
+      await applyPushedProjectChanges(
+        client,
+        orgId,
+        userId,
+        [create(PROJECT_ID, value("Easter", { targetTime: "10:30:00" }))],
+        3,
+      );
+      const [listed] = await listCloudProjects(client, orgId, 3);
+      expect(listed!.value).toMatchObject({ targetTime: null });
+    });
+  });
+});

@@ -426,7 +426,8 @@ const sameValue = (a: ProjectSyncValue, b: ProjectSyncValue) =>
   a.category === b.category &&
   a.tags.join("\0") === b.tags.join("\0") &&
   a.slug === b.slug &&
-  a.isPublic === b.isPublic;
+  a.isPublic === b.isPublic &&
+  a.targetTime === b.targetTime;
 
 /** UTF-8 byte order, as `collate "C"` sorts on both sides. */
 const byteOrder = (a: string, b: string) =>
@@ -452,13 +453,23 @@ export const mergeValues = (
   const tags = new Set(cloud.tags);
   for (const tag of local.tags) if (!base.tags.includes(tag)) tags.add(tag);
   for (const tag of base.tags) if (!local.tags.includes(tag)) tags.delete(tag);
+  const targetDate = field("targetDate");
   return {
     name: field("name"),
-    targetDate: field("targetDate"),
+    targetDate,
     category: field("category"),
     tags: [...tags].sort(byteOrder),
     slug: field("slug"),
     isPublic: field("isPublic"),
+    // A base from before version 3 has none; treat that as no time. No date
+    // means no time either
+    targetTime:
+      targetDate === null
+        ? null
+        : (local.targetTime ?? null) !== (base.targetTime ?? null) &&
+            (cloud.targetTime ?? null) === (base.targetTime ?? null)
+          ? local.targetTime
+          : cloud.targetTime,
   };
 };
 

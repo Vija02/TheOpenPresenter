@@ -115,7 +115,7 @@ export default async function installProjectImportExport(app: Express) {
       try {
         // Insert the project
         const { rows } = await rootPgPool.query(
-          `select * from app_public.create_full_project($1, $2, $3, $4, $5, $6)`,
+          `select * from app_public.create_full_project($1, $2, $3, $4, $5, $6, null, $7)`,
           [
             orgId,
             project.name,
@@ -123,6 +123,13 @@ export default async function installProjectImportExport(app: Express) {
             [],
             categoryId,
             project.targetDate,
+            // A malformed time is dropped rather than failing the import
+            project.targetDate &&
+            /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(
+              project.targetTime ?? "",
+            )
+              ? project.targetTime
+              : null,
           ],
         );
 
@@ -202,6 +209,7 @@ export default async function installProjectImportExport(app: Express) {
           ? new Date(projectRow.target_date)
           : undefined,
         categoryName: projectRow.category_name,
+        targetTime: projectRow.target_time ?? undefined,
       };
 
       try {

@@ -1,18 +1,18 @@
 import { Readable } from "stream";
 
+import {
+  createEmptyGetMediaFunction,
+  createGetMediaFunction,
+  createMinimalTestMedia,
+  createMinimalTestMediaStreams,
+  createMinimalTestProject,
+  createTestMedia,
+  createTestMediaStreams,
+  createTestProject,
+} from "../../__tests__/mocks";
 import { streamToBuffer } from "../../helper";
 import { Media } from "../../types";
 import v1_0_0 from "../v1.0.0";
-import {
-  createTestProject,
-  createTestMedia,
-  createTestMediaStreams,
-  createGetMediaFunction,
-  createMinimalTestProject,
-  createMinimalTestMedia,
-  createMinimalTestMediaStreams,
-  createEmptyGetMediaFunction,
-} from "../../__tests__/mocks";
 
 const { createTOPFile, parseTOPFile } = v1_0_0;
 
@@ -57,6 +57,7 @@ describe("v1.0.0 TOP file operations", () => {
     expect(parsed.project.name).toBe("Test Project");
     expect(parsed.project.categoryName).toBe("Test Category");
     expect(parsed.project.targetDate).toEqual(new Date("2024-12-25"));
+    expect(parsed.project.targetTime).toBe("10:30:00");
     expect(parsed.project.document).toBeInstanceOf(Buffer);
     expect(parsed.media).toHaveLength(2);
     expect(parsed.getMedia).toBeInstanceOf(Function);
@@ -102,6 +103,7 @@ describe("v1.0.0 TOP file operations", () => {
 
     expect(parsed.project.name).toBe("Minimal Project");
     expect(parsed.project.targetDate).toBeUndefined();
+    expect(parsed.project.targetTime).toBeUndefined();
     expect(parsed.project.categoryName).toBeUndefined();
     expect(parsed.media).toHaveLength(0);
   });

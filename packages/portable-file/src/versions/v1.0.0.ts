@@ -3,8 +3,8 @@ import Database from "better-sqlite3";
 import { PassThrough, Readable } from "stream";
 import * as yauzl from "yauzl";
 
-import { Media, Project } from "../types";
 import { streamToBuffer } from "../helper";
+import { Media, Project } from "../types";
 
 const createTOPFile = async (data: {
   mediaRows: Media[];
@@ -51,7 +51,8 @@ const createTOPFile = async (data: {
             document BLOB,
             name TEXT NOT NULL,
             target_date TEXT,
-            category_name TEXT
+            category_name TEXT,
+            target_time TEXT
           );
         `);
 
@@ -68,8 +69,8 @@ const createTOPFile = async (data: {
 
         // Insert project data
         const insertProject = db.prepare(`
-          INSERT INTO projects (document, name, target_date, category_name)
-          VALUES (?, ?, ?, ?)
+          INSERT INTO projects (document, name, target_date, category_name, target_time)
+          VALUES (?, ?, ?, ?, ?)
         `);
 
         const documentBuffer = data.project.document;
@@ -78,6 +79,7 @@ const createTOPFile = async (data: {
           data.project.name,
           data.project.targetDate?.toISOString() || null,
           data.project.categoryName || null,
+          data.project.targetTime || null,
         );
 
         // Insert media data
@@ -187,6 +189,7 @@ const parseTOPFile = async (
                     ? new Date(projectRow.target_date)
                     : undefined,
                   categoryName: projectRow.category_name || undefined,
+                  targetTime: projectRow.target_time || undefined,
                 };
 
                 // Get media data
