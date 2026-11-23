@@ -2,6 +2,7 @@ export type Project = {
   document: Buffer;
   name: string;
   targetDate?: Date;
+  targetTime?: string;
   categoryName?: string;
 };
 

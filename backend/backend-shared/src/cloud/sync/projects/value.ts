@@ -12,15 +12,18 @@ export type ProjectSyncValue = {
   /** From version 2. Absent for older local instances. */
   slug?: string;
   isPublic?: boolean;
+  /** From version 3: "HH:MM:SS" wall-clock on targetDate, or null. */
+  targetTime?: string | null;
 };
 
 /**
- * 1: name, date, category and tags. 2: also slug and isPublic. The cloud is
+ * 1: name, date, category and tags. 2: also slug and isPublic. 3: also
+ * targetTime. The cloud is
  * always at least as new as a local instance, but serves older ones the shape
  * they ask for: a value of another shape never compares equal.
  */
-export type ProjectSyncVersion = 1 | 2;
-export const PROJECT_SYNC_VERSION: ProjectSyncVersion = 2;
+export type ProjectSyncVersion = 1 | 2 | 3;
+export const PROJECT_SYNC_VERSION: ProjectSyncVersion = 3;
 
 /** What a caller asked for, capped at what this side knows. */
 export const projectSyncVersion = (
@@ -62,6 +65,10 @@ export const projectSyncValueSql = (
     'slug', ${alias}.slug::text,
     'isPublic', ${alias}.is_public
   )`
+      : ""
+  }${
+    version >= 3
+      ? ` || jsonb_build_object('targetTime', ${alias}.target_time::text)`
       : ""
   }
 `;
@@ -118,7 +125,13 @@ export const applyProjectSyncValue = async (
          ) then p.slug
          else $5
        end,
-       is_public = coalesce($6::boolean, p.is_public)
+       is_public = coalesce($6::boolean, p.is_public),
+       -- No date means no time
+       target_time = case
+         when $3::timestamptz is null then null
+         when $7::boolean then $8::time
+         else p.target_time
+       end
      where id = $1`,
     [
       project.id,
@@ -127,6 +140,8 @@ export const applyProjectSyncValue = async (
       refs!.category_id,
       value.slug ?? null,
       value.isPublic ?? null,
+      value.targetTime !== undefined,
+      value.targetTime ?? null,
     ],
   );
   const ids = Object.values(tagIds);

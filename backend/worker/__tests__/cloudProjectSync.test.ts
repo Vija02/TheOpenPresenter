@@ -18,7 +18,10 @@ import {
 } from "../../__tests__/helpers";
 import { introspectCloudSyncTables } from "../../backend-shared/src/cloud/sync/pluginTables/introspection";
 import type { CloudProject } from "../../backend-shared/src/cloud/sync/projects/cloud";
-import { syncProjects } from "../../backend-shared/src/cloud/sync/projects/sync";
+import {
+  mergeValues,
+  syncProjects,
+} from "../../backend-shared/src/cloud/sync/projects/sync";
 import {
   ProjectSyncValue,
   projectSyncValueSql,
@@ -272,6 +275,24 @@ describe("a project only on the cloud", () => {
     expect(project.created_at.toISOString()).toBe(cloud.createdAt);
     expect(project.cloud_last_updated.toISOString()).toBe(cloud.updatedAt);
     expect(fake.documentsFetched).toEqual([cloudId]);
+    await expectQuietSync();
+  });
+
+  it("is pulled with its start time", async () => {
+    onCloud(
+      cloudId,
+      value("Easter", {
+        targetDate: "2027-03-28T00:00:00.000000Z",
+        targetTime: "10:30:00",
+      }),
+    );
+
+    expect(await sync()).toMatchObject({ pulled: 1 });
+    const [project] = await query(
+      `select target_time::text from app_public.projects where organization_id = $1`,
+      [orgId],
+    );
+    expect(project.target_time).toBe("10:30:00");
     await expectQuietSync();
   });
 
@@ -1097,5 +1118,26 @@ describe("slug and public flag", () => {
       isPublic: true,
     });
     await expectQuietSync();
+  });
+});
+
+describe("mergeValues: target time", () => {
+  const day = "2027-03-28T00:00:00.000000Z";
+
+  it("takes a time changed on one side, treating a missing one as none", () => {
+    const base = value("Easter", { targetDate: day });
+    const local = { ...base, targetTime: "10:30:00" };
+    const cloud = { ...base, targetTime: null };
+    expect(mergeValues(base, local, cloud).targetTime).toBe("10:30:00");
+  });
+
+  it("drops the time when the merged project has no date", () => {
+    const base = value("Easter", { targetDate: day, targetTime: "10:00:00" });
+    const local = { ...base, targetDate: null };
+    const cloud = { ...base, targetTime: "10:30:00" };
+    expect(mergeValues(base, local, cloud)).toMatchObject({
+      targetDate: null,
+      targetTime: null,
+    });
   });
 });

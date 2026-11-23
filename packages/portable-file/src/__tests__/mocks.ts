@@ -10,6 +10,7 @@ export const createTestProject = (): Project => ({
   ),
   name: "Test Project",
   targetDate: new Date("2024-12-25"),
+  targetTime: "10:30:00",
   categoryName: "Test Category",
 });
 
