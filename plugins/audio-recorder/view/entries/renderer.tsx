@@ -4,7 +4,10 @@ import { lazyWithRetry } from "@repo/ui";
 import { rendererWebComponentTag } from "../../src/consts";
 
 const Component = r2wc(
-  lazyWithRetry(() => import("./RendererEntry"), { autoReload: true }),
+  lazyWithRetry(() => import("./RendererEntry"), {
+    autoReload: true,
+    catchCrashes: false,
+  }),
   {
     //@ts-ignore
     props: {

@@ -7,13 +7,11 @@ import type PresentModalType from "./PresentModal";
 type Props = ComponentProps<typeof PresentModalType>;
 
 // Closes the overlay, so the next click on Present opens it again
-const CloseOnMount = (props: Props) => {
-  const overlay = useOverlayToggle();
-  const onToggle = props.onToggle ?? overlay.onToggle;
+const CloseOnMount = () => {
+  const { onClose } = useOverlayToggle();
   useEffect(() => {
-    onToggle?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    onClose?.();
+  }, [onClose]);
   return null;
 };
 

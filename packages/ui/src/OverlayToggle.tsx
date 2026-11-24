@@ -17,6 +17,9 @@ export type OverlayToggleComponentProps = {
   /** Function to call from modal component to toggle `isOpen` */
   onToggle?: () => void;
 
+  /** Function to call from modal component to close it */
+  onClose?: () => void;
+
   /** Function to remount the modal component */
   resetData?: () => void;
 };
@@ -60,7 +63,7 @@ export const OverlayToggle = ({
   disableResetOnClose,
   children,
 }: OverlayTogglePropTypes) => {
-  const { open, onToggle, onOpen } = useDisclosure();
+  const { open, onToggle, onOpen, onClose } = useDisclosure();
   const [key, setKey] = useState(0);
 
   const resetData = useCallback(() => {
@@ -74,7 +77,9 @@ export const OverlayToggle = ({
   }, [open, resetData]);
 
   return (
-    <OverlayToggleContext value={{ isOpen: open, onToggle, resetData }}>
+    <OverlayToggleContext
+      value={{ isOpen: open, onToggle, onClose, resetData }}
+    >
       {toggler({ onOpen, onToggle })}
       <React.Fragment key={key}>{(open || !isLazy) && children}</React.Fragment>
     </OverlayToggleContext>

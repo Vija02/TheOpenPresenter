@@ -10,11 +10,11 @@ import {
   PluginMetaDataProvider,
 } from "@repo/shared";
 import { useData, useHandleKeyPress, usePluginData } from "@repo/shared";
-import { lazyWithRetry } from "@repo/ui";
 import { useEffect, useMemo } from "react";
 import { Route, Switch, useParams, useSearch } from "wouter";
 
 import { Body } from "./Body";
+import { DesktopHandler } from "./DesktopHandler";
 import { FullscreenButton } from "./FullscreenButton";
 import { OrganizationFonts } from "./OrganizationFonts";
 import { OutputPresenceReporter } from "./OutputPresence";
@@ -22,10 +22,6 @@ import { Screen } from "./Screen";
 import { LookSample } from "./preview/LookSample";
 
 void detectWebPSupport();
-
-const DesktopHandler = lazyWithRetry(() => import("./DesktopHandler"), {
-  autoReload: true,
-});
 
 function App() {
   return (
