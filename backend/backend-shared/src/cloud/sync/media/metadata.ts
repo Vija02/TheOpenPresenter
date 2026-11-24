@@ -39,6 +39,13 @@ export type MediaMetadata = {
     normalizeLoudness: boolean;
     transcodeStatus: string;
   }[];
+  /** Absent from instances that predate fonts, like `audioMetadata`. */
+  fontMetadata?: {
+    fontMediaId: string;
+    family: string;
+    category: string;
+    source: string;
+  }[];
 };
 
 export const emptyMediaMetadata = (): MediaMetadata => ({
@@ -47,6 +54,7 @@ export const emptyMediaMetadata = (): MediaMetadata => ({
   imageMetadata: [],
   videoMetadata: [],
   audioMetadata: [],
+  fontMetadata: [],
 });
 
 /** Every media id a row refers to; a row is only written where all exist. */
@@ -70,6 +78,9 @@ export const mediaIdsOf = {
     [r.audioMediaId, r.playbackMediaId, r.coverMediaId].filter(
       (id): id is string => id !== null,
     ),
+  fontMetadata: (r: NonNullable<MediaMetadata["fontMetadata"]>[number]) => [
+    r.fontMediaId,
+  ],
 };
 
 /** Keep only rows whose media are all in `present`. */
@@ -93,6 +104,9 @@ export const metadataWithin = (
     ),
     audioMetadata: (metadata.audioMetadata ?? []).filter((r) =>
       all(mediaIdsOf.audioMetadata(r)),
+    ),
+    fontMetadata: (metadata.fontMetadata ?? []).filter((r) =>
+      all(mediaIdsOf.fontMetadata(r)),
     ),
   };
 };
@@ -155,7 +169,16 @@ export const readMediaMetadata = async (
             'transcodeStatus', a.transcode_status))
           from app_public.media_audio_metadata a
           where a.audio_media_id = any($1::uuid[])
-        ), '[]'::jsonb) as audio_metadata
+        ), '[]'::jsonb) as audio_metadata,
+        coalesce((
+          select jsonb_agg(jsonb_build_object(
+            'fontMediaId', f.font_media_id,
+            'family', f.family,
+            'category', f.category,
+            'source', f.source))
+          from app_public.media_font_metadata f
+          where f.font_media_id = any($1::uuid[])
+        ), '[]'::jsonb) as font_metadata
     `,
     [mediaIds],
   );
@@ -165,6 +188,7 @@ export const readMediaMetadata = async (
     imageMetadata: row!.image_metadata,
     videoMetadata: row!.video_metadata,
     audioMetadata: row!.audio_metadata,
+    fontMetadata: row!.font_metadata,
   };
 };
 
@@ -258,5 +282,21 @@ export const writeMediaMetadata = async (
           or excluded.transcode_status = 'completed'
     `,
     [JSON.stringify(metadata.audioMetadata ?? [])],
+  );
+  // Last write wins on a rename
+  await client.query(
+    `
+      insert into app_public.media_font_metadata
+        (font_media_id, family, category, source)
+      select "fontMediaId", family, category, source
+      from jsonb_to_recordset($1::jsonb) as x(
+        "fontMediaId" uuid, family text, category text, source text
+      )
+      on conflict (font_media_id) do update
+        set family = excluded.family,
+            category = excluded.category,
+            source = excluded.source
+    `,
+    [JSON.stringify(metadata.fontMetadata ?? [])],
   );
 };

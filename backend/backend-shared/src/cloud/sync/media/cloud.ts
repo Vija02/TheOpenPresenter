@@ -138,6 +138,7 @@ export const applyPushedMediaMetadata = async (
           r.playbackMediaId,
           r.coverMediaId,
         ]),
+        ...(metadata.fontMetadata ?? []).map((r) => r.fontMediaId),
       ].filter((id): id is string => !!id),
     ),
   ];
