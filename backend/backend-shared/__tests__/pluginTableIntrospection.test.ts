@@ -17,6 +17,7 @@ const raw = (overrides: Partial<RawCloudSyncTable>): RawCloudSyncTable => ({
   comment: "@cloudSync",
   columns: ["id", "organization_id", "updated_at"],
   defaulted_columns: ["id"],
+  nullable_columns: [],
   unique_keys: [{ primary: true, columns: ["id"] }],
   foreign_keys: [orgFk],
   ...overrides,
@@ -102,6 +103,8 @@ describe("resolveCloudSyncTable", () => {
       ),
     ).toMatchObject({
       projectColumns: ["project_id"],
+      // Required, so its row waits for the project
+      deferrableProjectColumns: [],
       mediaColumns: ["media_id"],
     });
   });
@@ -254,6 +257,7 @@ describe("resolveCloudSyncTable", () => {
             "updated_at",
             "code",
           ],
+          nullable_columns: ["current_project_id"],
           unique_keys: [
             { primary: true, columns: ["id"] },
             { primary: false, columns: ["code"] },
@@ -274,6 +278,8 @@ describe("resolveCloudSyncTable", () => {
       rowKeyColumns: ["slug"],
       localIdentityColumns: ["id"],
       projectColumns: ["current_project_id"],
+      // Optional, so the screen syncs before its project
+      deferrableProjectColumns: ["current_project_id"],
       conflict: "cloudWins",
     });
   });
