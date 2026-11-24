@@ -37,11 +37,16 @@ const matchesType = (ext: string, type: MediaType): boolean => {
   }
 };
 
+// Picked in the font picker instead
+export const isFontStylesheet = (m: { isFontStylesheet?: boolean | null }) =>
+  !!m.isFontStylesheet;
+
 export const filterMediaByType = (
-  media: MediaWithMetadata[],
+  allMedia: MediaWithMetadata[],
   type: MediaType | MediaType[],
 ): MediaWithMetadata[] => {
   const types = Array.isArray(type) ? type : [type];
+  const media = allMedia.filter((m) => !isFontStylesheet(m));
 
   if (types.length === 0 || types.includes("all")) return media;
 

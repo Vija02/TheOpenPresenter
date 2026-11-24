@@ -1,0 +1,222 @@
+/* Font rows, shared by the fonts settings page and the add-font dialog */
+
+.bp--font-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px 16px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--stroke);
+  border-radius: 0;
+  min-width: 0;
+  outline: none;
+}
+
+.bp--font-row--clickable {
+  cursor: pointer;
+  border-radius: 8px;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s;
+}
+
+.bp--font-row--clickable:hover,
+.bp--font-row--clickable:focus-visible {
+  background-color: var(--surface-primary-hover);
+}
+
+.bp--font-row--selected,
+.bp--font-row--selected:hover {
+  border-color: var(--accent);
+  background-color: var(--surface-secondary);
+}
+
+.bp--font-row__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  font-size: 13px;
+  min-height: 28px;
+}
+
+.bp--font-row__name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--primary);
+  margin-right: 10px;
+}
+
+.bp--font-row__detail {
+  color: var(--tertiary);
+}
+
+.bp--font-row__detail + .bp--font-row__detail::before {
+  content: "";
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  margin: 0 10px;
+  vertical-align: -1px;
+  background-color: var(--stroke-emphasis);
+}
+
+.bp--font-row__action {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bp--font-row__sample {
+  color: var(--primary);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  /* Fade the end instead of cutting it off */
+  mask-image: linear-gradient(to right, black 85%, transparent);
+  transition: opacity 0.2s;
+}
+
+.bp--font-row__sample[dir="rtl"],
+.bp--font-row__sample:dir(rtl) {
+  mask-image: linear-gradient(to left, black 85%, transparent);
+}
+
+.bp--font-row__sample--loading {
+  opacity: 0;
+}
+
+/* Preview text and size */
+
+.bp--font-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.bp--font-controls__text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Category chips */
+
+.bp--font-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bp--font-chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  font-size: 13px;
+  color: var(--secondary);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s;
+}
+
+.bp--font-chip:hover {
+  background-color: var(--surface-primary-hover);
+}
+
+.bp--font-chip--active,
+.bp--font-chip--active:hover {
+  border-color: var(--accent);
+  background-color: var(--surface-secondary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Add-font dialog */
+
+.bp--font-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.bp--font-dialog__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bp--font-dialog__search-field {
+  position: relative;
+  flex: 1;
+}
+
+.bp--font-dialog__search-field svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--tertiary);
+  pointer-events: none;
+}
+
+.bp--font-dialog__search-field input {
+  padding-left: 32px;
+}
+
+.bp--font-dialog__sort {
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--stroke);
+  background-color: var(--surface-primary);
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.bp--font-dialog__count {
+  font-size: 13px;
+  color: var(--tertiary);
+}
+
+.bp--font-dialog__list {
+  height: min(52vh, 520px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 -8px;
+  padding: 0 8px;
+}
+
+.bp--font-dialog__list .bp--font-row {
+  border-bottom-color: transparent;
+}
+
+.bp--font-dialog__message {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--secondary);
+  font-size: 14px;
+}
+
+.bp--font-dialog__footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.bp--font-dialog__status {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--secondary);
+}
+
+.bp--font-dialog__error {
+  color: var(--fill-destructive);
+}
