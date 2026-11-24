@@ -161,6 +161,7 @@ export async function makeApp({
   await middleware.installDiagnostics(app);
   await middleware.installMediaProxyHandler(app);
   await middleware.installFileUpload(app);
+  await middleware.installGoogleFontPreview(app);
   await middleware.installStripe(app);
   await middleware.installEmailUnsubscribe(app);
   await middleware.installProjectImportExport(app);

@@ -15,6 +15,7 @@ import installEmailUnsubscribe from "./installEmailUnsubscribe";
 import installErrorHandler from "./installErrorHandler";
 import installFileUpload from "./installFileUpload";
 import installForceSSL from "./installForceSSL";
+import installGoogleFontPreview from "./installGoogleFontPreview";
 import installHelmet from "./installHelmet";
 import installHocuspocus from "./installHocuspocus";
 import installImpersonation from "./installImpersonation";
@@ -58,6 +59,7 @@ export {
   installErrorHandler,
   installFileUpload,
   installForceSSL,
+  installGoogleFontPreview,
   installHelmet,
   installHocuspocus,
   installImpersonation,
