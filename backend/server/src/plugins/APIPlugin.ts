@@ -3,6 +3,7 @@ import { makePluginByCombiningPlugins } from "graphile-utils";
 import activeDevicePlugin from "../api/activeDevice";
 import clientPlugin from "../api/clientPlugin";
 import cloudPlugin from "../api/cloud";
+import fontsPlugin from "../api/fonts";
 import mediaPlugin from "../api/media";
 import { pluginKeyPress } from "../api/pluginKeyPress";
 import { pluginMeta } from "../api/pluginMeta";
@@ -18,4 +19,5 @@ export default makePluginByCombiningPlugins(
   ...activeDevicePlugin,
   ...mediaPlugin,
   ...cloudPlugin,
+  ...fontsPlugin,
 );
