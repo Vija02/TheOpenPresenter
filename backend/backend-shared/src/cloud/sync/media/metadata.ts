@@ -39,7 +39,6 @@ export type MediaMetadata = {
     normalizeLoudness: boolean;
     transcodeStatus: string;
   }[];
-  /** Absent from instances that predate fonts, like `audioMetadata`. */
   fontMetadata?: {
     fontMediaId: string;
     family: string;
