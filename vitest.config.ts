@@ -5,12 +5,18 @@ const atAliasRoots = ["packages/ui/src", "apps/project/src"].map((dir) =>
   path.resolve(__dirname, dir),
 );
 
+const layoutSrc = path.resolve(__dirname, "packages/layout/src");
+
 export default defineConfig({
   plugins: [
     {
       name: "per-package-at-alias",
       enforce: "pre",
       resolveId(source, importer) {
+        // @repo/layout imports its own core entry; test it from source
+        if (source === "@repo/layout" && importer?.startsWith(layoutSrc)) {
+          return path.join(layoutSrc, "index.ts");
+        }
         if (!source.startsWith("@/") || !importer) return null;
         const root = atAliasRoots.find((r) =>
           importer.startsWith(r + path.sep),

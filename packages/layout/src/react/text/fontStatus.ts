@@ -1,10 +1,17 @@
-import { findFontOption } from "../../fonts/registry";
+import {
+  findFontOption,
+  getOrganizationFonts,
+  reportMissingFont,
+  subscribeToFontOptions,
+} from "@repo/layout";
 
 let generation = 0;
+let listening = false;
 const listeners = new Set<() => void>();
 /** Families already handed to `document.fonts.load`, so we ask at most once. */
 const requested = new Set<string>();
-let listening = false;
+const wanted = new Set<string>();
+const stylesheets = new Map<string, Promise<boolean>>();
 
 export const getFontGeneration = (): number => generation;
 
@@ -16,27 +23,75 @@ const bump = () => {
   for (const listener of listeners) listener();
 };
 
+const injectStylesheet = (cssUrl: string): Promise<boolean> => {
+  const existing = stylesheets.get(cssUrl);
+  if (existing) return existing;
+  const ready = new Promise<boolean>((resolve) => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = cssUrl;
+    link.dataset.layoutFont = cssUrl;
+    link.onload = () => resolve(true);
+    link.onerror = () => {
+      // Let a later call retry, eg once the network is back
+      link.remove();
+      stylesheets.delete(cssUrl);
+      resolve(false);
+    };
+    document.head.appendChild(link);
+  });
+  stylesheets.set(cssUrl, ready);
+  return ready;
+};
+
+const injectOrganizationStylesheets = () => {
+  for (const font of getOrganizationFonts()) {
+    if (font.cssUrl) void injectStylesheet(font.cssUrl);
+  }
+};
+
+const startListening = () => {
+  if (listening) return;
+  listening = true;
+  document.fonts.addEventListener("loadingdone", bump);
+  injectOrganizationStylesheets();
+  subscribeToFontOptions(() => {
+    injectOrganizationStylesheets();
+    ensureFontsLoaded([...wanted]);
+    bump();
+  });
+};
+
 /**
- * Load the bundled faces used by the given font stacks, and bump the
- * generation when they land
+ * Load the bundled and organization faces used by the given font stacks, and
+ * bump the generation when they land
  */
 export const ensureFontsLoaded = (stacks: Iterable<string>): void => {
   if (typeof document === "undefined" || !document.fonts) return;
-
-  if (!listening) {
-    listening = true;
-    document.fonts.addEventListener("loadingdone", bump);
-  }
+  startListening();
 
   const pending: Promise<unknown>[] = [];
   for (const stack of stacks) {
+    wanted.add(stack);
     const option = findFontOption(stack);
-    // System entries and unknown families have nothing to fetch.
-    if (option?.source !== "bundled" || !option.family) continue;
+    if (!option) {
+      reportMissingFont(stack);
+      continue;
+    }
+    if (!option.family || option.source === "system") continue;
     if (requested.has(option.family)) continue;
     requested.add(option.family);
+    const family = option.family;
+    const before = option.cssUrl
+      ? injectStylesheet(option.cssUrl)
+      : Promise.resolve(true);
     pending.push(
-      document.fonts.load(`1em "${option.family}"`).catch(() => undefined),
+      before
+        .then((ok) => {
+          if (ok) return document.fonts.load(`1em "${family}"`);
+          requested.delete(family);
+        })
+        .catch(() => undefined),
     );
   }
 

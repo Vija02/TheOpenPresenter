@@ -275,6 +275,14 @@ survive.
   Faces without a metric-compatible substitute were deliberately excluded: they
   break the fit across machines, not just the look.
 
+- **organization** — fonts the organization added (today: from Google Fonts).
+  The server downloads every weight and style once into the organization's
+  media: a stylesheet whose font files are its children, plus a
+  `media_font_metadata` row. They sync like other media, so any screen that
+  can reach its server (cloud or Studio) has them, offline included. The host
+  passes the list in with `setOrganizationFonts`, and may register
+  `setAddFontHandler` to give the picker an "Add a font…" entry.
+
 `style.fontFamily` stores a **raw CSS stack**, not a registry id, so documents
 predating the registry need no migration. `findFontOption` falls back to
 matching the primary family, and the picker surfaces an unknown stack as
@@ -283,7 +291,12 @@ matching the primary family, and the picker surfaces an unknown stack as
 Because a webfont arriving late would otherwise leave a wrong size cached
 forever, `LayoutRenderer` preloads exactly the families a document references
 and `text/fontStatus.ts` bumps a generation counter that is folded into the
-measure cache key, forcing a re-fit.
+measure cache key, forcing a re-fit. Organization stylesheets are linked
+before their family loads.
+A stack that resolves to no option is reported through
+`subscribeToMissingFonts`, again with backoff while it stays missing, so a
+screen open for hours picks up a font added later
+(`useRefetchWhenFontsMissing`).
 
 ## Editor
 

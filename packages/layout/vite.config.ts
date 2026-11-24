@@ -57,6 +57,8 @@ export default defineConfig({
           ...Object.keys(peerDependencies),
         ];
         if (id === "react/jsx-runtime") return true;
+        // The core entry owns the font registry; see src/fonts/registry.ts
+        if (id === "@repo/layout") return true;
         return deps.some((dep) => id === dep || id.startsWith(dep + "/"));
       },
     },
