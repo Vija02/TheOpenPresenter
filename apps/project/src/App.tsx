@@ -264,6 +264,7 @@ function LocationHandler() {
   useEffect(() => {
     NProgress.start();
     NProgress.done();
+    window.scrollTo(0, 0);
   }, [location]);
 
   return null;
