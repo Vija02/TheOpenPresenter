@@ -8,7 +8,8 @@
     "declarationDir": "dist",
     "module": "Preserve",
     "moduleResolution": "Bundler",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": { "@repo/layout": ["./src/index.ts"] }
   },
   "include": ["src"]
 }

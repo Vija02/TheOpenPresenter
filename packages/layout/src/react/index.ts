@@ -16,6 +16,7 @@ export * from "./elements/ShapeElement";
 export * from "./elements/TextElement";
 export * from "./text/columns";
 export * from "./text/fontStatus";
+export * from "./text/useRefetchWhenFontsMissing";
 export * from "./text/measure";
 export * from "./useFeedData";
 export * from "./useLayoutVideoPreload";
