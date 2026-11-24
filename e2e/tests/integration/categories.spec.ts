@@ -231,6 +231,32 @@ test.describe("Categories", () => {
     ).toContainText("Uncategorized");
   });
 
+  test("deleting a category keeps its projects", async ({
+    page,
+    organizationPage,
+    loginWithDefaultProject,
+  }) => {
+    await loginWithDefaultProject(`${orgUrl()}/settings/categories`);
+    const settings = new OrgSettingCategoriesPage(page);
+
+    await settings.editExistingCategoryButton("Sunday Morning").click();
+    await settings.deleteTab.click();
+    await settings.deleteCategoryButton.click();
+    await page.getByTestId("popconfirm-confirm").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByRole("row", { name: /Sunday Morning/ })).toHaveCount(
+      0,
+    );
+
+    await page.goto(orgUrl());
+    await expect(organizationPage.projectCards).toHaveCount(1);
+    await expect(organizationPage.projectCards).not.toContainText(
+      "Sunday Morning",
+    );
+    await page.getByRole("button", { name: "Other", exact: true }).click();
+    await expect(organizationPage.projectCards).toHaveCount(1);
+  });
+
   test("a category without a name gets a numbered default", async ({
     page,
     loginWithDefaultProject,
