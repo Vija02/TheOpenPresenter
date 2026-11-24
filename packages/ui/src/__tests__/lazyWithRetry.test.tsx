@@ -82,6 +82,26 @@ describe("importWithRetry when the file is gone", () => {
     expect(fetchMock).toHaveBeenCalledWith(chunkUrl, { cache: "no-store" });
   });
 
+  it("keeps retrying on a server error page", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("<html>Bad gateway</html>", {
+          status: 503,
+          headers: { "content-type": "text/html" },
+        }),
+      ),
+    );
+    const loader = vi.fn().mockRejectedValue(chunkError());
+
+    const result = importWithRetry(loader, 2);
+    const assertion =
+      expect(result).rejects.not.toBeInstanceOf(NewVersionError);
+    await vi.runAllTimersAsync();
+
+    await assertion;
+  });
+
   it("keeps retrying when the file is still there", async () => {
     vi.stubGlobal(
       "fetch",
@@ -166,11 +186,33 @@ describe("lazyWithRetry", () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
-  it("lets a crash inside the view reach the boundary above", async () => {
+  it("shows an error card when the view crashes", async () => {
+    let shouldCrash = true;
+    const Crashy = () => {
+      if (shouldCrash) throw new Error("bad scene data");
+      return <div>view loaded</div>;
+    };
+    const LazyView = lazyWithRetry(() => Promise.resolve({ default: Crashy }));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(<LazyView />);
+    await act(() => vi.runAllTimersAsync());
+    expect(screen.getByText("Something went wrong")).toBeTruthy();
+    expect(window.reportError).toHaveBeenCalledTimes(1);
+
+    shouldCrash = false;
+    fireEvent.click(screen.getByText("Try again"));
+    await act(() => vi.runAllTimersAsync());
+    expect(screen.getByText("view loaded")).toBeTruthy();
+  });
+
+  it("lets a crash reach the boundary above when catchCrashes is off", async () => {
     const Crash = () => {
       throw new Error("bad scene data");
     };
-    const LazyView = lazyWithRetry(() => Promise.resolve({ default: Crash }));
+    const LazyView = lazyWithRetry(() => Promise.resolve({ default: Crash }), {
+      catchCrashes: false,
+    });
     const Outer = class extends Component<
       { children: ReactNode },
       { caught: string | null }
@@ -193,7 +235,8 @@ describe("lazyWithRetry", () => {
     await act(() => vi.runAllTimersAsync());
 
     expect(screen.getByText("bad scene data")).toBeTruthy();
-    expect(screen.queryByText("Couldn't load this view")).toBeNull();
+    expect(screen.queryByText("Something went wrong")).toBeNull();
+    expect(window.reportError).not.toHaveBeenCalled();
   });
 
   it("importOrReload reloads instead of rejecting", async () => {

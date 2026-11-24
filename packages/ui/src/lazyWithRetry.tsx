@@ -42,7 +42,8 @@ const isModuleGone = async (url: string) => {
       res.status === 403 ||
       res.status === 404 ||
       res.status === 410 ||
-      !!res.headers.get("content-type")?.includes("text/html")
+      // The SPA fallback answers 200. An HTML 5xx is an outage page, so retry
+      (res.ok && !!res.headers.get("content-type")?.includes("text/html"))
     );
   } catch {
     // Network error, so a retry might still work
@@ -122,14 +123,29 @@ export const importOrReload = <T,>(loader: () => Promise<T>): Promise<T> =>
     throw error;
   });
 
-const LoadFailed = ({
-  error,
+const MESSAGES = {
+  newVersion: {
+    title: "New version available",
+    body: "Reload the page to open this.",
+  },
+  loadFailed: {
+    title: "Couldn't load this view",
+    body: "Check your connection, then try again.",
+  },
+  crashed: {
+    title: "Something went wrong",
+    body: "This view stopped working. Try opening it again.",
+  },
+};
+
+const ViewError = ({
+  kind,
   onRetry,
 }: {
-  error: Error;
+  kind: keyof typeof MESSAGES;
   onRetry: () => void;
 }) => {
-  const isNewVersion = error instanceof NewVersionError;
+  const isNewVersion = kind === "newVersion";
 
   return (
     <div className="flex h-full min-h-48 w-full items-center justify-center p-6">
@@ -148,14 +164,8 @@ const LoadFailed = ({
           )}
         </div>
         <div className="flex flex-col gap-1">
-          <h3 className="text-base font-semibold">
-            {isNewVersion ? "New version available" : "Couldn't load this view"}
-          </h3>
-          <p className="text-sm text-secondary">
-            {isNewVersion
-              ? "Reload the page to open this."
-              : "Check your connection, then try again."}
-          </p>
+          <h3 className="text-base font-semibold">{MESSAGES[kind].title}</h3>
+          <p className="text-sm text-secondary">{MESSAGES[kind].body}</p>
         </div>
         {isNewVersion ? (
           <Button size="sm" onClick={() => window.location.reload()}>
@@ -168,22 +178,30 @@ const LoadFailed = ({
             Try again
           </Button>
         )}
-        {!isNewVersion && (
-          <p className="line-clamp-2 break-all text-xs text-tertiary">
-            {error.message}
-          </p>
-        )}
       </div>
     </div>
   );
+};
+
+type LazyWithRetryOptions = {
+  /** Reload the page once if loading fails. For screens nobody interacts with */
+  autoReload?: boolean;
+  /**
+   * Show an error card when the loaded view crashes. Turn off when a boundary
+   * above should handle it, or on screens the audience sees
+   */
+  catchCrashes?: boolean;
+  /** Shown while loading. A function gets the component's props */
+  fallback?: ReactNode | ((props: any) => ReactNode);
 };
 
 export const lazyWithRetry = (
   loader: Loader,
   {
     autoReload = false,
+    catchCrashes = true,
     fallback = <LoadingPart />,
-  }: { autoReload?: boolean; fallback?: ReactNode } = {},
+  }: LazyWithRetryOptions = {},
 ) => {
   const createLazy = () =>
     lazy(() =>
@@ -204,15 +222,20 @@ export const lazyWithRetry = (
 
     componentDidCatch(error: Error) {
       // A new version is expected after every deploy, so not worth reporting.
-      // Render errors are rethrown below and reported further up
-      if (error instanceof LoadError) {
+      // Uncaught crashes are rethrown below and reported further up
+      if (
+        error instanceof LoadError ||
+        (catchCrashes && !(error instanceof NewVersionError))
+      ) {
         window.reportError?.(error);
       }
     }
 
     retry = () => {
       // React keeps a failed lazy import, so a retry needs a new one
-      LazyComponent = createLazy();
+      if (this.state.error instanceof LoadError) {
+        LazyComponent = createLazy();
+      }
       this.setState({ error: null });
     };
 
@@ -220,18 +243,26 @@ export const lazyWithRetry = (
       const { error } = this.state;
       if (!error) {
         return (
-          <Suspense fallback={fallback}>
+          <Suspense
+            fallback={
+              typeof fallback === "function" ? fallback(this.props) : fallback
+            }
+          >
             <LazyComponent {...this.props} />
           </Suspense>
         );
       }
 
-      // Only handle loading. A crash inside the view goes to the boundary above
-      if (!(error instanceof LoadError || error instanceof NewVersionError)) {
+      if (error instanceof NewVersionError) {
+        return <ViewError kind="newVersion" onRetry={this.retry} />;
+      }
+      if (error instanceof LoadError) {
+        return <ViewError kind="loadFailed" onRetry={this.retry} />;
+      }
+      if (!catchCrashes) {
         throw error;
       }
-
-      return <LoadFailed error={error} onRetry={this.retry} />;
+      return <ViewError kind="crashed" onRetry={this.retry} />;
     }
   };
 };

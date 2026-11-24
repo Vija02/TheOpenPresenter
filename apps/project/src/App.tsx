@@ -44,10 +44,11 @@ import VerifyPage from "./pages/verify";
 
 const OnboardingPage = lazyWithRetry(() => import("./pages/onboarding"), {
   fallback: <Skeleton className="h-40" />,
+  catchCrashes: false,
 });
 const OrganizationSlugPluginsPage = lazyWithRetry(
   () => import("./pages/o/[slug]/plugins"),
-  { fallback: <Skeleton className="h-40" /> },
+  { fallback: <Skeleton className="h-40" />, catchCrashes: false },
 );
 
 // ========================================================================== //

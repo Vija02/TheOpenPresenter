@@ -68,7 +68,10 @@ const useRendererId = () => {
   return rendererId;
 };
 
-const Landing = lazyWithRetry(() => import("./Landing"), { autoReload: true });
+const Landing = lazyWithRetry(() => import("./Landing"), {
+  autoReload: true,
+  catchCrashes: false,
+});
 
 /**
  * Whether the program's Black/Clear applies here. Null outside any box, so the
