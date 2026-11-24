@@ -10,7 +10,8 @@ import {
   PluginMetaDataProvider,
 } from "@repo/shared";
 import { useData, useHandleKeyPress, usePluginData } from "@repo/shared";
-import { lazy, useEffect, useMemo } from "react";
+import { lazyWithRetry } from "@repo/ui";
+import { useEffect, useMemo } from "react";
 import { Route, Switch, useParams, useSearch } from "wouter";
 
 import { Body } from "./Body";
@@ -22,7 +23,9 @@ import { LookSample } from "./preview/LookSample";
 
 void detectWebPSupport();
 
-const DesktopHandler = lazy(() => import("./DesktopHandler"));
+const DesktopHandler = lazyWithRetry(() => import("./DesktopHandler"), {
+  autoReload: true,
+});
 
 function App() {
   return (

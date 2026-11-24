@@ -41,13 +41,12 @@ import {
   usePluginData,
   usePluginMetaData,
 } from "@repo/shared";
-import { ErrorAlert, LoadingPart } from "@repo/ui";
+import { ErrorAlert, LoadingPart, lazyWithRetry } from "@repo/ui";
 import { useQuery } from "@tanstack/react-query";
 import { cx } from "class-variance-authority";
 import React, {
   ReactNode,
   createContext,
-  lazy,
   useCallback,
   useContext,
   useMemo,
@@ -69,7 +68,7 @@ const useRendererId = () => {
   return rendererId;
 };
 
-const Landing = lazy(() => import("./Landing"));
+const Landing = lazyWithRetry(() => import("./Landing"), { autoReload: true });
 
 /**
  * Whether the program's Black/Clear applies here. Null outside any box, so the
