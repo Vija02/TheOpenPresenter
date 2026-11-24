@@ -17,6 +17,17 @@ import { WithPgClient } from "../../types";
 
 const log = debug("tus-node-server:stores:s3store");
 
+const CONTENT_TYPES: Record<string, string> = {
+  css: "text/css",
+  woff2: "font/woff2",
+  woff: "font/woff",
+  ttf: "font/ttf",
+  otf: "font/otf",
+};
+
+const contentTypeOf = (id: string): string | undefined =>
+  CONTENT_TYPES[id.slice(id.lastIndexOf(".") + 1).toLowerCase()];
+
 export class OurS3Store extends S3Store implements OurDataStore {
   protected withPgClient: WithPgClient;
   protected configstore: KvStore<MetadataValue>;
@@ -110,6 +121,7 @@ export class OurS3Store extends S3Store implements OurDataStore {
         Key: id,
         Body: src,
         ContentLength: metadata.file.size,
+        ContentType: contentTypeOf(id),
       });
 
       return metadata.file.size;
@@ -256,6 +268,10 @@ export class OurS3Store extends S3Store implements OurDataStore {
       return metadata.file;
     }
 
+    const contentType = contentTypeOf(upload.id);
+    if (contentType && !upload.metadata?.contentType) {
+      upload.metadata = { ...upload.metadata, contentType };
+    }
     return super.create(upload);
   }
 
