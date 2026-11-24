@@ -110,7 +110,6 @@ export function SharedOrgLayout({
 }: Omit<SharedLayoutProps, "forbidWhen" | "noPad" | "children" | "query"> & {
   children: React.ReactNode;
   sharedOrgQuery: UseQueryResponse<SharedOrganizationFragment>;
-  /** Desktop only; pages show their own copy on mobile */
   rightPanel?: React.ReactNode;
 }) {
   const slug = useOrganizationSlug();
