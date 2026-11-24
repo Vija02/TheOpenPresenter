@@ -130,6 +130,8 @@ test.describe("Categories", () => {
     await expect(youth).toContainText("Every Saturday");
 
     await expect(page.getByRole("dialog")).toBeHidden();
+    // Rows above the fold would scroll mid-drag and move the drop target
+    await page.evaluate(() => window.scrollTo(0, 0));
     const from = await page
       .getByRole("button", { name: "Reorder Youth" })
       .boundingBox();
