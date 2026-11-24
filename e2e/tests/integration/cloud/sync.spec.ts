@@ -81,7 +81,9 @@ test.describe("Cloud Sync", () => {
       currentProjectPage.getByText("New edited project name"),
     ).toBeInViewport();
     await expect(
-      currentProjectPage.getByText("Sunday Morning"),
+      currentProjectPage
+        .getByTestId("project-card")
+        .getByText("Sunday Morning"),
     ).toBeInViewport();
 
     // 2. Should sync new categories and tags
