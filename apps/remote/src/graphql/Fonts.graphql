@@ -1,0 +1,32 @@
+query OrganizationFonts($organizationId: UUID!) {
+  organizationFonts(organizationId: $organizationId) {
+    nodes {
+      fontMediaId
+      family
+      category
+      cssUrl
+    }
+  }
+}
+
+query GoogleFontCatalog {
+  googleFontCatalog {
+    family
+    category
+    googleCategory
+    styleCount
+    axisCount
+    designers
+    popularity
+    primaryScript
+    hasLatin
+  }
+}
+
+mutation AddGoogleFont($organizationId: UUID!, $family: String!) {
+  addGoogleFont(input: { organizationId: $organizationId, family: $family }) {
+    fontMediaId
+    family
+    alreadyAdded
+  }
+}

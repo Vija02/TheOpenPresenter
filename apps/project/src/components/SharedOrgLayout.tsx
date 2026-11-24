@@ -105,10 +105,13 @@ function OrgSwitcherMenu({
 
 export function SharedOrgLayout({
   sharedOrgQuery,
+  rightPanel,
   ...props
 }: Omit<SharedLayoutProps, "forbidWhen" | "noPad" | "children" | "query"> & {
   children: React.ReactNode;
   sharedOrgQuery: UseQueryResponse<SharedOrganizationFragment>;
+  /** Desktop only; pages show their own copy on mobile */
+  rightPanel?: React.ReactNode;
 }) {
   const slug = useOrganizationSlug();
   const result = sharedOrgQuery[0];
@@ -153,7 +156,7 @@ export function SharedOrgLayout({
 
   const navbar = React.useMemo(
     () => (
-      <div className="w-full md:w-[250px] self-stretch border-r border-stroke">
+      <div className="w-full md:w-[250px] md:shrink-0 self-stretch border-r border-stroke">
         <div className="flex items-stretch">
           <WouterLink
             href="/org/overview"
@@ -244,6 +247,7 @@ export function SharedOrgLayout({
             href={`/o/${slug}/settings/categories`}
             name="Categories"
           />
+          <SidebarItem href={`/o/${slug}/settings/fonts`} name="Fonts" />
           <SidebarItem href={`/o/${slug}/settings/members`} name="Members" />
           <SidebarItem
             href={`/o/${slug}/settings/leave`}
@@ -306,9 +310,16 @@ export function SharedOrgLayout({
           {organizationLoadingElement || (
             <div className="flex" style={{ minHeight: contentMinHeight }}>
               {!isMobile && navbar}
-              <StandardWidth style={{ width: "100%" }}>
+              <StandardWidth style={{ width: "100%", minWidth: 0 }}>
                 {props.children}
               </StandardWidth>
+              {!isMobile && rightPanel && (
+                <aside className="w-[300px] shrink-0 self-stretch border-l border-stroke bg-surface-primary">
+                  <div className="sticky top-0 max-h-dvh overflow-y-auto">
+                    {rightPanel}
+                  </div>
+                </aside>
+              )}
             </div>
           )}
         </SharedLayout>

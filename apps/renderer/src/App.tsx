@@ -15,6 +15,7 @@ import { Route, Switch, useParams, useSearch } from "wouter";
 
 import { Body } from "./Body";
 import { FullscreenButton } from "./FullscreenButton";
+import { OrganizationFonts } from "./OrganizationFonts";
 import { OutputPresenceReporter } from "./OutputPresence";
 import { Screen } from "./Screen";
 import { LookSample } from "./preview/LookSample";
@@ -96,6 +97,7 @@ function Root() {
         projectSlug={projectSlug!}
         type="renderer"
       >
+        <OrganizationFonts />
         <ErrorProvider>
           <AudioCheckProvider>
             <div style={{ width: "100vw", height: "100dvh" }}>
@@ -118,6 +120,7 @@ function Root() {
       projectSlug={projectSlug!}
       type="renderer"
     >
+      <OrganizationFonts />
       <ErrorProvider>
         <AudioCheckProvider>
           <PluginDataProvider
