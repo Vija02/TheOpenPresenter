@@ -1,0 +1,7 @@
+query OrganizationSettingsFontsPage($slug: String!) {
+  ...BaseOrganizationSettingsPage
+
+  organizationBySlug(slug: $slug) {
+    id
+  }
+}

@@ -113,7 +113,10 @@ const OrganizationMediaPage = () => {
 
   // Raw media list from the query
   const rawMediaList = useMemo(
-    () => data?.organizationBySlug?.medias.nodes ?? [],
+    () =>
+      (data?.organizationBySlug?.medias.nodes ?? []).filter(
+        (m) => !m.isFontStylesheet,
+      ),
     [data?.organizationBySlug?.medias.nodes],
   );
 

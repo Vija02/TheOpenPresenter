@@ -22,6 +22,7 @@ import OrganizationSlugScreenRequestPage from "./pages/o/[slug]/screens/[screenS
 import OrganizationSlugGuestsPage from "./pages/o/[slug]/screens/guests";
 import OrganizationSlugSettingsCategoriesPage from "./pages/o/[slug]/settings/categories";
 import OrganizationSlugSettingsDeletePage from "./pages/o/[slug]/settings/delete";
+import OrganizationSlugSettingsFontsPage from "./pages/o/[slug]/settings/fonts";
 import OrganizationSlugSettingsGeneralPage from "./pages/o/[slug]/settings/general";
 import OrganizationSlugSettingsLeavePage from "./pages/o/[slug]/settings/leave";
 import OrganizationSlugSettingsMembersPage from "./pages/o/[slug]/settings/members";
@@ -80,6 +81,9 @@ function App() {
                   </Route>
                   <Route path="/o/:slug/settings/delete">
                     <OrganizationSlugSettingsDeletePage />
+                  </Route>
+                  <Route path="/o/:slug/settings/fonts">
+                    <OrganizationSlugSettingsFontsPage />
                   </Route>
                   <Route path="/o/:slug/settings/general">
                     <OrganizationSlugSettingsGeneralPage />

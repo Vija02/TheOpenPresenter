@@ -1,6 +1,8 @@
 fragment MediaWithMediaDependency on Media {
   id
   ...Media
+  # Managed on the Fonts page, so the media library leaves these out
+  isFontStylesheet
   imageMetadata: mediaImageMetadatumByImageMediaId {
     width
     height

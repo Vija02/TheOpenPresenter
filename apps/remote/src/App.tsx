@@ -15,6 +15,7 @@ import { Route, Switch, useParams } from "wouter";
 
 import "./App.css";
 import CentralContainer from "./containers/CentralContainer";
+import { OrganizationFonts } from "./containers/Fonts/OrganizationFonts";
 import { GuestControlGuard } from "./containers/GuestControlGuard";
 import { PresentHereHost } from "./containers/Sidebar/PresentButton";
 import { TopBar } from "./containers/TopBar";
@@ -84,6 +85,7 @@ const Inner = () => {
       <TopBar />
       <CentralContainer />
       <PresentHereHost />
+      <OrganizationFonts />
     </div>
   );
 };
