@@ -1,4 +1,4 @@
-import { importWithRetry } from "@repo/ui";
+import { importOrReload } from "@repo/ui";
 import { Suspense, lazy, useEffect, useMemo } from "react";
 
 import { getEffectiveDisplayMode, hasOfficeSlideshow } from "../../src/types";
@@ -17,7 +17,7 @@ import { SlideVideoOverlay } from "./SlideVideoOverlay";
 
 // Only fetched by shows that play a PowerPoint deck
 const PowerPointRenderer = lazy(() =>
-  importWithRetry(() => import("./PowerPointRenderer")).then((module) => ({
+  importOrReload(() => import("./PowerPointRenderer")).then((module) => ({
     default: module.PowerPointRenderer,
   })),
 );

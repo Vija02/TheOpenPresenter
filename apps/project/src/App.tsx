@@ -1,6 +1,6 @@
-import { FourOhFour, Skeleton } from "@repo/ui";
+import { FourOhFour, Skeleton, lazyWithRetry } from "@repo/ui";
 import NProgress from "nprogress";
-import { Suspense, lazy, useEffect } from "react";
+import { useEffect } from "react";
 import { Redirect, Route, Switch, useLocation, useSearchParams } from "wouter";
 
 import ConnectPage from "./pages/connect";
@@ -42,9 +42,12 @@ import SetupScreenPage from "./pages/setup";
 import UnsubscribePage from "./pages/unsubscribe";
 import VerifyPage from "./pages/verify";
 
-const OnboardingPage = lazy(() => import("./pages/onboarding"));
-const OrganizationSlugPluginsPage = lazy(
+const OnboardingPage = lazyWithRetry(() => import("./pages/onboarding"), {
+  fallback: <Skeleton className="h-40" />,
+});
+const OrganizationSlugPluginsPage = lazyWithRetry(
   () => import("./pages/o/[slug]/plugins"),
+  { fallback: <Skeleton className="h-40" /> },
 );
 
 // ========================================================================== //
@@ -110,9 +113,7 @@ function App() {
               <OrganizationSlugMediaPage />
             </Route>
             <Route path="/o/:slug/plugins">
-              <Suspense fallback={<Skeleton className="h-40" />}>
-                <OrganizationSlugPluginsPage />
-              </Suspense>
+              <OrganizationSlugPluginsPage />
             </Route>
             <Route path="/o/:slug/cloud">
               <OrganizationSlugCloudPage />
@@ -213,9 +214,7 @@ function App() {
           <SetupScreenPage />
         </Route>
         <Route path="/onboarding">
-          <Suspense fallback={<Skeleton className="h-40" />}>
-            <OnboardingPage />
-          </Suspense>
+          <OnboardingPage />
         </Route>
         <Route path="/qr/screen-select">
           <QrScreenSelectPage />
