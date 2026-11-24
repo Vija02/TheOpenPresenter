@@ -235,6 +235,7 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     md.audioMetadata = md.audioMetadata?.filter(
       (r) => !ids.has(r.audioMediaId),
     );
+    md.fontMetadata = md.fontMetadata?.filter((r) => !ids.has(r.fontMediaId));
   };
 
   const mediaInUse = (id: string): boolean =>
@@ -262,6 +263,14 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
           ? {
               audioMetadata: md.audioMetadata.filter((r) =>
                 ids.has(r.audioMediaId),
+              ),
+            }
+          : {}),
+        // Left out when the fake plays an instance from before fonts
+        ...(md.fontMetadata
+          ? {
+              fontMetadata: md.fontMetadata.filter((r) =>
+                ids.has(r.fontMediaId),
               ),
             }
           : {}),
@@ -313,6 +322,11 @@ export const startFakeCloud = async (syncTables: CloudSyncTable[]) => {
     if (md.audioMetadata) {
       for (const row of within.audioMetadata ?? []) {
         add(md.audioMetadata, row, (a, b) => a.audioMediaId === b.audioMediaId);
+      }
+    }
+    if (md.fontMetadata) {
+      for (const row of within.fontMetadata ?? []) {
+        add(md.fontMetadata, row, (a, b) => a.fontMediaId === b.fontMediaId);
       }
     }
     return {

@@ -479,6 +479,7 @@ const listCloud = async (
   };
   let after: string | null = null;
   let knowsAudio = false;
+  let knowsFonts = false;
   do {
     const { cloudMediaSyncPage: page }: { cloudMediaSyncPage: CloudMediaPage } =
       await queryCloud(urqlClient, CLOUD_MEDIA_SYNC_PAGE, {
@@ -489,12 +490,14 @@ const listCloud = async (
     all.media.push(...page.media);
     all.links.push(...page.links);
     knowsAudio ||= !!page.metadata.audioMetadata;
+    knowsFonts ||= !!page.metadata.fontMetadata;
     for (const key of Object.keys(all.metadata) as (keyof MediaMetadata)[]) {
       (all.metadata[key] as unknown[]).push(...(page.metadata[key] ?? []));
     }
     after = page.endCursor;
   } while (after);
   if (!knowsAudio) delete all.metadata.audioMetadata;
+  if (!knowsFonts) delete all.metadata.fontMetadata;
   return all;
 };
 
@@ -668,12 +671,15 @@ const missingFrom = (
       r.normalizeLoudness,
       r.transcodeStatus,
     ]);
+  const font = (r: NonNullable<MediaMetadata["fontMetadata"]>[number]) =>
+    json([r.fontMediaId, r.family, r.category, r.source]);
   const has = {
     dependencies: keyed(cloud.dependencies, dependency),
     imageSizes: keyed(cloud.imageSizes, size),
     imageMetadata: keyed(cloud.imageMetadata, image),
     videoMetadata: keyed(cloud.videoMetadata, video),
     audioMetadata: keyed(cloud.audioMetadata ?? [], audio),
+    fontMetadata: keyed(cloud.fontMetadata ?? [], font),
   };
   return {
     dependencies: local.dependencies.filter(
@@ -690,6 +696,9 @@ const missingFrom = (
       ? (local.audioMetadata ?? []).filter(
           (r) => !has.audioMetadata.has(audio(r)),
         )
+      : [],
+    fontMetadata: cloud.fontMetadata
+      ? (local.fontMetadata ?? []).filter((r) => !has.fontMetadata.has(font(r)))
       : [],
   };
 };

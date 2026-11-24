@@ -922,6 +922,76 @@ describe("audio metadata", () => {
   });
 });
 
+describe("font metadata", () => {
+  const fontRow = (fontMediaId: string, family: string) => ({
+    fontMediaId,
+    family,
+    category: "serif",
+    source: "google",
+  });
+
+  it("carries a font family and its files both ways", async () => {
+    const here = await createLocal("f1", { extension: "css" });
+    const hereFile = await createLocal("f1-file", {
+      extension: "woff2",
+      userUploaded: false,
+    });
+    await query(
+      `insert into app_public.media_dependencies (parent_media_id, child_media_id)
+       values ($1, $2)`,
+      [here.id, hereFile.id],
+    );
+    await query(
+      `insert into app_public.media_font_metadata (font_media_id, family, category, source)
+       values ($1, 'Lora', 'serif', 'google')`,
+      [here.id],
+    );
+    await sync();
+    expect(
+      fake.mediaMetadata.fontMetadata?.find((r) => r.fontMediaId === here.id),
+    ).toEqual(fontRow(here.id, "Lora"));
+    expect(fake.media.map((m) => m.id)).toContain(hereFile.id);
+
+    const there = createOnCloud("f2", { extension: "css" });
+    const thereFile = createOnCloud("f2-file", {
+      extension: "woff2",
+      userUploaded: false,
+    });
+    fake.mediaMetadata.dependencies.push({
+      parentMediaId: there.id,
+      childMediaId: thereFile.id,
+    });
+    fake.mediaMetadata.fontMetadata!.push(fontRow(there.id, "Merriweather"));
+    await sync();
+
+    expect(
+      await query(
+        `select family, category, source
+         from app_public.media_font_metadata where font_media_id = $1`,
+        [there.id],
+      ),
+    ).toEqual([
+      { family: "Merriweather", category: "serif", source: "google" },
+    ]);
+    expect(await localFile(thereFile.mediaName)).not.toBeNull();
+  });
+
+  it("syncs with an instance from before fonts", async () => {
+    delete fake.mediaMetadata.fontMetadata;
+    const here = await createLocal("f3", { extension: "css" });
+    await query(
+      `insert into app_public.media_font_metadata (font_media_id, family, source)
+       values ($1, 'Lora', 'google')`,
+      [here.id],
+    );
+    createOnCloud("f4", { extension: "css" });
+
+    await sync();
+    await expectQuietSync();
+    expect(fake.mediaMetadata.fontMetadata).toBeUndefined();
+  });
+});
+
 describe("when the cloud cannot answer", () => {
   it("changes nothing if the organization is not found", async () => {
     const media = await createLocal("safe");
