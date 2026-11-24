@@ -47,6 +47,18 @@ type AcceptJoinRequestToOrganizationPayload {
   query: Query
 }
 
+input AddGoogleFontInput {
+  family: String!
+  organizationId: UUID!
+}
+
+type AddGoogleFontPayload {
+  """True when the organization already had this family."""
+  alreadyAdded: Boolean!
+  family: String!
+  fontMediaId: UUID!
+}
+
 input AllMediaOfProjectsInput {
   projectIds: [UUID!]
 }
@@ -2694,6 +2706,27 @@ type ForgotPasswordPayload {
   clientMutationId: String
 }
 
+type GoogleFontCatalogEntry {
+  """Number of variable axes, 0 for a static family."""
+  axisCount: Int!
+
+  """sans, serif, display or mono."""
+  category: String!
+  designers: [String!]!
+  family: String!
+
+  """Google's own category, eg Handwriting."""
+  googleCategory: String!
+  hasLatin: Boolean!
+
+  """1 is the most used."""
+  popularity: Int!
+
+  """ISO 15924 code of the script it is made for, eg Thai. Empty for Latin."""
+  primaryScript: String!
+  styleCount: Int!
+}
+
 """
 A filter to be used against Int fields. All fields are combined with a logical ‘and.’
 """
@@ -2835,6 +2868,7 @@ type Media {
   fileSize: BigInt
   id: UUID!
   isComplete: Boolean!
+  isFontStylesheet: Boolean
   isUserUploaded: Boolean!
 
   """Reads and enables pagination through a set of `MediaAudioMetadatum`."""
@@ -3009,6 +3043,43 @@ type Media {
     """The method to use when ordering `MediaDependency`."""
     orderBy: [MediaDependenciesOrderBy!] = [NATURAL]
   ): MediaDependenciesConnection!
+
+  """Reads and enables pagination through a set of `MediaFontMetadatum`."""
+  mediaFontMetadataByFontMediaId(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaFontMetadatumCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaFontMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaFontMetadatum`."""
+    orderBy: [MediaFontMetadataOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaFontMetadataConnection! @deprecated(reason: "Please use mediaFontMetadatumByFontMediaId instead")
+
+  """Reads a single `MediaFontMetadatum` that is related to this `Media`."""
+  mediaFontMetadatumByFontMediaId: MediaFontMetadatum
 
   """Reads and enables pagination through a set of `MediaImageMetadatum`."""
   mediaImageMetadataByImageMediaId(
@@ -3549,6 +3620,9 @@ input MediaFilter {
   """Filter by the object’s `id` field."""
   id: UUIDFilter
 
+  """Filter by the object’s `isFontStylesheet` field."""
+  isFontStylesheet: BooleanFilter
+
   """Filter by the object’s `isUserUploaded` field."""
   isUserUploaded: BooleanFilter
 
@@ -3563,6 +3637,87 @@ input MediaFilter {
 
   """Filter by the object’s `tags` field."""
   tags: StringListFilter
+}
+
+"""A connection to a list of `MediaFontMetadatum` values."""
+type MediaFontMetadataConnection {
+  """
+  A list of edges which contains the `MediaFontMetadatum` and cursor to aid in pagination.
+  """
+  edges: [MediaFontMetadataEdge!]!
+
+  """A list of `MediaFontMetadatum` objects."""
+  nodes: [MediaFontMetadatum!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """
+  The count of *all* `MediaFontMetadatum` you could get from the connection.
+  """
+  totalCount: Int!
+}
+
+"""A `MediaFontMetadatum` edge in the connection."""
+type MediaFontMetadataEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `MediaFontMetadatum` at the end of the edge."""
+  node: MediaFontMetadatum!
+}
+
+"""Methods to use when ordering `MediaFontMetadatum`."""
+enum MediaFontMetadataOrderBy {
+  FONT_MEDIA_ID_ASC
+  FONT_MEDIA_ID_DESC
+  NATURAL
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+"""
+A font family available to the organization that owns the stylesheet media.
+"""
+type MediaFontMetadatum {
+  category: String!
+  createdAt: Datetime!
+  cssUrl: String
+  family: String!
+
+  """Reads a single `Media` that is related to this `MediaFontMetadatum`."""
+  fontMedia: Media
+  fontMediaId: UUID!
+  source: String!
+}
+
+"""
+A condition to be used against `MediaFontMetadatum` object types. All fields are
+tested for equality and combined with a logical ‘and.’
+"""
+input MediaFontMetadatumCondition {
+  """Checks for equality with the object’s `fontMediaId` field."""
+  fontMediaId: UUID
+}
+
+"""
+A filter to be used against `MediaFontMetadatum` object types. All fields are combined with a logical ‘and.’
+"""
+input MediaFontMetadatumFilter {
+  """Checks for all expressions in this list."""
+  and: [MediaFontMetadatumFilter!]
+
+  """Filter by the object’s `cssUrl` field."""
+  cssUrl: StringFilter
+
+  """Filter by the object’s `fontMediaId` field."""
+  fontMediaId: UUIDFilter
+
+  """Negates the expression."""
+  not: MediaFontMetadatumFilter
+
+  """Checks for any expressions in this list."""
+  or: [MediaFontMetadatumFilter!]
 }
 
 """A connection to a list of `MediaImageMetadatum` values."""
@@ -3868,6 +4023,17 @@ type Mutation {
     """
     input: AcceptJoinRequestToOrganizationInput!
   ): AcceptJoinRequestToOrganizationPayload
+
+  """
+  Download every weight and style of a Google Fonts family into the
+  organization.
+  """
+  addGoogleFont(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: AddGoogleFontInput!
+  ): AddGoogleFontPayload
 
   """
   Apply for the small-church sponsorship (a free Cloud plan). Only the organization owner or billing contact can apply.
@@ -6363,6 +6529,9 @@ type Query {
   currentUserCanAccessScreen(screenId: UUID!): Boolean
   currentUserCanAccessTag(tagId: UUID!): Boolean
 
+  """Every family Google Fonts offers. Needs internet."""
+  googleFontCatalog: [GoogleFontCatalogEntry!]!
+
   """
   Public summary of an invitation so the invitee can be guided to sign in or sign up. Returns null when the invitation or code does not match.
   """
@@ -6437,6 +6606,41 @@ type Query {
     """The method to use when ordering `MediaDependency`."""
     orderBy: [MediaDependenciesOrderBy!] = [NATURAL]
   ): MediaDependenciesConnection
+
+  """Reads and enables pagination through a set of `MediaFontMetadatum`."""
+  mediaFontMetadata(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: MediaFontMetadatumCondition
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaFontMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """The method to use when ordering `MediaFontMetadatum`."""
+    orderBy: [MediaFontMetadataOrderBy!] = [PRIMARY_KEY_ASC]
+  ): MediaFontMetadataConnection
+  mediaFontMetadatum(fontMediaId: UUID!): MediaFontMetadatum
 
   """Reads and enables pagination through a set of `MediaImageMetadatum`."""
   mediaImageMetadata(
@@ -6650,6 +6854,33 @@ type Query {
     """The method to use when ordering `OrganizationClientPlugin`."""
     orderBy: [OrganizationClientPluginsOrderBy!] = [PRIMARY_KEY_ASC]
   ): OrganizationClientPluginsConnection
+
+  """The font families available to an organization."""
+  organizationFonts(
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """
+    A filter to be used in determining which values should be returned by the collection.
+    """
+    filter: MediaFontMetadatumFilter
+
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+    organizationId: UUID!
+  ): MediaFontMetadataConnection
 
   """
   Given an invitation UUID (and, if required, the code that was emailed to you), retrieves the `Organization` that you were invited to.

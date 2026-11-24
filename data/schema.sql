@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WMnddSTQ0N46VohMevKdYqgW1UwFkVBSVlKrI7PPVEgIsQ8Ioz2DdmJHdHSj1HZ
+\restrict W8Z5qm4r23nK95geAFVlocUcEtlORUF1QIHii67J26W80DzDGc0D46dOShR8Rgf
 
 -- Dumped from database version 17.0 (Debian 17.0-1.pgdg120+1)
 -- Dumped by pg_dump version 18.6
@@ -392,6 +392,24 @@ begin
   where pm.project_id = p_from
   on conflict do nothing;
 end;
+$$;
+
+
+--
+-- Name: is_font_of_organization(uuid, uuid); Type: FUNCTION; Schema: app_hidden; Owner: -
+--
+
+CREATE FUNCTION app_hidden.is_font_of_organization(media_id uuid, organization_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select exists (
+    select 1
+    from app_public.medias m
+    join app_public.media_font_metadata f on f.font_media_id = m.id
+    where m.id = is_font_of_organization.media_id
+      and m.organization_id = is_font_of_organization.organization_id
+  );
 $$;
 
 
@@ -3141,6 +3159,98 @@ COMMENT ON FUNCTION app_public.make_email_primary(email_id uuid) IS 'Your primar
 
 
 --
+-- Name: media_font_metadata; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.media_font_metadata (
+    font_media_id uuid NOT NULL,
+    family text NOT NULL,
+    category text DEFAULT 'sans'::text NOT NULL,
+    source text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT media_font_metadata_category_check CHECK ((category = ANY (ARRAY['sans'::text, 'serif'::text, 'display'::text, 'mono'::text]))),
+    CONSTRAINT media_font_metadata_family_check CHECK (((length(family) >= 1) AND (length(family) <= 200))),
+    CONSTRAINT media_font_metadata_source_check CHECK ((source = ANY (ARRAY['google'::text, 'upload'::text, 'system'::text])))
+);
+
+
+--
+-- Name: TABLE media_font_metadata; Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON TABLE app_public.media_font_metadata IS 'A font family available to the organization that owns the stylesheet media.';
+
+
+--
+-- Name: media_font_metadata_css_url(app_public.media_font_metadata); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.media_font_metadata_css_url(f app_public.media_font_metadata) RETURNS text
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select '/media/data/' || m.media_name from app_public.medias m where m.id = f.font_media_id;
+$$;
+
+
+--
+-- Name: medias; Type: TABLE; Schema: app_public; Owner: -
+--
+
+CREATE TABLE app_public.medias (
+    id uuid DEFAULT public.uuid_generate_v7() NOT NULL,
+    media_name text NOT NULL,
+    file_size bigint,
+    file_offset integer NOT NULL,
+    original_name text,
+    file_extension text,
+    organization_id uuid NOT NULL,
+    creator_user_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    s3_upload_id text,
+    is_complete boolean DEFAULT false NOT NULL,
+    is_user_uploaded boolean DEFAULT true NOT NULL,
+    tags text[] DEFAULT '{}'::text[] NOT NULL
+);
+
+
+--
+-- Name: medias_is_font_stylesheet(app_public.medias); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.medias_is_font_stylesheet(m app_public.medias) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'pg_catalog', 'public', 'pg_temp'
+    AS $$
+  select exists (
+    select 1 from app_public.media_font_metadata f where f.font_media_id = m.id
+  );
+$$;
+
+
+--
+-- Name: organization_fonts(uuid); Type: FUNCTION; Schema: app_public; Owner: -
+--
+
+CREATE FUNCTION app_public.organization_fonts(organization_id uuid) RETURNS SETOF app_public.media_font_metadata
+    LANGUAGE sql STABLE
+    AS $$
+  select f.*
+  from app_public.media_font_metadata f
+  where app_hidden.is_font_of_organization(f.font_media_id, organization_fonts.organization_id)
+  order by lower(f.family);
+$$;
+
+
+--
+-- Name: FUNCTION organization_fonts(organization_id uuid); Type: COMMENT; Schema: app_public; Owner: -
+--
+
+COMMENT ON FUNCTION app_public.organization_fonts(organization_id uuid) IS 'The font families available to an organization.';
+
+
+--
 -- Name: organization_for_invitation(uuid, text); Type: FUNCTION; Schema: app_public; Owner: -
 --
 
@@ -4849,28 +4959,6 @@ CREATE TABLE app_public.media_video_metadata (
 
 
 --
--- Name: medias; Type: TABLE; Schema: app_public; Owner: -
---
-
-CREATE TABLE app_public.medias (
-    id uuid DEFAULT public.uuid_generate_v7() NOT NULL,
-    media_name text NOT NULL,
-    file_size bigint,
-    file_offset integer NOT NULL,
-    original_name text,
-    file_extension text,
-    organization_id uuid NOT NULL,
-    creator_user_id uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    s3_upload_id text,
-    is_complete boolean DEFAULT false NOT NULL,
-    is_user_uploaded boolean DEFAULT true NOT NULL,
-    tags text[] DEFAULT '{}'::text[] NOT NULL
-);
-
-
---
 -- Name: organization_active_devices; Type: TABLE; Schema: app_public; Owner: -
 --
 
@@ -5262,6 +5350,14 @@ ALTER TABLE ONLY app_public.cloud_sync_runs
 
 ALTER TABLE ONLY app_public.media_audio_metadata
     ADD CONSTRAINT media_audio_metadata_pkey PRIMARY KEY (audio_media_id);
+
+
+--
+-- Name: media_font_metadata media_font_metadata_pkey; Type: CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_font_metadata
+    ADD CONSTRAINT media_font_metadata_pkey PRIMARY KEY (font_media_id);
 
 
 --
@@ -6988,6 +7084,14 @@ ALTER TABLE ONLY app_public.media_dependencies
 
 
 --
+-- Name: media_font_metadata media_font_metadata_font_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
+--
+
+ALTER TABLE ONLY app_public.media_font_metadata
+    ADD CONSTRAINT media_font_metadata_font_media_id_fkey FOREIGN KEY (font_media_id) REFERENCES app_public.medias(id) ON DELETE CASCADE;
+
+
+--
 -- Name: media_image_metadata media_image_metadata_image_media_id_fkey; Type: FK CONSTRAINT; Schema: app_public; Owner: -
 --
 
@@ -7633,6 +7737,12 @@ ALTER TABLE app_public.media_audio_metadata ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_public.media_dependencies ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: media_font_metadata; Type: ROW SECURITY; Schema: app_public; Owner: -
+--
+
+ALTER TABLE app_public.media_font_metadata ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: media_image_metadata; Type: ROW SECURITY; Schema: app_public; Owner: -
 --
 
@@ -7993,6 +8103,16 @@ CREATE POLICY select_own_media ON app_public.media_audio_metadata FOR SELECT USI
 
 
 --
+-- Name: media_font_metadata select_own_media; Type: POLICY; Schema: app_public; Owner: -
+--
+
+CREATE POLICY select_own_media ON app_public.media_font_metadata FOR SELECT USING ((app_public.current_user_can_access_media(font_media_id) OR (EXISTS ( SELECT 1
+   FROM ( SELECT DISTINCT p.organization_id
+           FROM app_public.projects p) visible
+  WHERE app_hidden.is_font_of_organization(media_font_metadata.font_media_id, visible.organization_id)))));
+
+
+--
 -- Name: media_image_metadata select_own_media; Type: POLICY; Schema: app_public; Owner: -
 --
 
@@ -8208,6 +8328,14 @@ GRANT USAGE ON SCHEMA public TO theopenpresenter_visitor;
 
 REVOKE ALL ON FUNCTION app_hidden.copy_project_content(p_from uuid, p_to uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION app_hidden.copy_project_content(p_from uuid, p_to uuid) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION is_font_of_organization(media_id uuid, organization_id uuid); Type: ACL; Schema: app_hidden; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_hidden.is_font_of_organization(media_id uuid, organization_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_hidden.is_font_of_organization(media_id uuid, organization_id uuid) TO theopenpresenter_visitor;
 
 
 --
@@ -8921,6 +9049,52 @@ GRANT ALL ON FUNCTION app_public.make_email_primary(email_id uuid) TO theopenpre
 
 
 --
+-- Name: TABLE media_font_metadata; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.media_font_metadata TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION media_font_metadata_css_url(f app_public.media_font_metadata); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.media_font_metadata_css_url(f app_public.media_font_metadata) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.media_font_metadata_css_url(f app_public.media_font_metadata) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION uuid_generate_v7(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.uuid_generate_v7() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.uuid_generate_v7() TO theopenpresenter_visitor;
+
+
+--
+-- Name: TABLE medias; Type: ACL; Schema: app_public; Owner: -
+--
+
+GRANT SELECT ON TABLE app_public.medias TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION medias_is_font_stylesheet(m app_public.medias); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.medias_is_font_stylesheet(m app_public.medias) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.medias_is_font_stylesheet(m app_public.medias) TO theopenpresenter_visitor;
+
+
+--
+-- Name: FUNCTION organization_fonts(organization_id uuid); Type: ACL; Schema: app_public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION app_public.organization_fonts(organization_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION app_public.organization_fonts(organization_id uuid) TO theopenpresenter_visitor;
+
+
+--
 -- Name: FUNCTION organization_for_invitation(invitation_id uuid, code text); Type: ACL; Schema: app_public; Owner: -
 --
 
@@ -9406,14 +9580,6 @@ GRANT ALL ON FUNCTION app_public.verify_email(user_email_id uuid, token text) TO
 
 
 --
--- Name: FUNCTION uuid_generate_v7(); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.uuid_generate_v7() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.uuid_generate_v7() TO theopenpresenter_visitor;
-
-
---
 -- Name: FUNCTION uuid_timestamp_to_v7(timestamp without time zone, zero boolean); Type: ACL; Schema: public; Owner: -
 --
 
@@ -9597,13 +9763,6 @@ GRANT SELECT ON TABLE app_public.media_image_sizes TO theopenpresenter_visitor;
 --
 
 GRANT SELECT ON TABLE app_public.media_video_metadata TO theopenpresenter_visitor;
-
-
---
--- Name: TABLE medias; Type: ACL; Schema: app_public; Owner: -
---
-
-GRANT SELECT ON TABLE app_public.medias TO theopenpresenter_visitor;
 
 
 --
@@ -9876,5 +10035,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE theopenpresenter REVOKE ALL ON FUNCTIONS FROM 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WMnddSTQ0N46VohMevKdYqgW1UwFkVBSVlKrI7PPVEgIsQ8Ioz2DdmJHdHSj1HZ
+\unrestrict W8Z5qm4r23nK95geAFVlocUcEtlORUF1QIHii67J26W80DzDGc0D46dOShR8Rgf
 
