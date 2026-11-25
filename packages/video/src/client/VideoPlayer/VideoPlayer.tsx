@@ -118,14 +118,13 @@ export const VideoPlayer = ({
         // 2 second tolerance
         const tolerance = 2;
         if (manual || Math.abs(currentTime - targetTimeSeconds) > tolerance) {
-          const lookahead =
-            !manual && computedPlaying
-              ? seekLatencyRef.current * (playbackState.playbackRate ?? 1)
-              : 0;
-          const seekTo =
-            targetTimeSeconds + lookahead < videoDuration
-              ? targetTimeSeconds + lookahead
-              : targetTimeSeconds;
+          const seekTo = manual
+            ? targetTimeSeconds
+            : computePlaybackState(
+                playbackState,
+                videoDuration,
+                Date.now() + seekLatencyRef.current * 1000,
+              ).currentTimeSeconds;
           if (ref.current) ref.current.currentTime = seekTo;
           seekStartedAtRef.current = computedPlaying ? Date.now() : null;
           if (computedPlaying) ref.current?.play();
