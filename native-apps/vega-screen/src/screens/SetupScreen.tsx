@@ -181,8 +181,8 @@ export const SetupScreen: React.FC<Props> = ({navigation}) => {
           {status === 'ready'
             ? 'Waiting for sign-in...'
             : status === 'connecting'
-              ? 'Connecting to server...'
-              : 'Connection error'}
+            ? 'Connecting to server...'
+            : 'Connection error'}
         </Text>
       </View>
     </View>
