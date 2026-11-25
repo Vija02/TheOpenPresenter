@@ -7,6 +7,7 @@ import {
   getTurnstileSiteKey,
 } from "@/components/Turnstile";
 import { WrappedPasswordStrength } from "@/components/WrappedPasswordStrength";
+import { useSignupDisabled } from "@/lib/signupDisabled";
 import { useResetURQLClient } from "@/urql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRegisterMutation, useSharedQuery } from "@repo/graphql";
@@ -47,6 +48,7 @@ const Register = () => {
   const email = searchParams.get("email");
 
   const [, register] = useRegisterMutation();
+  const signupDisabled = useSignupDisabled();
   const resetClient = useResetURQLClient();
 
   const captchaEnabled = !!getTurnstileSiteKey();
@@ -108,6 +110,22 @@ const Register = () => {
     },
     [register, resetClient, navigate, redirectTo, form, captchaEnabled],
   );
+
+  if (signupDisabled) {
+    return (
+      <SharedLayout title="Sign in" query={query}>
+        <div className="flex justify-center px-4 py-12">
+          <Alert
+            variant="warning"
+            title="Sign in with an existing account"
+            className="max-w-sm"
+          >
+            Accounts can't be created here.
+          </Alert>
+        </div>
+      </SharedLayout>
+    );
+  }
 
   return (
     <SharedLayout title="Register" query={query}>

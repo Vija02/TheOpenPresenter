@@ -5,6 +5,7 @@ import {
 	ActivityIndicator,
 	Dimensions,
 	Image,
+	Platform,
 	StyleSheet,
 	Text,
 	View,
@@ -16,6 +17,10 @@ import { useCookie } from "../api/useCookie"
 import { login } from "../utils/login"
 import { getRootUrl } from "../utils/rootUrl"
 import { getScreen, setScreen } from "../utils/screen"
+
+const isFireOS =
+	Platform.OS === "android" &&
+	Platform.constants.Manufacturer?.toLowerCase() === "amazon"
 
 type Status = "connecting" | "ready" | "error"
 
@@ -139,7 +144,7 @@ export default function Setup() {
 						{status === "ready" && qrId && (
 							<QRCode
 								size={qrSize}
-								value={`${rootUrl}/qr-auth/screen-select/auth?id=${qrId}`}
+								value={`${rootUrl}/qr-auth/screen-select/auth?id=${qrId}${isFireOS ? "&no_signup=1" : ""}`}
 							/>
 						)}
 						{status === "connecting" && (

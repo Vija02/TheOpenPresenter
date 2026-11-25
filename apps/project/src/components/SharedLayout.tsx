@@ -13,6 +13,7 @@ import { CombinedError, UseQueryResponse } from "urql";
 import { Link as WouterLink, useLocation } from "wouter";
 import { useSearch } from "wouter";
 
+import { useSignupDisabled } from "../lib/signupDisabled";
 import { Redirect } from "./Redirect";
 import {
   SharedLayoutSkeleton,
@@ -74,6 +75,7 @@ export function SharedLayout({
   const searchString = useSearch();
   const searchParams = new URLSearchParams(searchString);
   const hasKiosk = searchParams.has("kiosk");
+  const signupDisabled = useSignupDisabled();
 
   const forbidsLoggedIn = forbidWhen & AuthRestrict.LOGGED_IN;
   const forbidsLoggedOut = forbidWhen & AuthRestrict.LOGGED_OUT;
@@ -169,17 +171,19 @@ export function SharedLayout({
                   </Button>
                 </WouterLink>
               </Link>
-              <Link asChild>
-                <WouterLink href="/register">
-                  <Button
-                    size="sm"
-                    variant="success"
-                    data-testid="header-register-button"
-                  >
-                    Sign up for free
-                  </Button>
-                </WouterLink>
-              </Link>
+              {!signupDisabled && (
+                <Link asChild>
+                  <WouterLink href="/register">
+                    <Button
+                      size="sm"
+                      variant="success"
+                      data-testid="header-register-button"
+                    >
+                      Sign up for free
+                    </Button>
+                  </WouterLink>
+                </Link>
+              )}
             </div>
           )
         }

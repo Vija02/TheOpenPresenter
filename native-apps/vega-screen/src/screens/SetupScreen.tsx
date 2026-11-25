@@ -144,7 +144,7 @@ export const SetupScreen: React.FC<Props> = ({navigation}) => {
             {status === 'ready' && qrId && (
               <QRCode
                 size={qrSize}
-                value={`${rootUrl}/qr-auth/screen-select/auth?id=${qrId}`}
+                value={`${rootUrl}/qr-auth/screen-select/auth?id=${qrId}&no_signup=1`}
               />
             )}
             {status === 'connecting' && (
@@ -181,8 +181,8 @@ export const SetupScreen: React.FC<Props> = ({navigation}) => {
           {status === 'ready'
             ? 'Waiting for sign-in...'
             : status === 'connecting'
-            ? 'Connecting to server...'
-            : 'Connection error'}
+              ? 'Connecting to server...'
+              : 'Connection error'}
         </Text>
       </View>
     </View>
