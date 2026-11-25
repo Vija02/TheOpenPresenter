@@ -216,16 +216,18 @@ export default async (app: Express) => {
       return;
     }
 
+    const noSignup = req.query.no_signup === "1" ? "&no_signup=1" : "";
+
     if (!req.user?.session_id) {
       res.redirect(
         `/login?next=${encodeURIComponent(
-          `/qr-auth/screen-select/auth?id=${id}`,
-        )}`,
+          `/qr-auth/screen-select/auth?id=${encodeURIComponent(id)}${noSignup}`,
+        )}${noSignup}`,
       );
       return;
     }
 
-    res.redirect(`/qr/screen-select?id=${encodeURIComponent(id)}`);
+    res.redirect(`/qr/screen-select?id=${encodeURIComponent(id)}${noSignup}`);
   });
 
   // Phone submits the chosen screen here.

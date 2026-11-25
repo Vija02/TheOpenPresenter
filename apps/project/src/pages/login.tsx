@@ -1,6 +1,7 @@
 import { Redirect } from "@/components/Redirect";
 import { SharedLayout } from "@/components/SharedLayout";
 import { SocialLoginOptions } from "@/components/SocialLoginOptions";
+import { useSignupDisabled } from "@/lib/signupDisabled";
 import { useResetURQLClient } from "@/urql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation, useSharedQuery } from "@repo/graphql";
@@ -92,6 +93,7 @@ function LoginForm({
 }: LoginFormProps) {
   const [, login] = useLoginMutation();
   const [, navigate] = useLocation();
+  const signupDisabled = useSignupDisabled();
 
   const resetClient = useResetURQLClient();
 
@@ -153,6 +155,7 @@ function LoginForm({
             next={onSuccessRedirectTo}
             persistSession={rememberMe}
             autoOpenQRLogin={autoOpenQRLogin}
+            showQRLogin={!signupDisabled}
           />
 
           <InputControl
@@ -225,20 +228,26 @@ function LoginForm({
             Sign in
           </Button>
 
-          <div className="stack-col items-center gap-1 w-full pt-2">
-            <Link asChild>
-              <WouterLink
-                href={
-                  onSuccessRedirectTo === "/o/"
-                    ? "/register"
-                    : `/register?next=${encodeURIComponent(onSuccessRedirectTo)}`
-                }
-                className="text-sm"
-              >
-                Don't have an account yet? Sign up
-              </WouterLink>
-            </Link>
-          </div>
+          {signupDisabled ? (
+            <p className="text-sm text-tertiary text-center w-full pt-2">
+              Sign in with an existing TheOpenPresenter account.
+            </p>
+          ) : (
+            <div className="stack-col items-center gap-1 w-full pt-2">
+              <Link asChild>
+                <WouterLink
+                  href={
+                    onSuccessRedirectTo === "/o/"
+                      ? "/register"
+                      : `/register?next=${encodeURIComponent(onSuccessRedirectTo)}`
+                  }
+                  className="text-sm"
+                >
+                  Don't have an account yet? Sign up
+                </WouterLink>
+              </Link>
+            </div>
+          )}
         </div>
       </form>
     </Form>

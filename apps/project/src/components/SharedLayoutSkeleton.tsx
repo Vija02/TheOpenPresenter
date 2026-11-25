@@ -5,6 +5,7 @@ import * as React from "react";
 import { useEffect } from "react";
 import { Link as WouterLink } from "wouter";
 
+import { useSignupDisabled } from "../lib/signupDisabled";
 import { Footer } from "./Footer";
 import { StandardWidth } from "./StandardWidth";
 
@@ -39,6 +40,7 @@ export function SharedLayoutSkeleton({
   }, [finalTitle]);
 
   const isDesktop = desktop.isDesktop;
+  const signupDisabled = useSignupDisabled();
 
   return (
     <div>
@@ -48,9 +50,13 @@ export function SharedLayoutSkeleton({
         >
           <div className="w-full h-full flex justify-between items-center flex-wrap gap-y-2">
             {navbarLeft}
-            <WouterLink href="/">
+            {signupDisabled ? (
               <Logo height="40px" />
-            </WouterLink>
+            ) : (
+              <WouterLink href="/">
+                <Logo height="40px" />
+              </WouterLink>
+            )}
             {navbarRight}
           </div>
         </StandardWidth>
