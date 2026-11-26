@@ -72,8 +72,11 @@
   }
 
   /* Sheet Content - Bottom Side */
+  /* Rests on the on-screen keyboard, scrolling if it runs out of room */
   .ui--sheet-content__bottom {
-    @apply inset-x-0 bottom-0 h-auto border-t;
+    @apply inset-x-0 h-auto overflow-y-auto border-t;
+    bottom: var(--keyboard-inset, 0px);
+    max-height: var(--visible-height, 100dvh);
 
     @starting-style {
       transform: translateY(100%);
