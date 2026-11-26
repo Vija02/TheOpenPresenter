@@ -3,14 +3,18 @@ import { ORG_SLUG, orgUrl } from "../../helpers/workerData";
 import {
   OrgSettingCategoriesPage,
   categoryCard,
-  categoryPill,
+  categoryOption,
 } from "../../pages/OrgSettings/OrgSettingCategoriesPage";
 
-const comingSunday = () => {
+const comingSunday = (weeksLater = 0) => {
   const d = new Date();
-  d.setDate(d.getDate() + ((7 - d.getDay()) % 7));
+  d.setDate(d.getDate() + ((7 - d.getDay()) % 7) + weeksLater * 7);
   return d;
 };
+
+/** As the new project summary shows it, e.g. "Sun 29 Nov" */
+const shortDate = (d: Date) =>
+  `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${d.getDate()} ${d.toLocaleDateString("en-GB", { month: "short" })}`;
 
 test.describe("Categories", () => {
   test.beforeEach(async ({ e2eCommand }) => await e2eCommand.clearWorkerData());
@@ -43,13 +47,15 @@ test.describe("Categories", () => {
       .first()
       .click();
     await page.keyboard.type("1030");
-    await expect(page.getByText(/Every Sunday at 10:30\. Next:/)).toBeVisible();
+    await expect(
+      page.getByText(/Every Sunday at 10:30 AM\. Next:/),
+    ).toBeVisible();
     await page.getByRole("tab", { name: "Template" }).click();
     await select("templateProjectId", "TestProject");
     await page.getByRole("button", { name: "Save", exact: true }).click();
 
     const row = categoryCard(page, "Sunday Morning");
-    await expect(row).toContainText("Every Sunday at 10:30");
+    await expect(row).toContainText("Every Sunday at 10:30 AM");
     await expect(row).toContainText("TestProject");
 
     await page.goto(orgUrl());
@@ -69,21 +75,20 @@ test.describe("Categories", () => {
 
     await organizationPage.newProjectButton.click();
     const dialog = page.getByRole("dialog");
-    await expect(categoryPill(dialog, "Sunday Morning")).toHaveAttribute(
-      "aria-pressed",
-      "true",
+    await expect(categoryOption(dialog, "Sunday Morning")).toBeChecked();
+    // What the category filled in shows as one line, until Change
+    await expect(dialog.getByTestId("create-project-summary")).toContainText(
+      "at 10:30 AM",
     );
+    await dialog.getByRole("button", { name: "Change" }).click();
     await expect(dialog.getByTestId("form-item-targetDate")).toContainText(
       String(comingSunday().getDate()),
     );
-    await expect(
-      dialog.getByTestId("form-item-templateProjectId"),
-    ).toContainText("TestProject");
     await expect(dialog.locator('input[name="targetTime"]')).toHaveValue(
       /^10:30/,
     );
 
-    await organizationPage.newProjectSaveButton.click();
+    await organizationPage.newProjectCreateButton.click();
     await expect(page).toHaveURL(new RegExp(`/app/${ORG_SLUG}/`));
 
     await page.goto(orgUrl());
@@ -91,7 +96,7 @@ test.describe("Categories", () => {
       .getByRole("button", { name: "Sunday Morning", exact: true })
       .click();
     await expect(organizationPage.projectCards).toHaveCount(1);
-    await expect(organizationPage.projectCards).toContainText("10:30");
+    await expect(organizationPage.projectCards).toContainText("10:30 AM");
   });
 
   test("order shows on the projects page, with a dropdown on mobile", async ({
@@ -126,7 +131,7 @@ test.describe("Categories", () => {
     await dialog.getByRole("button", { name: "Saturday" }).click();
     await dialog.getByRole("button", { name: "Sunday" }).click();
     await expect(
-      dialog.getByText("Every Saturday at 10:00. Next:"),
+      dialog.getByText("Every Saturday at 10:00 AM. Next:"),
     ).toBeVisible();
     await dialog.getByRole("button", { name: "Next" }).click();
     await dialog.getByRole("button", { name: "Create", exact: true }).click();
@@ -171,6 +176,50 @@ test.describe("Categories", () => {
       page.getByText("No projects in this category yet."),
     ).toBeVisible();
     await expect(organizationPage.projectCards).toHaveCount(0);
+  });
+
+  test("create another keeps the dialog open for the next date", async ({
+    page,
+    organizationPage,
+    loginWithDefaultProject,
+  }) => {
+    await loginWithDefaultProject(`${orgUrl()}/settings/categories`);
+
+    await categoryCard(page, "Sunday Morning")
+      .getByRole("button", { name: "Edit category" })
+      .click();
+    await page.getByRole("tab", { name: "Schedule" }).click();
+    await page.getByTestId("form-item-schedule").getByRole("combobox").focus();
+    await page.keyboard.press("ArrowDown");
+    await page
+      .getByRole("option", { name: "Every Sunday", exact: true })
+      .click();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(categoryCard(page, "Sunday Morning")).toContainText(
+      "Every Sunday",
+    );
+
+    await page.goto(orgUrl());
+    await page
+      .getByRole("button", { name: "Sunday Morning", exact: true })
+      .click();
+    await organizationPage.newProjectButton.click();
+    const dialog = page.getByRole("dialog");
+    const summary = dialog.getByTestId("create-project-summary");
+    await expect(summary).toContainText(shortDate(comingSunday()));
+
+    await dialog.getByRole("textbox", { name: "Name" }).fill("First");
+    await dialog.getByRole("button", { name: "Create another" }).click();
+
+    await expect(page.getByText("Created First")).toBeVisible();
+    // Ready for the next one: name cleared, moved on a week
+    await expect(dialog.getByRole("textbox", { name: "Name" })).toHaveValue("");
+    await expect(summary).toContainText(shortDate(comingSunday(1)));
+    await expect(page).not.toHaveURL(/\/app\//);
+
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(organizationPage.projectCards).toHaveCount(1);
+    await expect(organizationPage.projectCards).toContainText("First");
   });
 
   test("a category can be hidden from the projects filter", async ({
@@ -225,16 +274,16 @@ test.describe("Categories", () => {
     await page.goto(orgUrl());
     await organizationPage.newProjectButton.click();
     await expect(
-      categoryPill(page.getByRole("dialog"), "Sunday Morning"),
-    ).toHaveAttribute("aria-pressed", "true");
+      categoryOption(page.getByRole("dialog"), "Sunday Morning"),
+    ).toBeChecked();
     await page.keyboard.press("Escape");
 
     // Filtering by Other (no category) still starts uncategorized
     await page.getByRole("button", { name: "Other", exact: true }).click();
     await organizationPage.newProjectButton.click();
     await expect(
-      categoryPill(page.getByRole("dialog"), "Uncategorized"),
-    ).toHaveAttribute("aria-pressed", "true");
+      categoryOption(page.getByRole("dialog"), "Other"),
+    ).toBeChecked();
   });
 
   test("deleting a category keeps its projects", async ({

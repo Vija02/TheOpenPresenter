@@ -21,7 +21,7 @@ type OrgTypeLabel = {
 };
 
 const churchLabels: OrgTypeLabel = {
-  projectDate: "Service Time",
+  projectDate: "Service Date",
 };
 
 const venueLabels: OrgTypeLabel = {

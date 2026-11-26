@@ -14,7 +14,7 @@ test.describe("OrganizationPage", () => {
     await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
 
     await organizationPage.newProjectButton.click();
-    await organizationPage.newProjectSaveButton.click();
+    await organizationPage.newProjectCreateButton.click();
 
     await expect(page).toHaveURL(new RegExp(`/app/${ORG_SLUG}`));
   });

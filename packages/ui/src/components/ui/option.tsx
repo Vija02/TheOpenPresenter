@@ -42,6 +42,7 @@ interface OptionProps extends VariantProps<typeof optionVariants> {
   onClick?: () => void;
   className?: string;
   testId?: string;
+  role?: "radio";
 }
 
 function Option({
@@ -54,9 +55,26 @@ function Option({
   className,
   size,
   testId,
+  role,
 }: OptionProps) {
+  const isRadio = role === "radio";
   return (
     <div
+      role={role}
+      aria-checked={isRadio ? !!selected : undefined}
+      aria-disabled={isRadio && disabled ? true : undefined}
+      tabIndex={isRadio && !disabled ? 0 : undefined}
+      onKeyDown={
+        isRadio && !disabled
+          ? (e) => {
+              // Space picks, like a radio; Enter is left to submit the form
+              if (e.key === " ") {
+                e.preventDefault();
+                onClick?.();
+              }
+            }
+          : undefined
+      }
       className={cn(
         optionVariants({ size }),
         selected && "ui--option--selected",
@@ -104,9 +122,14 @@ function OptionGroup<Value = string>({
   disabled,
   className,
   size,
-}: OptionGroupProps<Value>) {
+  ...props
+}: OptionGroupProps<Value> & React.ComponentProps<"div">) {
   return (
-    <div className={cn("ui--option-group", className)}>
+    <div
+      role="radiogroup"
+      {...props}
+      className={cn("ui--option-group", className)}
+    >
       {options.map((option, index) => (
         <Option
           key={index}
@@ -116,6 +139,7 @@ function OptionGroup<Value = string>({
           disabled={disabled ?? option.disabled}
           onClick={() => onValueChange?.(option.value)}
           size={size}
+          role="radio"
         />
       ))}
     </div>
@@ -126,7 +150,8 @@ interface OptionControlProps<Value = string>
   extends VariantProps<typeof optionVariants> {
   control: Control<any, any, any>;
   name: string;
-  label: string;
+  label?: string;
+  "aria-label"?: string;
   description?: string;
   options: OptionItem<Value>[];
   disabled?: boolean;
@@ -141,6 +166,7 @@ function OptionControl<Value = string>({
   options,
   className,
   size,
+  "aria-label": ariaLabel,
 }: OptionControlProps<Value>) {
   return (
     <FormField
@@ -148,9 +174,10 @@ function OptionControl<Value = string>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          {label && <FormLabel>{label}</FormLabel>}
           <FormControl>
             <OptionGroup<Value>
+              aria-label={ariaLabel ?? label}
               options={options}
               value={field.value}
               onValueChange={field.onChange}

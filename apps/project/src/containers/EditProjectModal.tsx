@@ -1,5 +1,6 @@
 import { ReactSelectDateProps } from "@/components/DatePicker/datePickerReactSelect";
 import { TagsSelector } from "@/components/Tag/TagsSelector";
+import { noCategoryLabel } from "@/lib/categorySchedule";
 import { getOrgTypeLabels } from "@/lib/organizationType";
 import { useOrganizationType } from "@/lib/permissionHooks/organization";
 import {
@@ -173,7 +174,7 @@ const EditProjectModal = ({
           <DialogBody>
             <InputControl control={form.control} name="name" label="Name" />
 
-            <div className="grid grid-cols-[1fr_auto] gap-3 items-start">
+            <div className="grid gap-3 items-start sm:grid-cols-[1fr_auto]">
               <FormField
                 control={form.control}
                 name="targetDate"
@@ -207,7 +208,7 @@ const EditProjectModal = ({
                 name="targetTime"
                 label="Time"
                 disabled={!targetDate}
-                className="w-32"
+                className="sm:w-32"
               />
             </div>
 
@@ -215,9 +216,12 @@ const EditProjectModal = ({
               control={form.control}
               name="categoryId"
               label="Category"
-              options={[
-                { label: "Uncategorized", value: UNCATEGORIZED },
-              ].concat(categories.map((x) => ({ label: x.name, value: x.id })))}
+              options={categories
+                .map((x) => ({ label: x.name, value: x.id }))
+                .concat({
+                  label: noCategoryLabel(categories),
+                  value: UNCATEGORIZED,
+                })}
             />
 
             <div>
@@ -246,12 +250,13 @@ const EditProjectModal = ({
             </div>
           </DialogBody>
           <DialogFooter>
-            <div className="flex gap-2">
+            {/* Same order and alignment as New Project */}
+            <div className="flex w-full flex-wrap justify-end gap-2">
+              <Button variant="outline" onClick={onToggle}>
+                Cancel
+              </Button>
               <Button type="submit" variant="success">
                 Save
-              </Button>
-              <Button variant="outline" onClick={onToggle}>
-                Close
               </Button>
             </div>
           </DialogFooter>
