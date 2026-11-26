@@ -1,9 +1,8 @@
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
-import { CreatableSelect, Link } from "@repo/ui";
+import { CreatableSelect } from "@repo/ui";
 import { FiSettings } from "react-icons/fi";
 import { Props } from "react-select";
 import { CreatableProps } from "react-select/creatable";
-import { Link as WouterLink } from "wouter";
 
 import "./TagsSelector.css";
 import { ReactSelectTagsProps } from "./tagReactSelect";
@@ -64,21 +63,22 @@ export function TagsSelector({
   );
 }
 
-export function TagSettingsPrompt() {
+export function TagSettingsPrompt({ size = "sm" }: { size?: "sm" | "lg" }) {
   const slug = useOrganizationSlug();
 
   return (
-    <Link
-      variant="unstyled"
-      className="block h-full hover:bg-surface-secondary-hover transition-colors ease-in-out w-full"
-      asChild
+    <a
+      href={`/o/${slug}/settings/tags`}
+      target="_blank"
+      rel="noreferrer"
+      className="block h-full w-full transition-colors ease-in-out hover:bg-surface-secondary-hover hover:no-underline"
     >
-      <WouterLink href={`/o/${slug}/settings/tags`}>
-        <div className="stack-row justify-center py-1">
-          <FiSettings className="text-secondary text-[13px]" />
-          <p className="text-secondary text-xs">Tag Settings</p>
-        </div>
-      </WouterLink>
-    </Link>
+      <div
+        className={`stack-row justify-center ${size === "lg" ? "py-3" : "py-1"}`}
+      >
+        <FiSettings className="text-secondary text-[13px]" />
+        <p className="text-secondary text-xs">Tag Settings</p>
+      </div>
+    </a>
   );
 }
