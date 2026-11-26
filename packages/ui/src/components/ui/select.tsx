@@ -1,3 +1,4 @@
+import { useIsMobile } from "@/lib/useIsMobile";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, X } from "lucide-react";
 import React, { JSX, ReactElement, Ref } from "react";
@@ -284,6 +285,140 @@ const SelectParts = {
   MenuList,
 };
 
+/** Past this many choices a searchable dropdown beats scrolling a native list */
+const NATIVE_MAX_OPTIONS = 50;
+
+type NativeEntry =
+  | { option: OptionType; key: string }
+  | { group: string; entries: { option: OptionType; key: string }[] };
+
+const toNativeEntries = (
+  props: Props<OptionType, boolean>,
+): NativeEntry[] | null => {
+  if (
+    props.isMulti ||
+    props.formatOptionLabel ||
+    props.menuIsOpen !== undefined ||
+    props.inputValue !== undefined ||
+    (props.components && Object.keys(props.components).length > 0) ||
+    !Array.isArray(props.options)
+  )
+    return null;
+
+  let count = 0;
+  const entries: NativeEntry[] = [];
+  const toEntry = (option: unknown) => {
+    const o = option as OptionType;
+    if (typeof o?.label !== "string") return null;
+    return { option: o, key: String(count++) };
+  };
+  for (const item of props.options as unknown[]) {
+    const group = item as GroupBase<OptionType>;
+    if (Array.isArray(group?.options)) {
+      if (typeof group.label !== "string") return null;
+      const children = group.options.map(toEntry);
+      if (children.some((c) => !c)) return null;
+      entries.push({ group: group.label, entries: children as any });
+    } else {
+      const entry = toEntry(item);
+      if (!entry) return null;
+      entries.push(entry);
+    }
+  }
+  return count <= NATIVE_MAX_OPTIONS ? entries : null;
+};
+
+/** A single-choice select as the phone's own picker, for the same props */
+const NativeSelect = ({
+  props,
+  entries,
+}: {
+  props: Props<OptionType, boolean>;
+  entries: NativeEntry[];
+}) => {
+  const getValue = props.getOptionValue ?? ((o: OptionType) => String(o.value));
+  const flat = entries.flatMap((e) => ("group" in e ? e.entries : [e]));
+  const selected = props.value as OptionType | null | undefined;
+  const selectedKey = selected
+    ? flat.find(
+        (e) =>
+          e.option === selected || getValue(e.option) === getValue(selected),
+      )?.key
+    : undefined;
+
+  const renderOption = ({
+    option,
+    key,
+  }: {
+    option: OptionType;
+    key: string;
+  }) => (
+    <option
+      key={key}
+      value={key}
+      disabled={props.isOptionDisabled?.(option, selected ? [selected] : [])}
+    >
+      {option.label}
+    </option>
+  );
+
+  return (
+    <select
+      id={props.inputId ?? props.id}
+      name={props.name}
+      className={cn("ui--input", props.className)}
+      value={selectedKey ?? ""}
+      disabled={props.isDisabled}
+      aria-label={props["aria-label"]}
+      aria-labelledby={props["aria-labelledby"]}
+      aria-describedby={
+        (props as { "aria-describedby"?: string })["aria-describedby"]
+      }
+      aria-invalid={props["aria-invalid"]}
+      onBlur={(e) =>
+        props.onBlur?.(e as unknown as React.FocusEvent<HTMLInputElement>)
+      }
+      onFocus={(e) =>
+        props.onFocus?.(e as unknown as React.FocusEvent<HTMLInputElement>)
+      }
+      onChange={(e) => {
+        const option = flat.find((x) => x.key === e.target.value)?.option;
+        if (option) {
+          props.onChange?.(option as any, {
+            action: "select-option",
+            option,
+            name: props.name,
+          });
+        } else {
+          props.onChange?.(null as any, {
+            action: "clear",
+            removedValues: selected ? [selected] : [],
+            name: props.name,
+          });
+        }
+      }}
+    >
+      {/* Empty choice: removes the value when clearable, else only a prompt */}
+      {(props.isClearable || selectedKey === undefined) && (
+        <option value="" disabled={!props.isClearable}>
+          {typeof props.placeholder === "string"
+            ? props.placeholder
+            : "Select…"}
+        </option>
+      )}
+      {entries.map((e) =>
+        "group" in e ? (
+          <optgroup key={e.group} label={e.group}>
+            {e.entries.map(renderOption)}
+          </optgroup>
+        ) : (
+          renderOption(e)
+        ),
+      )}
+    </select>
+  );
+};
+
 const BaseSelect = <IsMulti extends boolean = false>(
   props: Props<OptionType, IsMulti> & { isMulti?: IsMulti },
   ref: React.Ref<SelectInstance<OptionType, IsMulti, GroupBase<OptionType>>>,
@@ -291,6 +426,20 @@ const BaseSelect = <IsMulti extends boolean = false>(
   const { styles, classNames, components = {}, ...rest } = props;
   const instanceId = React.useId();
   const container = useDialogPortalContainerContext();
+  const isMobile = useIsMobile();
+
+  // Phones get their own picker when the choices are plain text
+  const nativeEntries = isMobile
+    ? toNativeEntries(props as Props<OptionType, boolean>)
+    : null;
+  if (nativeEntries) {
+    return (
+      <NativeSelect
+        props={props as Props<OptionType, boolean>}
+        entries={nativeEntries}
+      />
+    );
+  }
 
   return (
     <SelectComponent<OptionType, IsMulti, GroupBase<OptionType>>
