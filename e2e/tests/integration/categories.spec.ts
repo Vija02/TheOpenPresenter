@@ -310,6 +310,28 @@ test.describe("Categories", () => {
     expect(page.url()).toBe(url);
   });
 
+  test("on phones a tap outside puts the keyboard away first", async ({
+    page,
+    organizationPage,
+    loginWithDefaultProject,
+  }) => {
+    await loginWithDefaultProject(orgUrl());
+    await page.setViewportSize({ width: 390, height: 800 });
+
+    await organizationPage.newProjectButton.click();
+    const dialog = page.getByRole("dialog", { name: "New Project" });
+    const name = dialog.getByRole("textbox", { name: "Name" });
+    await name.fill("Half typed");
+
+    // The sheet sits at the bottom; the top of the screen is backdrop
+    await page.mouse.click(195, 20);
+    await expect(name).not.toBeFocused();
+    await expect(dialog).toBeVisible();
+
+    await page.mouse.click(195, 20);
+    await expect(dialog).toBeHidden();
+  });
+
   test("a category can be hidden from the projects filter", async ({
     page,
     organizationPage,
