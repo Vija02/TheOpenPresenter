@@ -110,7 +110,7 @@ function DialogContent({
 
   return (
     <DialogPortal container={container ?? undefined}>
-      <DialogBackdrop />
+      <DialogBackdrop forceRender />
       <BaseDialog.Popup
         data-slot="dialog-content"
         className={cn(dialogPopupVariants({ size, className }))}
