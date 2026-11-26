@@ -51,6 +51,22 @@ export const useCloseOnBack = (
   }, [open, isMobile]);
 };
 
+const isTyping = () => {
+  const el = document.activeElement;
+  if (el instanceof HTMLTextAreaElement) return true;
+  if (el instanceof HTMLInputElement)
+    return ![
+      "checkbox",
+      "radio",
+      "button",
+      "submit",
+      "range",
+      "color",
+      "file",
+    ].includes(el.type);
+  return el instanceof HTMLElement && el.isContentEditable;
+};
+
 type OpenChange = (
   open: boolean,
   details: Dialog.Root.ChangeEventDetails,
@@ -69,10 +85,34 @@ export const useOverlayOpen = ({
   defaultOpen?: boolean;
   onOpenChange?: OpenChange;
 }) => {
+  const isMobile = useIsMobile();
   const [ownOpen, setOwnOpen] = React.useState(defaultOpen ?? false);
   const controlled = open !== undefined;
   const isOpen = controlled ? open : ownOpen;
+  // Checked as the press starts: some browsers move focus before we hear of it
+  const typingAtPress = React.useRef(false);
+  React.useEffect(() => {
+    if (!isOpen || !isMobile) return;
+    const onPress = () => {
+      typingAtPress.current = isTyping();
+    };
+    document.addEventListener("pointerdown", onPress, true);
+    return () => document.removeEventListener("pointerdown", onPress, true);
+  }, [isOpen, isMobile]);
+
   const change: OpenChange = (next, details) => {
+    // On phones, a tap outside first just puts the keyboard away
+    if (
+      !next &&
+      isMobile &&
+      details.reason === "outside-press" &&
+      typingAtPress.current
+    ) {
+      typingAtPress.current = false;
+      details.cancel();
+      (document.activeElement as HTMLElement | null)?.blur();
+      return;
+    }
     if (!controlled) setOwnOpen(next);
     onOpenChange?.(next, details);
   };
