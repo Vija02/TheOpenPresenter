@@ -235,7 +235,7 @@ test.describe("Screen /control as logged-in guest (non-member of screen org)", (
     ).toBeVisible();
 
     await dialog.getByLabel("Name").fill("Guest Created Project");
-    await dialog.getByRole("button", { name: "Save" }).click();
+    await dialog.getByRole("button", { name: "Create", exact: true }).click();
 
     // The new project is created in the user's OWN org (not the screen's
     // foreign org), and CreateProjectModal navigates to that project after

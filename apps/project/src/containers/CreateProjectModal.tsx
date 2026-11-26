@@ -1,10 +1,7 @@
 import { Tag } from "@/components/Tag";
+import { TagPickerDialog } from "@/components/Tag/TagPickerDialog";
 import { TagsSelector } from "@/components/Tag/TagsSelector";
-import {
-  categoryNextDate,
-  categoryScheduleLabel,
-  noCategoryLabel,
-} from "@/lib/categorySchedule";
+import { categoryNextDate, noCategoryLabel } from "@/lib/categorySchedule";
 import { getOrgTypeLabels } from "@/lib/organizationType";
 import {
   useOrganizationSlug,
@@ -34,10 +31,13 @@ import {
   DialogHeader,
   DialogTitle,
   Form,
-  InputControl,
-  Label,
-  OptionControl,
+  FormControl,
+  FormField,
+  FormItem,
+  Input,
+  SelectControl,
   TimeInputControl,
+  useIsMobile,
   useOverlayToggle,
 } from "@repo/ui";
 import { addDays, format } from "date-fns";
@@ -45,6 +45,7 @@ import { generateSlug } from "random-word-slugs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { FiCalendar, FiPlus, FiSettings, FiTag } from "react-icons/fi";
+import { TbCategory } from "react-icons/tb";
 import { toast } from "react-toastify";
 import { z } from "zod";
 
@@ -90,6 +91,8 @@ const CreateProjectModal = ({
   onCreated,
 }: CreateProjectModalPropTypes) => {
   const labels = getOrgTypeLabels(useOrganizationType());
+  // Same breakpoint as the bottom sheet, where a tag dropdown would be cut off
+  const isMobile = useIsMobile();
   const { isOpen, onToggle, resetData } = useOverlayToggle();
 
   const [, createProject] = useCreateProjectMutation();
@@ -120,6 +123,23 @@ const CreateProjectModal = ({
   const targetDate = useWatch({ control: form.control, name: "targetDate" });
   const targetTime = useWatch({ control: form.control, name: "targetTime" });
   const selectedCategory = categories.find((c) => c.id === categoryId);
+  const categoryOptions = [
+    ...categories.map((c) => ({ value: c.id, label: c.name })),
+    { value: UNCATEGORIZED, label: noCategoryLabel(categories) },
+  ];
+
+  const categorySettingsLink = (
+    <a
+      href={`/o/${slug}/settings/categories`}
+      target="_blank"
+      rel="noreferrer"
+      className="project--create-category-settings"
+      aria-label="Category settings"
+      title="Category settings"
+    >
+      <FiSettings />
+    </a>
+  );
 
   // What the category filled in, shown as one line until the user wants to change it
   const [showDetails, setShowDetails] = useState(false);
@@ -265,59 +285,85 @@ const CreateProjectModal = ({
       <Form {...form}>
         {/* The name field focuses itself */}
         <DialogContent
-          className="max-w-2xl"
+          className="project--create-dialog max-w-2xl"
           initialFocus={false}
           render={
             <form onSubmit={form.handleSubmit((data) => submit(data, false))} />
           }
         >
-          <DialogHeader>
-            <DialogTitle>New Project</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            {categories.length > 0 && (
-              <div className="project--create-category">
-                <div className="project--create-category-heading">
-                  <Label>Category</Label>
-                  <a
-                    href={`/o/${slug}/settings/categories`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="project--create-category-settings"
-                    aria-label="Category settings"
-                    title="Category settings"
-                  >
-                    <FiSettings />
-                  </a>
-                </div>
-                <OptionControl
-                  control={form.control}
-                  name="categoryId"
-                  aria-label="Category"
-                  size="sm"
-                  className="project--create-category-options"
-                  options={[
-                    ...categories.map((c) => ({
-                      value: c.id,
-                      title: c.name,
-                      description: categoryScheduleLabel(c),
-                    })),
-                    {
-                      value: UNCATEGORIZED,
-                      title: noCategoryLabel(categories),
-                    },
-                  ]}
-                />
-              </div>
-            )}
-
-            <InputControl
+          <DialogHeader className="project--create-header">
+            {/* The name is the visible heading; the title stays for screen readers */}
+            <DialogTitle className="sr-only">New Project</DialogTitle>
+            <FormField
               control={form.control}
               name="name"
-              label="Name"
-              placeholder={namePlaceholder}
-              autoFocus={canHover}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      aria-label="Name"
+                      placeholder={namePlaceholder}
+                      autoFocus={canHover}
+                      autoComplete="off"
+                      className="project--create-name"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
+          </DialogHeader>
+          <DialogBody>
+            {categories.length > 0 &&
+              (isMobile ? (
+                <SelectControl
+                  control={form.control}
+                  name="categoryId"
+                  label="Category"
+                  labelSuffix={categorySettingsLink}
+                  options={categoryOptions}
+                  isSearchable={false}
+                />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <div className="project--create-summary project--create-category">
+                      <TbCategory aria-hidden />
+                      {/* Pills and the cog wrap as one run, so the cog follows the last pill */}
+                      <div className="project--create-category-pills">
+                        <div
+                          role="radiogroup"
+                          aria-label="Category"
+                          className="project--create-category-options"
+                        >
+                          {categoryOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="radio"
+                              aria-checked={field.value === option.value}
+                              className="project--create-category-pill"
+                              onClick={() => field.onChange(option.value)}
+                              onKeyDown={(e) => {
+                                // Buttons pick on Enter; in this form Enter means Create
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  e.currentTarget.form?.requestSubmit();
+                                }
+                              }}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                        {categorySettingsLink}
+                      </div>
+                    </div>
+                  )}
+                />
+              ))}
 
             {detailsOpen ? (
               <div className="grid grid-cols-2 items-start gap-3 md:grid-cols-[1fr_auto]">
@@ -359,7 +405,7 @@ const CreateProjectModal = ({
 
             <div className="project--create-summary">
               <FiTag aria-hidden />
-              {editingTags ? (
+              {editingTags && !isMobile ? (
                 <TagsSelector
                   inline
                   autoFocus
@@ -424,6 +470,20 @@ const CreateProjectModal = ({
                 </>
               )}
             </div>
+            {isMobile && (
+              <TagPickerDialog
+                open={editingTags}
+                onOpenChange={setEditingTags}
+                tags={allTagByOrganization ?? []}
+                selectedIds={selectedTagIds}
+                onChange={setSelectedTagIds}
+                onCreate={async (name) => {
+                  const result = await createTag({ name, organizationId });
+                  refetchTags?.();
+                  return result?.createTag?.tag?.id;
+                }}
+              />
+            )}
           </DialogBody>
           <DialogFooter>
             <div className="flex w-full flex-wrap justify-end gap-2">
