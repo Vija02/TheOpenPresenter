@@ -1,3 +1,4 @@
+import { useIsMobile } from "@/lib/useIsMobile";
 import { cn } from "@/lib/utils";
 import { Time } from "@internationalized/date";
 import { ChevronDown } from "lucide-react";
@@ -50,6 +51,7 @@ function TimeInput({
   "aria-invalid": invalid,
   ...aria
 }: TimeInputProps) {
+  const isMobile = useIsMobile();
   const [open, setOpen] = React.useState(false);
   const selectedRef = React.useRef<HTMLButtonElement>(null);
   const time = parseTime(value);
@@ -73,6 +75,22 @@ function TimeInput({
   const current = value
     ? ([...suggestions].reverse().find((s) => s <= value) ?? suggestions[0])
     : "09:00";
+
+  if (isMobile) {
+    return (
+      <input
+        {...aria}
+        type="time"
+        className={cn("ui--input", className)}
+        value={value ?? ""}
+        onChange={(e) => onChange?.(e.target.value)}
+        onBlur={onBlur}
+        name={name}
+        disabled={disabled}
+        aria-invalid={invalid}
+      />
+    );
+  }
 
   return (
     <div className={cn("ui--time-input", className)} data-disabled={disabled}>
