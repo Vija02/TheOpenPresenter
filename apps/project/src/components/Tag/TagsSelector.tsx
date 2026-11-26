@@ -5,6 +5,7 @@ import { Props } from "react-select";
 import { CreatableProps } from "react-select/creatable";
 import { Link as WouterLink } from "wouter";
 
+import "./TagsSelector.css";
 import { ReactSelectTagsProps } from "./tagReactSelect";
 
 type PropTypes = {
@@ -12,18 +13,47 @@ type PropTypes = {
   value: { value: any; label: string }[];
   onChange: Props<any, any>["onChange"];
   disabled?: boolean;
+  /** No box or arrows, so it reads as part of the form */
+  inline?: boolean;
+  autoFocus?: boolean;
+  onBlur?: () => void;
+  "aria-label"?: string;
 };
+
+const Nothing = () => null;
 
 export function TagsSelector({
   onCreateOption,
   value,
   onChange,
   disabled,
+  inline,
+  autoFocus,
+  onBlur,
+  "aria-label": ariaLabel,
 }: PropTypes) {
+  const selectProps = ReactSelectTagsProps();
   return (
-    <div data-testid="tag-selector">
+    <div
+      data-testid="tag-selector"
+      className={inline ? "min-w-0 flex-1" : undefined}
+    >
       <CreatableSelect
-        {...ReactSelectTagsProps()}
+        {...selectProps}
+        {...(inline && {
+          components: {
+            ...selectProps.components,
+            DropdownIndicator: Nothing,
+            IndicatorSeparator: Nothing,
+            ClearIndicator: Nothing,
+          },
+          classNames: { control: () => "project--tags-inline__control" },
+          placeholder: "Search or create a tag…",
+        })}
+        autoFocus={autoFocus}
+        openMenuOnFocus={autoFocus}
+        onBlur={onBlur}
+        aria-label={ariaLabel}
         isMulti
         onCreateOption={onCreateOption}
         value={value}
