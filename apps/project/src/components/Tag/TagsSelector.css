@@ -4,3 +4,35 @@
 .project--tags-inline__control {
   @apply flex min-h-7 w-full flex-wrap items-center gap-1 text-sm text-primary;
 }
+
+/* Phones: tags picked from a centred card, one row per tag */
+.project--tag-picker {
+  @apply h-auto max-h-[70dvh] w-[calc(100%-2rem)] max-w-sm gap-0 overflow-hidden rounded-xl;
+}
+.project--tag-picker__header {
+  @apply flex-row items-center justify-between py-2 pr-2 pl-4;
+}
+.project--tag-picker__search {
+  @apply px-4 pb-2;
+}
+.project--tag-picker__list {
+  @apply min-h-0 flex-1 overflow-y-auto;
+}
+.project--tag-picker__row {
+  @apply flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 border-b border-stroke px-4 text-left;
+  @apply active:bg-surface-primary-hover disabled:opacity-50;
+  @apply focus-visible:outline-none focus-visible:bg-surface-primary-hover;
+}
+.project--tag-picker__check {
+  @apply size-5 shrink-0 text-link;
+}
+.project--tag-picker__create {
+  @apply inline-flex items-center gap-2 text-sm font-medium text-link;
+}
+/* Stays in view under the list */
+.project--tag-picker__footer {
+  @apply shrink-0 border-t border-stroke;
+}
+.project--tag-picker__empty {
+  @apply px-4 py-6 text-center text-sm text-secondary;
+}
