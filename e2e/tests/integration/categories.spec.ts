@@ -299,10 +299,22 @@ test.describe("Categories", () => {
 
     // Closing it another way doesn't leave an extra step for back
     await organizationPage.newProjectButton.click();
-    await page
-      .getByRole("dialog")
-      .getByRole("button", { name: "Cancel" })
-      .click();
+    const dialog = page.getByRole("dialog");
+    // Phones close with ✕, back or a tap outside, so Create gets the room
+    await expect(dialog.getByRole("button", { name: "Cancel" })).toBeHidden();
+    const create = await dialog
+      .getByRole("button", { name: "Create", exact: true })
+      .boundingBox();
+    const another = await dialog
+      .getByRole("button", { name: "Create another" })
+      .boundingBox();
+    expect(create!.width).toBeGreaterThan(another!.width);
+    // A finger-sized ✕
+    const close = dialog.getByRole("button", { name: "Close" });
+    const closeBox = await close.boundingBox();
+    expect(closeBox!.width).toBeGreaterThanOrEqual(44);
+    expect(closeBox!.height).toBeGreaterThanOrEqual(44);
+    await close.click();
     await expect(page.getByRole("dialog")).toBeHidden();
     await expect
       .poll(() => page.evaluate(() => window.history.state?.__overlay))

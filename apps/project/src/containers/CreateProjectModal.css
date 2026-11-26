@@ -67,7 +67,7 @@
 
 /* Room for the close button */
 .project--create-header {
-  @apply pr-12;
+  @apply pr-14;
 }
 
 /* The name doubles as the dialog's heading; the padding is pulled out so the text lines up */
@@ -95,8 +95,26 @@
   .project--create-dialog[data-ending-style] {
     transform: translate(-50%, 100%);
   }
+  /* Sets the actions apart, clear of the iPhone home bar */
+  .project--create-dialog [data-slot="dialog-footer"] {
+    @apply pt-2;
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
   /* Lets the body scroll when the keyboard leaves little room */
   .project--create-dialog [data-slot="dialog-body"] {
     @apply min-h-0;
+  }
+}
+
+.project--create-actions {
+  @apply flex w-full flex-wrap justify-end gap-2;
+}
+/* Phones: ✕, back and tapping outside already close it, so Create gets the room */
+@media (width < 48rem) {
+  .project--create-cancel {
+    @apply hidden;
+  }
+  .project--create-submit {
+    @apply flex-1;
   }
 }
