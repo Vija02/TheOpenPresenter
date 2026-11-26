@@ -1,0 +1,6 @@
+@reference "@repo/tailwind-config/index.css";
+
+/* Outside a layer on purpose: react-calendar's own stylesheet isn't layered */
+.react-calendar.ui--date-input__calendar {
+  border: none;
+}

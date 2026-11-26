@@ -8,7 +8,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { StrictMode } from "react";
-import "react-calendar/dist/Calendar.css";
 import { createRoot } from "react-dom/client";
 import { ErrorBoundary } from "react-error-boundary";
 import { ToastContainer } from "react-toastify";

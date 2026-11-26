@@ -1,4 +1,3 @@
-import { ReactSelectDateProps } from "@/components/DatePicker/datePickerReactSelect";
 import { TagsSelector } from "@/components/Tag/TagsSelector";
 import { noCategoryLabel } from "@/lib/categorySchedule";
 import { getOrgTypeLabels } from "@/lib/organizationType";
@@ -21,6 +20,7 @@ import {
 import { globalState } from "@repo/lib";
 import {
   Button,
+  DateInputControl,
   Dialog,
   DialogBody,
   DialogContent,
@@ -28,16 +28,10 @@ import {
   DialogHeader,
   DialogTitle,
   Form,
-  FormControl,
-  FormField,
-  FormItem,
   FormLabel,
-  FormMessage,
   InputControl,
-  Select,
   SelectControl,
   TimeInputControl,
-  formatHumanReadableDate,
   useOverlayToggle,
 } from "@repo/ui";
 import { useCallback, useEffect, useState } from "react";
@@ -174,41 +168,18 @@ const EditProjectModal = ({
           <DialogBody>
             <InputControl control={form.control} name="name" label="Name" />
 
-            <div className="grid gap-3 items-start sm:grid-cols-[1fr_auto]">
-              <FormField
+            <div className="grid grid-cols-2 items-start gap-3 md:grid-cols-[1fr_auto]">
+              <DateInputControl
                 control={form.control}
                 name="targetDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{labels.projectDate}</FormLabel>
-                    <FormControl>
-                      <Select
-                        {...ReactSelectDateProps}
-                        value={
-                          field.value
-                            ? {
-                                value: field.value,
-                                label: formatHumanReadableDate(field.value),
-                              }
-                            : null
-                        }
-                        onChange={(val) => {
-                          field.onChange(val);
-                        }}
-                        isClearable
-                        isSearchable={false}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={labels.projectDate}
               />
               <TimeInputControl
                 control={form.control}
                 name="targetTime"
                 label="Time"
                 disabled={!targetDate}
-                className="sm:w-32"
+                className="md:w-32"
               />
             </div>
 
