@@ -5,7 +5,7 @@ import {
 } from "@repo/base-plugin";
 import { projectTitle } from "@repo/lib";
 import { useAwareness, useData, usePluginMetaData } from "@repo/shared";
-import { Button, OverlayToggle } from "@repo/ui";
+import { Button, OverlayToggle, useIsMobile } from "@repo/ui";
 import { cx } from "class-variance-authority";
 import { sortBy } from "lodash-es";
 import { useMemo } from "react";
@@ -18,7 +18,6 @@ import { useLocation } from "wouter";
 import { useMobileSidebar } from "../../contexts/mobileSidebar";
 import { useRendererSelection } from "../../contexts/rendererSelection";
 import { useSidebarSections } from "../../contexts/sidebarSections";
-import { useIsMobile } from "../../hooks/useIsMobile";
 import { useNavigateWithParams } from "../../hooks/useNavigateWithParams";
 import { useSceneIcon } from "../../hooks/useSceneIcon";
 import { getSceneOwnershipStatus } from "../../util/sceneOwnership";

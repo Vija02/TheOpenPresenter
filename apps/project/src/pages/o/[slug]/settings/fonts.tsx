@@ -1,5 +1,4 @@
 import { SharedOrgLayout } from "@/components/SharedOrgLayout";
-import { useIsMobile } from "@/components/useIsMobile";
 import {
   useOrganizationLoading,
   useOrganizationSlug,
@@ -47,6 +46,7 @@ import {
   Textarea,
   ToggleGroup,
   ToggleGroupItem,
+  useIsMobile,
 } from "@repo/ui";
 import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { FiPlus, FiSearch, FiSliders } from "react-icons/fi";

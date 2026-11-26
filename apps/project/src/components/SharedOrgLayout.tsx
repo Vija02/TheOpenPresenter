@@ -14,6 +14,7 @@ import {
   PopoverClose,
   PopoverContent,
   PopoverTrigger,
+  useIsMobile,
   useOverlayToggle,
 } from "@repo/ui";
 import * as React from "react";
@@ -36,7 +37,6 @@ import { contentMinHeight } from "./SharedLayoutSkeleton";
 import { DrawerShell } from "./Sidebar/DrawerShell";
 import { SidebarItem } from "./Sidebar/SidebarItem";
 import { StandardWidth } from "./StandardWidth";
-import { useIsMobile } from "./useIsMobile";
 
 type OrgMembership = NonNullable<
   NonNullable<

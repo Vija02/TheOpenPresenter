@@ -6,7 +6,13 @@ import {
   useAiChat,
 } from "@repo/ai-chat";
 import type { DataBinding, MediaPickerResult } from "@repo/base-types";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  useIsMobile,
+} from "@repo/ui";
 import {
   ReactNode,
   useCallback,
@@ -45,7 +51,6 @@ import { ElementInspector } from "./inspector/ElementInspector";
 import { LayoutPluginApi } from "./pluginApi";
 import { useLayoutHistory } from "./useLayoutHistory";
 import { useLayoutShortcuts } from "./useLayoutShortcuts";
-import { useIsCompact } from "./useMediaQuery";
 
 export type LayoutWorkbenchProps = {
   doc: LayoutDoc;
@@ -142,7 +147,7 @@ export const LayoutWorkbench = ({
   const organizationId = pluginApi?.pluginContext.organizationId;
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [muted, setMuted] = useState(true);
-  const compact = useIsCompact();
+  const compact = useIsMobile();
   const [compactTab, setCompactTab] = useState<CompactTab>("properties");
   const rootRef = useRef<HTMLDivElement>(null);
 

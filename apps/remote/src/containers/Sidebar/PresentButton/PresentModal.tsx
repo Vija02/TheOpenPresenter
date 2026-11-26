@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  useIsMobile,
   useOverlayToggle,
 } from "@repo/ui";
 import { useState } from "react";
@@ -29,7 +30,6 @@ import { useSearch } from "wouter";
 
 import { presentHereStore } from "../../../contexts/presentHere";
 import { useRendererSelection } from "../../../contexts/rendererSelection";
-import { useIsMobile } from "../../../hooks/useIsMobile";
 import { useOutputs } from "../RendererManagement/useOutputs";
 import { HandoffAnimation } from "./HandoffAnimation";
 import { MonitorPicker } from "./MonitorPicker";

@@ -3,6 +3,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   Button as UiButton,
+  useIsMobile,
 } from "@repo/ui";
 import { ReactNode, useState } from "react";
 import {
@@ -27,7 +28,6 @@ import {
   addVideoElement,
 } from "./addElement";
 import { LayoutPluginApi } from "./pluginApi";
-import { useIsCompact } from "./useMediaQuery";
 
 export type AddElementBarProps = {
   doc: LayoutDoc;
@@ -60,7 +60,7 @@ export const AddElementBar = ({
   labels,
   className,
 }: AddElementBarProps) => {
-  const compact = useIsCompact();
+  const compact = useIsMobile();
   const defaults = useLayoutInsertDefaults();
   const { sources } = useHostCatalog();
   // On a phone the canvas is capped at 55% of the viewport

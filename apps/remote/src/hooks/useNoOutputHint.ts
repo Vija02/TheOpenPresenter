@@ -1,11 +1,11 @@
 import { isScreenRenderer } from "@repo/base-plugin";
 import { captureEvent } from "@repo/observability/initAnalytics";
 import { useAwareness } from "@repo/shared";
+import { useIsMobile } from "@repo/ui";
 import { useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 
 import { previewPanelStore } from "../contexts/previewPanel";
-import { useIsMobile } from "./useIsMobile";
 
 const ATTEMPT_COUNT = 3;
 const ATTEMPT_WINDOW_MS = 5000;
