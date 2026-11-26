@@ -1,0 +1,6 @@
+@reference "@repo/tailwind-config/index.css";
+
+/* Replaces the boxed control, so only the layout it needs is set here */
+.project--tags-inline__control {
+  @apply flex min-h-7 w-full flex-wrap items-center gap-1 text-sm text-primary;
+}
