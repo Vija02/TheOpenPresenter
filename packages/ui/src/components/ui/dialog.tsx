@@ -1,4 +1,5 @@
 import { useOverlayOpen } from "@/lib/useCloseOnBack";
+import { KeyboardInset } from "@/lib/useKeyboardInset";
 import { cn } from "@/lib/utils";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { type VariantProps, cva } from "class-variance-authority";
@@ -123,6 +124,7 @@ function DialogContent({
         className={cn(dialogPopupVariants({ size, className }))}
         {...props}
       >
+        <KeyboardInset />
         {children}
         {!hideCloseButton && (
           <BaseDialog.Close className="ui--dialog-popup__close">

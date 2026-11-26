@@ -79,11 +79,13 @@
 
 /*
  * Phones: a bottom sheet sized to its content, instead of the usual full-screen
- * dialog, so the buttons sit right under the controls.
+ * dialog, resting on the keyboard when it's open.
  */
 @media (width < 48rem) {
   .project--create-dialog {
-    @apply top-auto bottom-0 h-auto max-h-[90dvh] rounded-t-xl border-x-0 border-b-0;
+    @apply top-auto h-auto rounded-t-xl border-x-0 border-b-0;
+    bottom: var(--keyboard-inset, 0px);
+    max-height: min(90dvh, calc(var(--visible-height, 100dvh) - 1rem));
     transform: translateX(-50%);
 
     @starting-style {
@@ -92,5 +94,9 @@
   }
   .project--create-dialog[data-ending-style] {
     transform: translate(-50%, 100%);
+  }
+  /* Lets the body scroll when the keyboard leaves little room */
+  .project--create-dialog [data-slot="dialog-body"] {
+    @apply min-h-0;
   }
 }

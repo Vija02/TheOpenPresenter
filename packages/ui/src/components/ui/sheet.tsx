@@ -1,4 +1,5 @@
 import { useOverlayOpen } from "@/lib/useCloseOnBack";
+import { KeyboardInset } from "@/lib/useKeyboardInset";
 import { cn } from "@/lib/utils";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
@@ -98,6 +99,7 @@ function SheetContent({
         )}
         {...props}
       >
+        <KeyboardInset />
         {children}
         {!hideCloseButton && (
           <BaseDialog.Close className={cn("ui--sheet-close")}>

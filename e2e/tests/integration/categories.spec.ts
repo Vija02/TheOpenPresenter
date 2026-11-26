@@ -169,10 +169,10 @@ test.describe("Categories", () => {
 
     await page.setViewportSize({ width: 390, height: 800 });
     await expect(pills).toBeHidden();
-    // Phones get their own picker for simple selects
-    await page
-      .getByRole("combobox", { name: "Filter by category" })
-      .selectOption({ label: "Sunday Morning" });
+    // Wait for the switch to the native select after resizing
+    const filter = page.getByRole("combobox", { name: "Filter by category" });
+    await expect(filter).toHaveJSProperty("tagName", "SELECT");
+    await filter.selectOption({ label: "Sunday Morning" });
     await expect(page).toHaveURL(/category=/);
     await expect(
       page.getByText("No projects in this category yet."),
