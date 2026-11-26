@@ -480,12 +480,14 @@ function SelectControl<IsMulti extends boolean = false>({
   control,
   name,
   label,
+  labelSuffix,
   description,
   options,
   ...props
 }: Omit<Props<OptionType, IsMulti>, "options"> & {
   name: string;
   label: string;
+  labelSuffix?: React.ReactNode;
   description?: string;
   control: Control<any, any, any>;
   options: OptionType[];
@@ -497,7 +499,14 @@ function SelectControl<IsMulti extends boolean = false>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          {labelSuffix ? (
+            <div className="flex items-center justify-between gap-2">
+              <FormLabel>{label}</FormLabel>
+              {labelSuffix}
+            </div>
+          ) : (
+            <FormLabel>{label}</FormLabel>
+          )}
           <FormControl>
             <Select
               {...field}

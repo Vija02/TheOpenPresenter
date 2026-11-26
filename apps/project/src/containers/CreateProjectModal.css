@@ -1,29 +1,50 @@
 @reference "@repo/tailwind-config/index.css";
 
-/* Same gap to the options as a form label has to its field */
-.project--create-category-heading {
-  @apply mb-2 flex items-center gap-1;
-}
-
 .project--create-category-settings {
-  @apply rounded-xs p-0.5 text-tertiary opacity-0 transition hover:text-primary;
+  @apply rounded-xs p-0.5 text-tertiary transition hover:text-primary;
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
   @apply [&_svg]:size-3;
 }
-/* Shown while using the section; always shown where there's no hover (touch) */
+/* Beside the pills it waits for the row to be used; always shown on touch */
+.project--create-category .project--create-category-settings {
+  @apply opacity-0;
+}
 .project--create-category:hover .project--create-category-settings,
 .project--create-category:focus-within .project--create-category-settings {
   @apply opacity-100;
 }
 @media (hover: none) {
-  .project--create-category-settings {
+  .project--create-category .project--create-category-settings {
     @apply opacity-100;
   }
 }
 
-/* One per row on phones; side by side, equal heights, on wider screens */
+/* Icon stays beside the pills, which wrap among themselves */
+.project--create-summary.project--create-category {
+  @apply flex-nowrap items-start;
+}
+.project--create-summary.project--create-category > svg {
+  @apply mt-2.5 sm:mt-1.5;
+}
+
+.project--create-category-pills {
+  @apply flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-1.5;
+}
+/* Lays its pills straight into the row above, so the cog can follow the last one */
 .project--create-category-options {
-  @apply grid grid-cols-1 auto-rows-fr sm:grid-cols-3;
+  @apply contents;
+}
+
+.project--create-category-pill {
+  /* Bigger touch targets on phones */
+  @apply inline-flex h-9 cursor-pointer items-center whitespace-nowrap rounded-full border border-stroke px-4 text-sm text-secondary transition-colors;
+  @apply sm:h-7 sm:px-3;
+  @apply hover:border-stroke-emphasis hover:text-primary;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
+}
+.project--create-category-pill[aria-checked="true"] {
+  @apply border-fill-default bg-fill-default text-fill-default-fg;
+  @apply hover:border-fill-default hover:text-fill-default-fg;
 }
 
 .project--create-summary {
@@ -42,4 +63,34 @@
   @apply hover:border-stroke-emphasis hover:text-primary;
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
   @apply [&_svg]:size-3.5;
+}
+
+/* Room for the close button */
+.project--create-header {
+  @apply pr-12;
+}
+
+/* The name doubles as the dialog's heading; the padding is pulled out so the text lines up */
+.project--create-name {
+  @apply -mx-2 h-auto w-[calc(100%+1rem)] border-transparent px-2 py-1 text-2xl font-bold md:text-2xl;
+  @apply hover:bg-surface-primary-hover;
+  @apply focus-visible:border-transparent focus-visible:bg-surface-primary-hover;
+}
+
+/*
+ * Phones: a bottom sheet sized to its content, instead of the usual full-screen
+ * dialog, so the buttons sit right under the controls.
+ */
+@media (width < 48rem) {
+  .project--create-dialog {
+    @apply top-auto bottom-0 h-auto max-h-[90dvh] rounded-t-xl border-x-0 border-b-0;
+    transform: translateX(-50%);
+
+    @starting-style {
+      transform: translate(-50%, 100%);
+    }
+  }
+  .project--create-dialog[data-ending-style] {
+    transform: translate(-50%, 100%);
+  }
 }

@@ -11,9 +11,8 @@ export const categoryCard = (page: Page, name?: string) => {
 /** A category choice in the new project dialog */
 export const categoryOption = (scope: Page | Locator, name: string) =>
   scope
-    .getByTestId("form-item-categoryId")
-    .getByRole("radio")
-    .filter({ hasText: name });
+    .getByRole("radiogroup", { name: "Category" })
+    .getByRole("radio", { name, exact: true });
 
 export class OrgSettingCategoriesPage {
   readonly addCategoryButton: Locator;

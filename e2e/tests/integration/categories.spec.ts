@@ -169,8 +169,10 @@ test.describe("Categories", () => {
 
     await page.setViewportSize({ width: 390, height: 800 });
     await expect(pills).toBeHidden();
-    await page.getByTestId("category-filter-select").click();
-    await page.getByRole("option", { name: "Sunday Morning" }).click();
+    // Phones get their own picker for simple selects
+    await page
+      .getByRole("combobox", { name: "Filter by category" })
+      .selectOption({ label: "Sunday Morning" });
     await expect(page).toHaveURL(/category=/);
     await expect(
       page.getByText("No projects in this category yet."),
@@ -220,6 +222,92 @@ test.describe("Categories", () => {
     await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(organizationPage.projectCards).toHaveCount(1);
     await expect(organizationPage.projectCards).toContainText("First");
+  });
+
+  test("on phones the date and tags avoid dropdowns", async ({
+    page,
+    organizationPage,
+    loginWithDefaultProject,
+  }) => {
+    await loginWithDefaultProject(orgUrl());
+    await page.setViewportSize({ width: 390, height: 800 });
+
+    await organizationPage.newProjectButton.click();
+    const dialog = page.getByRole("dialog", { name: "New Project" });
+    // The phone's own picker for the category too
+    const category = dialog.getByRole("combobox", { name: "Category" });
+    await category.selectOption({ label: "Other" });
+    await expect(category.locator("option:checked")).toHaveText("Other");
+
+    // The phone's own date and time pickers
+    await dialog.locator('input[type="date"]').fill("2030-12-25");
+    await dialog.locator('input[type="time"]').fill("18:45");
+    await expect(dialog.locator('input[name="targetTime"]')).toHaveValue(
+      "18:45",
+    );
+    await expect(dialog.getByRole("textbox", { name: "Name" })).toHaveAttribute(
+      "placeholder",
+      "25th Dec 2030",
+    );
+
+    // Tags are picked from a card of rows; a new one is selected straight away
+    await dialog.getByRole("button", { name: "Add tags" }).click();
+    const tagPicker = page.getByRole("dialog", { name: "Tags" });
+    // Stacked on New Project, which gets dimmed by a second backdrop
+    await expect(page.locator('[data-slot="dialog-backdrop"]')).toHaveCount(2);
+    const tagSettings = tagPicker.getByRole("link", { name: "Tag settings" });
+    await expect(tagSettings).toHaveAttribute("href", /\/settings\/tags$/);
+    await expect(tagSettings).toHaveAttribute("target", "_blank");
+    await tagPicker
+      .getByRole("textbox", { name: "Search or create a tag" })
+      .fill("Mobile tag");
+    await tagPicker
+      .getByRole("button", { name: /Create “Mobile tag”/ })
+      .click();
+    const row = tagPicker.getByRole("checkbox", { name: "Mobile tag" });
+    await expect(row).toBeChecked();
+    // Tapping a row toggles it
+    await row.click();
+    await expect(row).not.toBeChecked();
+    await row.click();
+    await expect(row).toBeChecked();
+
+    // Back closes only the tag picker
+    await page.goBack();
+    await expect(tagPicker).toBeHidden();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("Mobile tag")).toBeVisible();
+
+    await organizationPage.newProjectCreateButton.click();
+    await expect(page).toHaveURL(new RegExp(`/app/${ORG_SLUG}/`));
+  });
+
+  test("on phones the back button closes the dialog first", async ({
+    page,
+    organizationPage,
+    loginWithDefaultProject,
+  }) => {
+    await loginWithDefaultProject(orgUrl());
+    await page.setViewportSize({ width: 390, height: 800 });
+    const url = page.url();
+
+    await organizationPage.newProjectButton.click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole("dialog")).toBeHidden();
+    expect(page.url()).toBe(url);
+
+    // Closing it another way doesn't leave an extra step for back
+    await organizationPage.newProjectButton.click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect
+      .poll(() => page.evaluate(() => window.history.state?.__overlay))
+      .toBeUndefined();
+    expect(page.url()).toBe(url);
   });
 
   test("a category can be hidden from the projects filter", async ({
@@ -273,9 +361,11 @@ test.describe("Categories", () => {
 
     await page.goto(orgUrl());
     await organizationPage.newProjectButton.click();
-    await expect(
-      categoryOption(page.getByRole("dialog"), "Sunday Morning"),
-    ).toBeChecked();
+    const dialog = page.getByRole("dialog");
+    await expect(categoryOption(dialog, "Sunday Morning")).toBeChecked();
+    await categoryOption(dialog, "Other").click();
+    await expect(categoryOption(dialog, "Other")).toBeChecked();
+    await expect(categoryOption(dialog, "Sunday Morning")).not.toBeChecked();
     await page.keyboard.press("Escape");
 
     // Filtering by Other (no category) still starts uncategorized

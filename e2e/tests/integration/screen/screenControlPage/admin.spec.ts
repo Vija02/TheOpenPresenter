@@ -372,7 +372,7 @@ test.describe("Screen /control as org member", () => {
     ).toBeVisible();
 
     await dialog.getByLabel("Name").fill("Brand New Screen Project");
-    await dialog.getByRole("button", { name: "Save" }).click();
+    await dialog.getByRole("button", { name: "Create", exact: true }).click();
 
     await expect(page).toHaveURL(new RegExp(`/app/${ctx.orgSlug}/[^/]+`));
 
