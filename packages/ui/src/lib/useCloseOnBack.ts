@@ -51,6 +51,35 @@ export const useCloseOnBack = (
   }, [open, isMobile]);
 };
 
+type OpenChange = (
+  open: boolean,
+  details: Dialog.Root.ChangeEventDetails,
+) => void;
+
+/**
+ * A dialog's open state, tracked here when the caller leaves it to a trigger
+ * button, so back can close those too
+ */
+export const useOverlayOpen = ({
+  open,
+  defaultOpen,
+  onOpenChange,
+}: {
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: OpenChange;
+}) => {
+  const [ownOpen, setOwnOpen] = React.useState(defaultOpen ?? false);
+  const controlled = open !== undefined;
+  const isOpen = controlled ? open : ownOpen;
+  const change: OpenChange = (next, details) => {
+    if (!controlled) setOwnOpen(next);
+    onOpenChange?.(next, details);
+  };
+  useCloseOnBack(isOpen, () => change(false, backDetails()));
+  return { open: isOpen, onOpenChange: change };
+};
+
 /** What a dialog's `onOpenChange` gets when back closed it */
 export const backDetails = (): Dialog.Root.ChangeEventDetails => ({
   reason: "none",

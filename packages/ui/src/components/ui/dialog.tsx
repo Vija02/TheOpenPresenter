@@ -1,4 +1,4 @@
-import { backDetails, useCloseOnBack } from "@/lib/useCloseOnBack";
+import { useOverlayOpen } from "@/lib/useCloseOnBack";
 import { cn } from "@/lib/utils";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { type VariantProps, cva } from "class-variance-authority";
@@ -13,13 +13,21 @@ const isInPopover = (target: EventTarget | null | undefined) =>
 
 function Dialog({
   children,
-  onOpenChange,
+  open: openProp,
+  defaultOpen,
+  onOpenChange: onOpenChangeProp,
   ...props
 }: React.ComponentProps<typeof BaseDialog.Root>) {
-  useCloseOnBack(props.open, () => onOpenChange?.(false, backDetails()));
+  const { open, onOpenChange } = useOverlayOpen({
+    open: openProp,
+    defaultOpen,
+    onOpenChange: onOpenChangeProp,
+  });
   return (
     <BaseDialog.Root
       data-slot="dialog"
+      {...props}
+      open={open}
       onOpenChange={(open, details) => {
         const event = details.event as
           | (Event & { relatedTarget?: EventTarget | null })
@@ -31,9 +39,8 @@ function Dialog({
           details.cancel();
           return;
         }
-        onOpenChange?.(open, details);
+        onOpenChange(open, details);
       }}
-      {...props}
     >
       {children}
     </BaseDialog.Root>

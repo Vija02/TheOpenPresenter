@@ -336,14 +336,17 @@ const NativeSelect = ({
   props: Props<OptionType, boolean>;
   entries: NativeEntry[];
 }) => {
-  const getValue = props.getOptionValue ?? ((o: OptionType) => String(o.value));
   const flat = entries.flatMap((e) => ("group" in e ? e.entries : [e]));
   const selected = props.value as OptionType | null | undefined;
+  // By the caller's key when given; otherwise the value itself, as text would
+  // make every object-valued option look the same
+  const same = (a: OptionType, b: OptionType) =>
+    a === b ||
+    (props.getOptionValue
+      ? props.getOptionValue(a) === props.getOptionValue(b)
+      : Object.is(a.value, b.value));
   const selectedKey = selected
-    ? flat.find(
-        (e) =>
-          e.option === selected || getValue(e.option) === getValue(selected),
-      )?.key
+    ? flat.find((e) => same(e.option, selected))?.key
     : undefined;
 
   const renderOption = ({

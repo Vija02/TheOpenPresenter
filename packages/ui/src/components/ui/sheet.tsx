@@ -1,4 +1,4 @@
-import { backDetails, useCloseOnBack } from "@/lib/useCloseOnBack";
+import { useOverlayOpen } from "@/lib/useCloseOnBack";
 import { cn } from "@/lib/utils";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
@@ -9,11 +9,23 @@ import "./sheet.css";
 
 function Sheet({
   children,
+  open: openProp,
+  defaultOpen,
+  onOpenChange: onOpenChangeProp,
   ...props
 }: React.ComponentProps<typeof BaseDialog.Root>) {
-  useCloseOnBack(props.open, () => props.onOpenChange?.(false, backDetails()));
+  const { open, onOpenChange } = useOverlayOpen({
+    open: openProp,
+    defaultOpen,
+    onOpenChange: onOpenChangeProp,
+  });
   return (
-    <BaseDialog.Root data-slot="sheet" {...props}>
+    <BaseDialog.Root
+      data-slot="sheet"
+      {...props}
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       {children}
     </BaseDialog.Root>
   );

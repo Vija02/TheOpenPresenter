@@ -19,6 +19,7 @@ import {
 import { Select } from "./select";
 
 export type DateInputProps = {
+  id?: string;
   value?: Date | null;
   onChange?: (value: Date | undefined) => void;
   onBlur?: () => void;
@@ -55,6 +56,7 @@ const CalendarMenu = (props: MenuListProps<any, false>) => {
  * instead, since a dropdown gets cut off on a small screen.
  */
 function DateInput({
+  id,
   value,
   onChange,
   onBlur,
@@ -71,6 +73,7 @@ function DateInput({
     return (
       <input
         {...aria}
+        id={id}
         type="date"
         className={cn("ui--input", className)}
         value={value ? format(value, "yyyy-MM-dd") : ""}
@@ -92,6 +95,7 @@ function DateInput({
   return (
     <Select
       {...aria}
+      inputId={id}
       className={className}
       name={name}
       value={value ? { value, label: formatHumanReadableDate(value) } : null}
