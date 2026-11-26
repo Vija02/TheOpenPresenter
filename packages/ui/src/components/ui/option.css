@@ -20,8 +20,9 @@
     @apply p-3;
   }
 
+  /* Tint and a ring so the choice stands out from the hover border */
   .ui--option--selected {
-    @apply border-accent;
+    @apply border-accent bg-accent/10 ring-1 ring-accent;
   }
 
   .ui--option--disabled {

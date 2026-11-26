@@ -1,5 +1,9 @@
 import { Tag } from "@/components/Tag";
-import { fromProjectDateValue, fromProjectTimeValue } from "@/lib/projectDate";
+import {
+  formatTimeLabel,
+  fromProjectDateValue,
+  fromProjectTimeValue,
+} from "@/lib/projectDate";
 import { ProjectFragment } from "@repo/graphql";
 import { PROJECT_DATE_FORMAT, untitledProjectName } from "@repo/lib";
 import {
@@ -76,7 +80,11 @@ export const ProjectCard = ({
                   formatToken={PROJECT_DATE_FORMAT}
                   className="text-sm font-bold sm:font-medium"
                 />
-                {time && <span className="text-sm text-secondary">{time}</span>}
+                {time && (
+                  <span className="text-sm text-secondary">
+                    {formatTimeLabel(time)}
+                  </span>
+                )}
                 {cloudIcon}
               </div>
               <p className="text-xs">{project.name}</p>

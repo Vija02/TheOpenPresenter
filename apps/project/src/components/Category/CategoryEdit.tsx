@@ -1,3 +1,4 @@
+import { formatTimeLabel } from "@/lib/projectDate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CategoryFragment } from "@repo/graphql";
 import {
@@ -703,8 +704,10 @@ export function CategoryEdit({
                       {cadence && preview.length > 0 && (
                         <p className="text-sm text-secondary">
                           {describeCadence(cadence)}
-                          {values.startTime ? ` at ${values.startTime}` : ""}.
-                          Next:{" "}
+                          {values.startTime
+                            ? ` at ${formatTimeLabel(values.startTime)}`
+                            : ""}
+                          . Next:{" "}
                           {preview
                             .map((d) => format(d, "EEE d MMM"))
                             .join(", ")}

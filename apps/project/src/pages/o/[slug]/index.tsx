@@ -5,6 +5,7 @@ import { ProjectCard } from "@/containers/Dashboard/ProjectCard";
 import DuplicateProjectModal from "@/containers/DuplicateProjectModal";
 import EditProjectModal from "@/containers/EditProjectModal";
 import ImportProjectModal from "@/containers/ImportProjectModal";
+import { noCategoryLabel } from "@/lib/categorySchedule";
 import { useOrganizationSlug } from "@/lib/permissionHooks/organization";
 import {
   CategoryFragment,
@@ -122,10 +123,7 @@ const OrganizationPage = () => {
         ? [
             {
               value: UNCATEGORIZED,
-              // Unless a real category already uses the short name
-              label: categories.some((c) => c.name.toLowerCase() === "other")
-                ? "Uncategorized"
-                : "Other",
+              label: noCategoryLabel(categories),
             },
           ]
         : []),

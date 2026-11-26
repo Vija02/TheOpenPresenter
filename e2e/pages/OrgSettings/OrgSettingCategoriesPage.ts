@@ -9,10 +9,11 @@ export const categoryCard = (page: Page, name?: string) => {
 };
 
 /** A category choice in the new project dialog */
-export const categoryPill = (scope: Page | Locator, name: string) =>
+export const categoryOption = (scope: Page | Locator, name: string) =>
   scope
-    .getByRole("group", { name: "Category" })
-    .getByRole("button", { name, exact: true });
+    .getByTestId("form-item-categoryId")
+    .getByRole("radio")
+    .filter({ hasText: name });
 
 export class OrgSettingCategoriesPage {
   readonly addCategoryButton: Locator;

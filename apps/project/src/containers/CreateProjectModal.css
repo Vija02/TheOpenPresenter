@@ -1,0 +1,45 @@
+@reference "@repo/tailwind-config/index.css";
+
+/* Same gap to the options as a form label has to its field */
+.project--create-category-heading {
+  @apply mb-2 flex items-center gap-1;
+}
+
+.project--create-category-settings {
+  @apply rounded-xs p-0.5 text-tertiary opacity-0 transition hover:text-primary;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
+  @apply [&_svg]:size-3;
+}
+/* Shown while using the section; always shown where there's no hover (touch) */
+.project--create-category:hover .project--create-category-settings,
+.project--create-category:focus-within .project--create-category-settings {
+  @apply opacity-100;
+}
+@media (hover: none) {
+  .project--create-category-settings {
+    @apply opacity-100;
+  }
+}
+
+/* One per row on phones; side by side, equal heights, on wider screens */
+.project--create-category-options {
+  @apply grid grid-cols-1 auto-rows-fr sm:grid-cols-3;
+}
+
+.project--create-summary {
+  @apply flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-secondary;
+  @apply [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-tertiary;
+}
+
+.project--create-link {
+  @apply inline-flex cursor-pointer items-center gap-1 rounded-xs text-sm font-medium text-link hover:text-link-hover hover:underline;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
+  @apply [&_svg]:size-3.5;
+}
+
+.project--create-icon-button {
+  @apply grid size-6 cursor-pointer place-items-center rounded-xs border border-dashed border-stroke text-secondary transition-colors;
+  @apply hover:border-stroke-emphasis hover:text-primary;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
+  @apply [&_svg]:size-3.5;
+}

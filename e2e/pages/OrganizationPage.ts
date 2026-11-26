@@ -5,7 +5,7 @@ export class OrganizationPage {
   readonly newOptionsButton: Locator;
   readonly importButton: Locator;
   readonly importCloseButton: Locator;
-  readonly newProjectSaveButton: Locator;
+  readonly newProjectCreateButton: Locator;
   readonly projectCards: Locator;
   readonly projectCardEditButtonNth: (nth?: number) => Locator;
   readonly projectCardMenuButtonNth: (nth?: number) => Locator;
@@ -39,8 +39,9 @@ export class OrganizationPage {
     this.importCloseButton = page
       .getByRole("button", { name: "Close" })
       .first();
-    this.newProjectSaveButton = page.getByRole("button", {
-      name: "Save",
+    this.newProjectCreateButton = page.getByRole("button", {
+      name: "Create",
+      exact: true,
     });
 
     this.projectCards = page.locator("[data-testid=project-card]");
