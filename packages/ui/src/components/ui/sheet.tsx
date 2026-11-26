@@ -1,3 +1,4 @@
+import { backDetails, useCloseOnBack } from "@/lib/useCloseOnBack";
 import { cn } from "@/lib/utils";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
@@ -10,6 +11,7 @@ function Sheet({
   children,
   ...props
 }: React.ComponentProps<typeof BaseDialog.Root>) {
+  useCloseOnBack(props.open, () => props.onOpenChange?.(false, backDetails()));
   return (
     <BaseDialog.Root data-slot="sheet" {...props}>
       {children}

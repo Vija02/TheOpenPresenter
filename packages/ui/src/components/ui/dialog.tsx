@@ -1,3 +1,4 @@
+import { backDetails, useCloseOnBack } from "@/lib/useCloseOnBack";
 import { cn } from "@/lib/utils";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { type VariantProps, cva } from "class-variance-authority";
@@ -15,6 +16,7 @@ function Dialog({
   onOpenChange,
   ...props
 }: React.ComponentProps<typeof BaseDialog.Root>) {
+  useCloseOnBack(props.open, () => onOpenChange?.(false, backDetails()));
   return (
     <BaseDialog.Root
       data-slot="dialog"
