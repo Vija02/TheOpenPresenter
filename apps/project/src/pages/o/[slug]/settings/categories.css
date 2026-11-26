@@ -1,0 +1,31 @@
+@reference "@repo/tailwind-config/index.css";
+
+.project--category-cards {
+  @apply stack-col items-stretch gap-2;
+}
+
+.project--category-card {
+  @apply flex items-start gap-2 rounded border border-stroke bg-surface-primary p-3;
+}
+.project--category-card[data-dragging] {
+  @apply relative z-10 shadow-md;
+}
+
+.project--category-card__grip {
+  @apply cursor-grab touch-none p-1 text-secondary active:cursor-grabbing;
+}
+
+.project--category-card__body {
+  @apply min-w-0 flex-1;
+}
+
+.project--category-card__name {
+  @apply flex flex-wrap items-center gap-2 font-medium;
+}
+
+.project--category-card__details {
+  @apply mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2;
+}
+.project--category-card__details dt {
+  @apply text-xs text-tertiary;
+}

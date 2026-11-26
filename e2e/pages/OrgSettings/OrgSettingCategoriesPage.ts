@@ -1,5 +1,19 @@
 import { type Locator, type Page } from "@playwright/test";
 
+/** A card in the settings list; every card when no name is given */
+export const categoryCard = (page: Page, name?: string) => {
+  const cards = page
+    .getByRole("list", { name: "Categories" })
+    .getByRole("listitem");
+  return name ? cards.filter({ hasText: name }) : cards;
+};
+
+/** A category choice in the new project dialog */
+export const categoryPill = (scope: Page | Locator, name: string) =>
+  scope
+    .getByRole("group", { name: "Category" })
+    .getByRole("button", { name, exact: true });
+
 export class OrgSettingCategoriesPage {
   readonly addCategoryButton: Locator;
   readonly categoryNameInput: Locator;
@@ -21,9 +35,9 @@ export class OrgSettingCategoriesPage {
     this.nextButton = page.getByRole("button", { name: "Next" });
 
     this.editExistingCategoryButton = (categoryName: string) =>
-      page
-        .getByRole("row", { name: categoryName })
-        .getByRole("button", { name: "Edit category" });
+      categoryCard(page, categoryName).getByRole("button", {
+        name: "Edit category",
+      });
     this.deleteTab = page.getByRole("tab", { name: "Delete" });
     this.deleteCategoryButton = page.getByRole("button", {
       name: "Delete category",

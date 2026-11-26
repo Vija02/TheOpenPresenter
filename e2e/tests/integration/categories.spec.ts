@@ -1,6 +1,10 @@
 import { expect, test } from "../../fixtures/organizationFixture";
 import { ORG_SLUG, orgUrl } from "../../helpers/workerData";
-import { OrgSettingCategoriesPage } from "../../pages/OrgSettings/OrgSettingCategoriesPage";
+import {
+  OrgSettingCategoriesPage,
+  categoryCard,
+  categoryPill,
+} from "../../pages/OrgSettings/OrgSettingCategoriesPage";
 
 const comingSunday = () => {
   const d = new Date();
@@ -28,8 +32,7 @@ test.describe("Categories", () => {
       await page.getByRole("option", { name: option, exact: true }).click();
     };
 
-    await page
-      .getByRole("row", { name: /Sunday Morning/ })
+    await categoryCard(page, "Sunday Morning")
       .getByRole("button", { name: "Edit category" })
       .click();
     await page.getByRole("tab", { name: "Schedule" }).click();
@@ -45,7 +48,7 @@ test.describe("Categories", () => {
     await select("templateProjectId", "TestProject");
     await page.getByRole("button", { name: "Save", exact: true }).click();
 
-    const row = page.getByRole("row", { name: /Sunday Morning/ });
+    const row = categoryCard(page, "Sunday Morning");
     await expect(row).toContainText("Every Sunday at 10:30");
     await expect(row).toContainText("TestProject");
 
@@ -66,8 +69,9 @@ test.describe("Categories", () => {
 
     await organizationPage.newProjectButton.click();
     const dialog = page.getByRole("dialog");
-    await expect(dialog.getByTestId("form-item-categoryId")).toContainText(
-      "Sunday Morning",
+    await expect(categoryPill(dialog, "Sunday Morning")).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
     await expect(dialog.getByTestId("form-item-targetDate")).toContainText(
       String(comingSunday().getDate()),
@@ -126,7 +130,7 @@ test.describe("Categories", () => {
     ).toBeVisible();
     await dialog.getByRole("button", { name: "Next" }).click();
     await dialog.getByRole("button", { name: "Create", exact: true }).click();
-    const youth = page.getByRole("row", { name: /Youth/ });
+    const youth = categoryCard(page, "Youth");
     await expect(youth).toContainText("Every Saturday");
 
     await expect(page.getByRole("dialog")).toBeHidden();
@@ -145,9 +149,9 @@ test.describe("Categories", () => {
     await page.mouse.move(to!.x + 5, to!.y, { steps: 20 });
     await page.waitForTimeout(100);
     await page.mouse.up();
-    await expect(page.getByRole("row").nth(1)).toContainText("Youth");
+    await expect(categoryCard(page).first()).toContainText("Youth");
     await page.reload();
-    await expect(page.getByRole("row").nth(1)).toContainText("Youth");
+    await expect(categoryCard(page).first()).toContainText("Youth");
 
     await page.goto(orgUrl());
     const pills = page.getByRole("group", { name: "Filter by category" });
@@ -176,15 +180,14 @@ test.describe("Categories", () => {
   }) => {
     await loginWithDefaultProject(`${orgUrl()}/settings/categories`);
 
-    await page
-      .getByRole("row", { name: /Sunday Morning/ })
+    await categoryCard(page, "Sunday Morning")
       .getByRole("button", { name: "Edit category" })
       .click();
     await page.getByRole("checkbox", { name: /Show in filter/ }).click();
     await page.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(
-      page.getByRole("row", { name: /Sunday Morning/ }),
-    ).toContainText("Hidden from filter");
+    await expect(categoryCard(page, "Sunday Morning")).toContainText(
+      "Hidden from filter",
+    );
 
     await page.goto(orgUrl());
     const pills = page.getByRole("group", { name: "Filter by category" });
@@ -208,29 +211,30 @@ test.describe("Categories", () => {
   }) => {
     await loginWithDefaultProject(`${orgUrl()}/settings/categories`);
 
-    await page
-      .getByRole("row", { name: /Sunday Morning/ })
+    await categoryCard(page, "Sunday Morning")
       .getByRole("button", { name: "Edit category" })
       .click();
     await page.getByRole("checkbox", { name: /Use as default/ }).click();
     await page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(
-      page.getByRole("row", { name: /Sunday Morning/ }),
-    ).toContainText("Default");
+      categoryCard(page, "Sunday Morning").getByText("Default", {
+        exact: true,
+      }),
+    ).toBeVisible();
 
     await page.goto(orgUrl());
     await organizationPage.newProjectButton.click();
     await expect(
-      page.getByRole("dialog").getByTestId("form-item-categoryId"),
-    ).toContainText("Sunday Morning");
+      categoryPill(page.getByRole("dialog"), "Sunday Morning"),
+    ).toHaveAttribute("aria-pressed", "true");
     await page.keyboard.press("Escape");
 
     // Filtering by Other (no category) still starts uncategorized
     await page.getByRole("button", { name: "Other", exact: true }).click();
     await organizationPage.newProjectButton.click();
     await expect(
-      page.getByRole("dialog").getByTestId("form-item-categoryId"),
-    ).toContainText("Uncategorized");
+      categoryPill(page.getByRole("dialog"), "Uncategorized"),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   test("deleting a category keeps its projects", async ({
@@ -246,9 +250,7 @@ test.describe("Categories", () => {
     await settings.deleteCategoryButton.click();
     await page.getByTestId("popconfirm-confirm").click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    await expect(page.getByRole("row", { name: /Sunday Morning/ })).toHaveCount(
-      0,
-    );
+    await expect(categoryCard(page, "Sunday Morning")).toHaveCount(0);
 
     await page.goto(orgUrl());
     await expect(organizationPage.projectCards).toHaveCount(1);
@@ -267,12 +269,8 @@ test.describe("Categories", () => {
     const settings = new OrgSettingCategoriesPage(page);
 
     await settings.createCategory("");
-    await expect(
-      page.getByRole("row", { name: /Unnamed category/ }),
-    ).toHaveCount(1);
+    await expect(categoryCard(page, "Unnamed category")).toHaveCount(1);
     await settings.createCategory("");
-    await expect(
-      page.getByRole("row", { name: /Unnamed category 2/ }),
-    ).toBeVisible();
+    await expect(categoryCard(page, "Unnamed category 2")).toBeVisible();
   });
 });

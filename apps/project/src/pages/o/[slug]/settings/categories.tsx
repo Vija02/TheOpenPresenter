@@ -41,19 +41,7 @@ import {
   useUpdateCategoryMutation,
 } from "@repo/graphql";
 import { globalState, projectTitle } from "@repo/lib";
-import {
-  Badge,
-  Button,
-  Dialog,
-  DialogContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  useDisclosure,
-} from "@repo/ui";
+import { Badge, Button, Dialog, DialogContent, useDisclosure } from "@repo/ui";
 import { format } from "date-fns";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { FiPlus } from "react-icons/fi";
@@ -61,6 +49,8 @@ import { TbCategory } from "react-icons/tb";
 import { VscEdit, VscGripper } from "react-icons/vsc";
 import { toast } from "react-toastify";
 import { CombinedError, UseQueryResponse } from "urql";
+
+import "./categories.css";
 
 const OrganizationSettingsCategoriesPage = () => {
   const slug = useOrganizationSlug();
@@ -250,31 +240,20 @@ const OrganizationSettingsCategoriesPageInner: FC<
           collisionDetection={closestCenter}
           onDragEnd={onDragEnd}
         >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead style={{ width: "40px" }}></TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Schedule</TableHead>
-                <TableHead>Starts from</TableHead>
-                <TableHead style={{ width: "60px" }}></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <SortableContext
-                items={categories.map((c) => c.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {categories.map((category) => (
-                  <CategoryRow
-                    key={category.id}
-                    category={category}
-                    onEdit={() => setEditingCategory(category)}
-                  />
-                ))}
-              </SortableContext>
-            </TableBody>
-          </Table>
+          <ul className="project--category-cards" aria-label="Categories">
+            <SortableContext
+              items={categories.map((c) => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {categories.map((category) => (
+                <CategoryCard
+                  key={category.id}
+                  category={category}
+                  onEdit={() => setEditingCategory(category)}
+                />
+              ))}
+            </SortableContext>
+          </ul>
         </DndContext>
       )}
 
@@ -325,7 +304,7 @@ const OrganizationSettingsCategoriesPageInner: FC<
   );
 };
 
-const CategoryRow = ({
+const CategoryCard = ({
   category,
   onEdit,
 }: {
@@ -343,55 +322,58 @@ const CategoryRow = ({
   } = useSortable({ id: category.id });
 
   return (
-    <TableRow
+    <li
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={
-        isDragging ? "relative z-10 bg-surface-primary shadow-md" : undefined
-      }
+      className="project--category-card"
+      data-dragging={isDragging || undefined}
     >
-      <TableCell style={{ width: "40px" }}>
-        <button
-          type="button"
-          ref={setActivatorNodeRef}
-          className="cursor-grab touch-none p-1 text-secondary active:cursor-grabbing"
-          aria-label={`Reorder ${category.name}`}
-          {...attributes}
-          {...listeners}
-        >
-          <VscGripper />
-        </button>
-      </TableCell>
-      <TableCell>
-        {category.name}
-        {category.isDefault && (
-          <Badge size="sm" className="ml-2">
-            Default
-          </Badge>
-        )}
-        {!category.showInFilter && (
-          <p className="text-xs text-tertiary">Hidden from filter</p>
-        )}
-      </TableCell>
-      <TableCell>
-        <ScheduleCell category={category} />
-      </TableCell>
-      <TableCell className="text-secondary">
-        {category.templateProject
-          ? projectTitle(category.templateProject)
-          : "Blank project"}
-      </TableCell>
-      <TableCell style={{ width: "60px" }}>
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label="Edit category"
-          onClick={onEdit}
-        >
-          <VscEdit className="text-secondary" />
-        </Button>
-      </TableCell>
-    </TableRow>
+      <button
+        type="button"
+        ref={setActivatorNodeRef}
+        className="project--category-card__grip"
+        aria-label={`Reorder ${category.name}`}
+        {...attributes}
+        {...listeners}
+      >
+        <VscGripper />
+      </button>
+      <div className="project--category-card__body">
+        <div className="project--category-card__name">
+          {category.name}
+          {category.isDefault && <Badge size="sm">Default</Badge>}
+          {!category.showInFilter && (
+            <span className="text-xs font-normal text-tertiary">
+              Hidden from filter
+            </span>
+          )}
+        </div>
+        <dl className="project--category-card__details">
+          <div>
+            <dt>Schedule</dt>
+            <dd>
+              <ScheduleCell category={category} />
+            </dd>
+          </div>
+          <div>
+            <dt>Starts from</dt>
+            <dd>
+              {category.templateProject
+                ? projectTitle(category.templateProject)
+                : "Blank project"}
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-label="Edit category"
+        onClick={onEdit}
+      >
+        <VscEdit className="text-secondary" />
+      </Button>
+    </li>
   );
 };
 
@@ -400,14 +382,15 @@ const ScheduleCell = ({ category }: { category: CategoryFragment }) => {
   const next = categoryNextDate(category);
   if (!label) return <span className="text-tertiary">Not set</span>;
   return (
-    <div>
-      <div>{label}</div>
+    <>
+      {label}
       {next && (
-        <div className="text-xs text-secondary">
-          Next: {format(next, "EEE d MMM")}
-        </div>
+        <span className="text-secondary">
+          {" "}
+          · Next: {format(next, "EEE d MMM")}
+        </span>
       )}
-    </div>
+    </>
   );
 };
 
