@@ -26,6 +26,7 @@ const formatTime = (time: { hour: number; minute: number }) =>
   `${String(time.hour).padStart(2, "0")}:${String(time.minute).padStart(2, "0")}`;
 
 export type TimeInputProps = {
+  id?: string;
   /** "HH:mm", or "" when empty */
   value?: string | null;
   onChange?: (value: string) => void;
