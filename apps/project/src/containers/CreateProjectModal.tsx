@@ -486,8 +486,12 @@ const CreateProjectModal = ({
             )}
           </DialogBody>
           <DialogFooter>
-            <div className="flex w-full flex-wrap justify-end gap-2">
-              <Button variant="outline" onClick={onToggle}>
+            <div className="project--create-actions">
+              <Button
+                variant="outline"
+                className="project--create-cancel"
+                onClick={onToggle}
+              >
                 Cancel
               </Button>
               {!onCreated && (
@@ -495,12 +499,19 @@ const CreateProjectModal = ({
                   type="button"
                   variant="outline"
                   disabled={isCreating}
+                  aria-label="Create another"
                   onClick={form.handleSubmit((data) => submit(data, true))}
                 >
-                  Create another
+                  <FiPlus aria-hidden />
+                  Another
                 </Button>
               )}
-              <Button type="submit" variant="success" disabled={isCreating}>
+              <Button
+                type="submit"
+                variant="success"
+                className="project--create-submit"
+                disabled={isCreating}
+              >
                 Create
               </Button>
             </div>
