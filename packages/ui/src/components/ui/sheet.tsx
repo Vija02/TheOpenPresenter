@@ -73,7 +73,7 @@ function SheetContent({
 
   return (
     <SheetPortal container={container ?? undefined}>
-      <SheetOverlay />
+      <SheetOverlay forceRender />
       <BaseDialog.Popup
         data-slot="sheet-content"
         className={cn(
