@@ -1,4 +1,5 @@
 import { newTabProps } from "@/lib/newTab";
+import { useIsMobile } from "@/lib/useIsMobile";
 import { cn } from "@/lib/utils";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { ChevronRightIcon, XIcon } from "lucide-react";
@@ -160,15 +161,7 @@ function PopoverSubMenu({
   const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickPointerType = React.useRef<string | null>(null);
 
-  const [isNarrow, setIsNarrow] = React.useState(false);
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const query = window.matchMedia("(max-width: 767px)");
-    const sync = () => setIsNarrow(query.matches);
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, []);
+  const isNarrow = useIsMobile();
 
   const cancelClose = React.useCallback(() => {
     if (closeTimer.current) {

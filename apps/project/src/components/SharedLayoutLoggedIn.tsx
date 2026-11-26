@@ -4,6 +4,7 @@ import {
   AvatarImage,
   Button,
   OverlayToggle,
+  useIsMobile,
 } from "@repo/ui";
 import * as React from "react";
 import { GoOrganization } from "react-icons/go";
@@ -16,7 +17,6 @@ import { contentMinHeight } from "./SharedLayoutSkeleton";
 import { DrawerShell } from "./Sidebar/DrawerShell";
 import { SidebarItem } from "./Sidebar/SidebarItem";
 import { StandardWidth } from "./StandardWidth";
-import { useIsMobile } from "./useIsMobile";
 
 export function SharedLayoutLoggedIn(
   props: Omit<SharedLayoutProps, "forbidWhen" | "noPad" | "children"> & {
