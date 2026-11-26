@@ -44,7 +44,14 @@ import {
   TimeInputControl,
 } from "@repo/ui";
 import { format } from "date-fns";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { CombinedError } from "urql";
 import { z } from "zod";
@@ -363,6 +370,14 @@ export function CategoryEdit({
   const steps = !initialCategory.id;
   const [section, setSection] = useState<Section | "delete">("general");
   const [reached, setReached] = useState(0);
+
+  // On phones the tabs scroll, so keep the current one in view (e.g. after Next)
+  const navRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    navRef.current
+      ?.querySelector('[data-state="active"]')
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [section]);
   const index = SECTIONS.findIndex((s) => s.value === section);
   const isLast = index === SECTIONS.length - 1;
 
@@ -423,6 +438,7 @@ export function CategoryEdit({
           <div className="project--category-edit__body">
             <div className="project--category-edit__sidebar">
               <TabsList
+                ref={navRef}
                 aria-label="Category settings"
                 className="project--category-edit__nav"
               >
