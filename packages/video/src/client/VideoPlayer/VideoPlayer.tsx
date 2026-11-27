@@ -67,6 +67,10 @@ export const VideoPlayer = ({
   const [ready, setReady] = useState(false);
   const ref = useRef<HTMLVideoElement>(null);
   const hasInitialSeekRef = useRef(false);
+  // How long the last seek took to start playing. YouTube can take seconds,
+  // so a correction aims that far ahead or it lands behind again and loops
+  const seekStartedAtRef = useRef<number | null>(null);
+  const seekLatencyRef = useRef(0);
 
   const { videoUrl, isYouTube } = useVideoUrl(video);
 
@@ -114,7 +118,15 @@ export const VideoPlayer = ({
         // 2 second tolerance
         const tolerance = 2;
         if (manual || Math.abs(currentTime - targetTimeSeconds) > tolerance) {
-          if (ref.current) ref.current.currentTime = targetTimeSeconds;
+          const seekTo = manual
+            ? targetTimeSeconds
+            : computePlaybackState(
+                playbackState,
+                videoDuration,
+                Date.now() + seekLatencyRef.current * 1000,
+              ).currentTimeSeconds;
+          if (ref.current) ref.current.currentTime = seekTo;
+          seekStartedAtRef.current = computedPlaying ? Date.now() : null;
           if (computedPlaying) ref.current?.play();
           hasInitialSeekRef.current = true;
         }
@@ -179,6 +191,11 @@ export const VideoPlayer = ({
           onError?.(err instanceof Error ? err : new Error(String(err)), data);
         }}
         onPlaying={() => {
+          if (seekStartedAtRef.current !== null) {
+            seekLatencyRef.current =
+              (Date.now() - seekStartedAtRef.current) / 1000;
+            seekStartedAtRef.current = null;
+          }
           setVideoSeek();
           onAwarenessLoadingChange?.(false);
         }}
